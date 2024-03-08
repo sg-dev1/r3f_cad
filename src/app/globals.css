@@ -15,3 +15,7 @@ body {
 .mainview {
   height: 100vh !important;
 }
+
+.sketcherview {
+  height: 100vh !important;
+}

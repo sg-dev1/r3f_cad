@@ -1,9 +1,11 @@
-import MainView from './components/MainView';
+// import MainView from './components/MainView';
+import SketcherView from './components/SketcherView';
 
 export default function Home() {
   return (
     <div>
-      <MainView />
+      {/* <MainView /> */}
+      <SketcherView />
     </div>
   );
 }
