@@ -1,6 +1,10 @@
-// TODO add a (hidden plane) as background, e.g. to not need the boxes and more as drawing surface and to have only single drawing surface
+// Add a (hidden plane) as background, e.g. to not need the boxes and more as drawing surface and to have only single drawing surface
 //      --> this is the "sketch plane"
 //      Plane should lie on the X and Y axes, e.g. looking from front on it with ortographic camera  (XY plane)  - in future all different planes shall be supported
+//      - current issue of solution is that plane is limited in size
+//      - app also behaves strangely together with orbit controls (maybe disable it - only support zooming and panning and no rotation)
+// TODO it would be nicer if line to be drawn is already displayed (based on last point clicked and current position of mouse)
+//      - here also a snap to parallel to x/y axis could be implemented
 // TODO it would be also good to have a behaviour where the lines are closed, e.g. detect when a new point is close to and existing
 //      --> then use the existing one
 // TODO save common state in the background, e.g. points/ lines drawn --> what to use for state management
@@ -18,7 +22,7 @@
 
 import React, { useRef, useState, forwardRef, useImperativeHandle } from 'react';
 import { Canvas, useThree } from '@react-three/fiber';
-import { CameraControls, OrthographicCamera, Line } from '@react-three/drei';
+import { CameraControls, OrthographicCamera, Line, Plane } from '@react-three/drei';
 import { BoxGeometry, Vector3 } from 'three';
 import * as THREE from 'three';
 
@@ -94,10 +98,13 @@ const SketcherView = () => {
         <ambientLight intensity={0.25} />
         <pointLight intensity={0.75} position={[500, 500, 1000]} />
 
-        <Box position={[70, 70, 0]} />
+        {/* <Box position={[70, 70, 0]} />
         <Box position={[-70, 70, 0]} />
         <Box position={[70, -70, 0]} />
-        <Box position={[-70, -70, 0]} />
+        <Box position={[-70, -70, 0]} /> */}
+
+        {/* Have a drawing plane where to draw the sketch */}
+        <Plane args={[2000, 2000]} />
 
         <ClickableLine ref={clickRef} />
 
