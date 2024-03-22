@@ -21,6 +21,8 @@ export interface ClickableLineRefType {
   onPointerMove: (event: React.PointerEvent<HTMLDivElement>) => void;
 }
 
+const xyPlane = new THREE.Plane(new THREE.Vector3(0, 0, 1), 0);
+
 const ClickableLine = forwardRef<any, any>(({}, ref) => {
   const [points, setPoints] = useState<Vector3[]>([]);
   const [currentMousePos, setCurrentMousePos] = useState<Vector3 | undefined>(undefined);
@@ -33,14 +35,19 @@ const ClickableLine = forwardRef<any, any>(({}, ref) => {
     const y = (-(yCoord - rect.top) / rect.height) * 2 + 1;
     const point = new THREE.Vector2(x, y);
 
-    console.log('x=', y, 'y=', y, 'clientX=', xCoord, 'clientY=', yCoord);
+    //console.log('x=', y, 'y=', y, 'clientX=', xCoord, 'clientY=', yCoord);
 
     raycaster.setFromCamera(point, camera);
     // For this to work the scene must have children, e.g. adding the boxes
     // Maybe the camera controls should be disabled --> weird behaviour
-    const [intersect] = raycaster.intersectObjects(scene.children, true);
+    //const [intersect] = raycaster.intersectObjects(scene.children, true);
+    // UPDATE: Do not intersect with object on screen but with a plane!
 
-    return intersect;
+    let planeIntersection: THREE.Vector3 = new THREE.Vector3(0, 0, 0);
+    raycaster.ray.intersectPlane(xyPlane, planeIntersection);
+    //console.log('Plane intersection:', out);
+
+    return planeIntersection;
   };
 
   useImperativeHandle(
@@ -52,7 +59,7 @@ const ClickableLine = forwardRef<any, any>(({}, ref) => {
 
         const intersect = calcIntersection(event.clientX, event.clientY, event.target as HTMLElement);
         if (intersect) {
-          setPoints((points) => [...points, intersect.point]);
+          setPoints((points) => [...points, intersect]);
         }
         console.log(intersect);
       },
@@ -66,7 +73,7 @@ const ClickableLine = forwardRef<any, any>(({}, ref) => {
 
         //console.log('onPointerMove', event);
         const intersect = calcIntersection(event.clientX, event.clientY, event.target as HTMLElement);
-        setCurrentMousePos(intersect?.point);
+        setCurrentMousePos(intersect);
       },
     }),
     [camera, scene, raycaster]

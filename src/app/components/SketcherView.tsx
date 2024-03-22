@@ -3,6 +3,8 @@
 //      Plane should lie on the X and Y axes, e.g. looking from front on it with ortographic camera  (XY plane)  - in future all different planes shall be supported
 //      - current issue of solution is that plane is limited in size
 //      - app also behaves strangely together with orbit controls (maybe disable it - only support zooming and panning and no rotation)
+// NOTE: To fix this issue use Plane instead (mathematical infinite plane)
+// https://www.columbia.edu/~njn2118/journal/2019/2/18.html
 //
 // TODO improve the forward ref (what types to use instead of any)
 // TODO disable camera rotation (only zooming and paning should be allowed) - rotation creates weird behaviour
@@ -16,16 +18,16 @@ import * as THREE from 'three';
 import ClickableLine, { ClickableLineRefType } from './ClickableLine';
 
 // This is just a test object and will be removed in the future
-const Box = (props: any) => {
-  const boxRef = useRef<BoxGeometry>();
+// const Box = (props: any) => {
+//   const boxRef = useRef<BoxGeometry>();
 
-  return (
-    <mesh ref={boxRef} {...props}>
-      <boxGeometry args={[100, 100, 100]} />
-      <meshStandardMaterial attach="material" color={'red'} />
-    </mesh>
-  );
-};
+//   return (
+//     <mesh ref={boxRef} {...props}>
+//       <boxGeometry args={[100, 100, 100]} />
+//       <meshStandardMaterial attach="material" color={'red'} />
+//     </mesh>
+//   );
+// };
 
 const SketcherView = () => {
   const clickRef = React.useRef<ClickableLineRefType>(null);
@@ -49,7 +51,7 @@ const SketcherView = () => {
         <Box position={[-70, -70, 0]} /> */}
 
         {/* Have a drawing plane where to draw the sketch */}
-        <Plane args={[2000, 2000]} />
+        {/* <Plane args={[2000, 2000]} /> */}
 
         <ClickableLine ref={clickRef} />
 
