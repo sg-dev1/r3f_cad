@@ -1,5 +1,5 @@
 // import MainView from './components/MainView';
-import SketcherView from './components/SketcherView';
+import SketcherView from '../components/SketcherView';
 
 export default function Home() {
   return (
