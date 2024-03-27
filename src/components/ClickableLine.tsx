@@ -2,9 +2,7 @@
 // - snap to parallel for x/y axis
 // - tangent, parallel, ... contraints  --> needs a constraint solver   (e.g. use solvespace in a "backend")
 // TODO it would be also good to have a behaviour where the lines are closed, e.g. detect when a new point is close to and existing
-//      --> then use the existing one
-// TODO save common state in the background, e.g. points/ lines drawn --> what to use for state management
-//      react-redux? zustand (which comes from r3f)?
+//      --> then use the existing one  --> coincidence constraint in solver
 //
 // TODO check if this implementation of line drawing (using a raycaster its setFromCamera function) is the best way to do it,
 //      e.g. it requires the creation of THREE.Vector2 instance all the time, are there alternative ways?
@@ -14,6 +12,9 @@ import { useThree } from '@react-three/fiber';
 import { Line } from '@react-three/drei';
 import { Vector3 } from 'three';
 import * as THREE from 'three';
+import { useAppSelector, useAppDispatch } from '@/app/hooks';
+import { addPoint, selectPoints } from '@/app/slices/sketchSlice';
+import { calcIntersectionWithPlane } from '@/utils/threejs_utils';
 
 export interface ClickableLineRefType {
   onClick: (event: React.MouseEvent<HTMLDivElement, MouseEvent>) => void;
@@ -24,31 +25,23 @@ export interface ClickableLineRefType {
 const xyPlane = new THREE.Plane(new THREE.Vector3(0, 0, 1), 0);
 
 const ClickableLine = forwardRef<any, any>(({}, ref) => {
-  const [points, setPoints] = useState<Vector3[]>([]);
   const [currentMousePos, setCurrentMousePos] = useState<Vector3 | undefined>(undefined);
   const [pointsToDraw, setPointsToDraw] = useState<Vector3[]>([]);
   const { camera, scene, raycaster } = useThree();
 
-  const calcIntersection = (xCoord: number, yCoord: number, target: HTMLElement) => {
-    const rect = (target as HTMLElement).getBoundingClientRect();
-    const x = ((xCoord - rect.left) / rect.width) * 2 - 1;
-    const y = (-(yCoord - rect.top) / rect.height) * 2 + 1;
-    const point = new THREE.Vector2(x, y);
+  const dispatch = useAppDispatch();
+  const sketchPoints = useAppSelector(selectPoints);
 
-    //console.log('x=', y, 'y=', y, 'clientX=', xCoord, 'clientY=', yCoord);
+  // Convert the sketchPoints from redux state to pointsToDraw
+  useEffect(() => {
+    console.log('sketchPoints', sketchPoints);
 
-    raycaster.setFromCamera(point, camera);
-    // For this to work the scene must have children, e.g. adding the boxes
-    // Maybe the camera controls should be disabled --> weird behaviour
-    //const [intersect] = raycaster.intersectObjects(scene.children, true);
-    // UPDATE: Do not intersect with object on screen but with a plane!
-
-    let planeIntersection: THREE.Vector3 = new THREE.Vector3(0, 0, 0);
-    raycaster.ray.intersectPlane(xyPlane, planeIntersection);
-    //console.log('Plane intersection:', out);
-
-    return planeIntersection;
-  };
+    const pointsLst = sketchPoints.map((p) => new Vector3(p.x, p.y, p.z));
+    if (currentMousePos) {
+      pointsLst.push(currentMousePos);
+    }
+    setPointsToDraw(pointsLst);
+  }, [sketchPoints]);
 
   useImperativeHandle(
     ref,
@@ -57,9 +50,16 @@ const ClickableLine = forwardRef<any, any>(({}, ref) => {
         event.stopPropagation();
         //console.log(event);
 
-        const intersect = calcIntersection(event.clientX, event.clientY, event.target as HTMLElement);
+        const intersect = calcIntersectionWithPlane(
+          raycaster,
+          camera,
+          xyPlane,
+          event.clientX,
+          event.clientY,
+          event.target as HTMLElement
+        );
         if (intersect) {
-          setPoints((points) => [...points, intersect]);
+          dispatch(addPoint({ ...intersect, id: 0 }));
         }
         console.log(intersect);
       },
@@ -72,8 +72,17 @@ const ClickableLine = forwardRef<any, any>(({}, ref) => {
         event.stopPropagation();
 
         //console.log('onPointerMove', event);
-        const intersect = calcIntersection(event.clientX, event.clientY, event.target as HTMLElement);
-        setCurrentMousePos(intersect);
+        const intersect = calcIntersectionWithPlane(
+          raycaster,
+          camera,
+          xyPlane,
+          event.clientX,
+          event.clientY,
+          event.target as HTMLElement
+        );
+        if (intersect) {
+          setCurrentMousePos(intersect);
+        }
       },
     }),
     [camera, scene, raycaster]
@@ -81,9 +90,8 @@ const ClickableLine = forwardRef<any, any>(({}, ref) => {
 
   useEffect(() => {
     if (currentMousePos) {
-      setPointsToDraw([...points, currentMousePos]);
-    } else {
-      setPointsToDraw(points);
+      const pointsLst = sketchPoints.map((p) => new Vector3(p.x, p.y, p.z));
+      setPointsToDraw([...pointsLst, currentMousePos]);
     }
   }, [currentMousePos]);
 

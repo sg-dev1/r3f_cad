@@ -1,15 +1,20 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import type { RootState } from '../../app/store';
+import { Point3DMapType, Point3DType } from '../types/Point3DType';
+import { Line3DType } from '../types/Line3DType';
 
 // Define a type for the slice state
 export interface SketchState {
   // Just a simple counter for demo purpose
   counter: number;
+
+  points: Point3DType[];
 }
 
 // Define the initial state using that type
 const initialState: SketchState = {
   counter: 0,
+  points: [],
 };
 
 export const sketchSlice = createSlice({
@@ -17,25 +22,33 @@ export const sketchSlice = createSlice({
   // `createSlice` will infer the state type from the `initialState` argument
   initialState,
   reducers: {
-    //
-    // Example reducers, to be removed
-    //
-    increment: (state) => {
-      state.counter += 1;
+    addPoint: {
+      reducer(state, action: PayloadAction<Point3DType, string>) {
+        const _id = state.counter;
+
+        state.points.push({ ...action.payload, id: _id });
+        state.counter++;
+      },
+      prepare(payload: Point3DType) {
+        //return { payload: { ...payload, id: 1 } };
+        return { payload };
+      },
+      //reducer: (state, { payload }) => {},
+      //prepare: (payload: PayloadAction<Point3DType>) => ({ payload: { ...payload, id: 0 } }),
     },
-    decrement: (state) => {
-      state.counter -= 1;
+    /*
+    addLine: (state, { payload }) => {
+      const _id = state.counter;
+
+      state.lines.push({ ...payload, id: _id });
+      state.counter++;
     },
-    // Use the PayloadAction type to declare the contents of `action.payload`
-    incrementByAmount: (state, action: PayloadAction<number>) => {
-      state.counter += action.payload;
-    },
+    */
   },
 });
 
-export const { increment, decrement, incrementByAmount } = sketchSlice.actions;
+export const { addPoint } = sketchSlice.actions;
 
-// Other code such as selectors can use the imported `RootState` type
-export const selectCount = (state: RootState) => state.sketchs.counter;
+export const selectPoints = (state: RootState) => state.sketchs.points;
 
 export default sketchSlice.reducer;

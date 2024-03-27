@@ -6,6 +6,10 @@
 // NOTE: To fix this issue use Plane instead (mathematical infinite plane)
 // https://www.columbia.edu/~njn2118/journal/2019/2/18.html
 //
+// TODO add more tools:
+//   - Currently we simply have a simple line drawing tool that saves its points into the redux state
+//   - We need tools to draw other primitives (e.g. points, circles) and to add constraints (coincident, parallel, ...)
+//
 // TODO improve the forward ref (what types to use instead of any)
 // TODO disable camera rotation (only zooming and paning should be allowed) - rotation creates weird behaviour
 'use client';
@@ -16,9 +20,6 @@ import { CameraControls, OrthographicCamera, Line, Plane } from '@react-three/dr
 import { BoxGeometry, Vector3 } from 'three';
 import * as THREE from 'three';
 import ClickableLine, { ClickableLineRefType } from './ClickableLine';
-
-import { useAppSelector, useAppDispatch } from '../app/hooks';
-import { incrementByAmount } from '../app/slices/sketchSlice';
 
 // This is just a test object and will be removed in the future
 // const Box = (props: any) => {
@@ -35,19 +36,12 @@ import { incrementByAmount } from '../app/slices/sketchSlice';
 const SketcherView = () => {
   const clickRef = React.useRef<ClickableLineRefType>(null);
 
-  // Only some demo code, to be removed in future
-  // The `state` arg is correctly typed as `RootState` already
-  const count = useAppSelector((state) => state.sketchs.counter);
-  const dispatch = useAppDispatch();
-
   return (
     <>
-      <div>{count}</div>
       <Canvas
         className="sketcherview"
         onClick={(e) => {
           clickRef.current?.onClick(e);
-          dispatch(incrementByAmount(2));
         }}
         //onPointerOver={(e) => clickRef.current?.onPointerOver(e)}
         onPointerMove={(e) => clickRef.current?.onPointerMove(e)}
