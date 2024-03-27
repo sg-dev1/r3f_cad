@@ -20,6 +20,7 @@ export interface ClickableLineRefType {
   onClick: (event: React.MouseEvent<HTMLDivElement, MouseEvent>) => void;
   onPointerOver: (event: React.PointerEvent<HTMLDivElement>) => void;
   onPointerMove: (event: React.PointerEvent<HTMLDivElement>) => void;
+  reset: () => void;
 }
 
 const xyPlane = new THREE.Plane(new THREE.Vector3(0, 0, 1), 0);
@@ -84,14 +85,19 @@ const ClickableLine = forwardRef<any, any>(({}, ref) => {
           setCurrentMousePos(intersect);
         }
       },
+      reset: () => {
+        setCurrentMousePos(undefined);
+      },
     }),
     [camera, scene, raycaster]
   );
 
   useEffect(() => {
+    const pointsLst = sketchPoints.map((p) => new Vector3(p.x, p.y, p.z));
     if (currentMousePos) {
-      const pointsLst = sketchPoints.map((p) => new Vector3(p.x, p.y, p.z));
       setPointsToDraw([...pointsLst, currentMousePos]);
+    } else {
+      setPointsToDraw(pointsLst);
     }
   }, [currentMousePos]);
 

@@ -6,6 +6,11 @@
 // NOTE: To fix this issue use Plane instead (mathematical infinite plane)
 // https://www.columbia.edu/~njn2118/journal/2019/2/18.html
 //
+// TODO Should display points
+// TODO Should allow multiple lines --> currently we only have one long line
+// TODO Points and lines should be selectable (highlight on mouse over) --> preparation for constraint tools
+//   --> all this will require changes in data model (redux)
+//
 // TODO add more tools:
 //   - Currently we simply have a simple line drawing tool that saves its points into the redux state
 //   - We need tools to draw other primitives (e.g. points, circles) and to add constraints (coincident, parallel, ...)
@@ -14,52 +19,94 @@
 // TODO disable camera rotation (only zooming and paning should be allowed) - rotation creates weird behaviour
 'use client';
 
-import React, { useRef, useState, forwardRef, useImperativeHandle } from 'react';
-import { Canvas, useThree } from '@react-three/fiber';
-import { CameraControls, OrthographicCamera, Line, Plane } from '@react-three/drei';
-import { BoxGeometry, Vector3 } from 'three';
-import * as THREE from 'three';
+import React, { useState, useEffect } from 'react';
+import { Canvas } from '@react-three/fiber';
+import { CameraControls, OrthographicCamera } from '@react-three/drei';
 import ClickableLine, { ClickableLineRefType } from './ClickableLine';
+import { Button } from 'antd';
 
-// This is just a test object and will be removed in the future
-// const Box = (props: any) => {
-//   const boxRef = useRef<BoxGeometry>();
+enum ToolState {
+  DISABLED = 0,
+  LINE_TOOL,
+  POINT_TOOL,
 
-//   return (
-//     <mesh ref={boxRef} {...props}>
-//       <boxGeometry args={[100, 100, 100]} />
-//       <meshStandardMaterial attach="material" color={'red'} />
-//     </mesh>
-//   );
-// };
+  CONSTRAINT_COINCIDENCE,
+  CONSTRAINT_HORIZONTAL,
+  CONSTRAINT_VERTICAL,
+}
 
 const SketcherView = () => {
-  const clickRef = React.useRef<ClickableLineRefType>(null);
+  const [toolState, setToolState] = useState<ToolState>(ToolState.LINE_TOOL);
+  const [stateIndicator, setStateIndicator] = useState<string>('');
+
+  const clickableLineRef = React.useRef<ClickableLineRefType>(null);
+
+  useEffect(() => {
+    switch (toolState) {
+      case ToolState.DISABLED:
+        setStateIndicator('No Tool selected!');
+        break;
+      case ToolState.LINE_TOOL:
+        setStateIndicator('Line Tool');
+        break;
+      case ToolState.POINT_TOOL:
+        setStateIndicator('Point Tool');
+        break;
+      case ToolState.CONSTRAINT_COINCIDENCE:
+        setStateIndicator('Coincidence Tool');
+        break;
+      case ToolState.CONSTRAINT_HORIZONTAL:
+        setStateIndicator('Horizontal Constraint Tool');
+        break;
+      case ToolState.CONSTRAINT_VERTICAL:
+        setStateIndicator('Vertical Constraint Tool');
+        break;
+      default:
+        console.error('Should not get here. Invalid Tool State.');
+    }
+  }, [toolState]);
 
   return (
     <>
+      <Button type="primary" className="primary-button" onClick={() => setToolState(ToolState.LINE_TOOL)}>
+        Line
+      </Button>
+      <Button type="primary" className="primary-button" onClick={() => setToolState(ToolState.POINT_TOOL)}>
+        Point
+      </Button>
+      <Button type="primary" className="primary-button" onClick={() => setToolState(ToolState.CONSTRAINT_COINCIDENCE)}>
+        Coincidence
+      </Button>
+      <Button type="primary" className="primary-button" onClick={() => setToolState(ToolState.CONSTRAINT_HORIZONTAL)}>
+        Horizontal
+      </Button>
+      <Button type="primary" className="primary-button" onClick={() => setToolState(ToolState.CONSTRAINT_VERTICAL)}>
+        Vertical
+      </Button>
+
+      <div>{stateIndicator}</div>
+
       <Canvas
         className="sketcherview"
         onClick={(e) => {
-          clickRef.current?.onClick(e);
+          if (ToolState.LINE_TOOL === toolState) {
+            clickableLineRef.current?.onClick(e);
+          }
         }}
-        //onPointerOver={(e) => clickRef.current?.onPointerOver(e)}
-        onPointerMove={(e) => clickRef.current?.onPointerMove(e)}
+        onPointerMove={(e) => {
+          if (ToolState.LINE_TOOL === toolState) {
+            clickableLineRef.current?.onPointerMove(e);
+          } else {
+            clickableLineRef.current?.reset();
+          }
+        }}
       >
         <CameraControls minDistance={1.2} maxDistance={4} />
 
         <ambientLight intensity={0.25} />
         <pointLight intensity={0.75} position={[500, 500, 1000]} />
 
-        {/* <Box position={[70, 70, 0]} />
-        <Box position={[-70, 70, 0]} />
-        <Box position={[70, -70, 0]} />
-        <Box position={[-70, -70, 0]} /> */}
-
-        {/* Have a drawing plane where to draw the sketch */}
-        {/* <Plane args={[2000, 2000]} /> */}
-
-        <ClickableLine ref={clickRef} />
+        <ClickableLine ref={clickableLineRef} />
 
         <OrthographicCamera
           makeDefault

@@ -19,3 +19,9 @@ body {
 .sketcherview {
   height: 100vh !important;
 }
+
+/* Apply a margin to all primary buttons */
+.primary-button {
+  margin: 10px;
+  background-color: blue;
+}
