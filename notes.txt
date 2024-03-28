@@ -30,7 +30,7 @@ For points Points from drei looks most reasonable (use onClick etc. events for e
   // As many as you want, make them conditional, mount/unmount them, lazy load them, etc ...
 </Points>
 
-For lines could use Segements (instead of current implementation)
+For lines could use Segments (instead of current implementation)
 <Segments
   limit={1000}
   lineWidth={1.0}
@@ -42,7 +42,8 @@ For lines could use Segements (instead of current implementation)
   <Segment start={[0, 0, 0]} end={[0, 10, 10]} color={[1, 0, 1]} />
 </Segments>
 
-// Need to refactor the ClickableLine to use this types (or to create more components)
+// Update: Segments do not support event handlers, therefore use Line from drei (which supports on click handler)
+// Downside is that for each line with have to render a new mesh (compared to the approach with Segments)
 
 ---------
 

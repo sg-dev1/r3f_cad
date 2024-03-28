@@ -9,7 +9,7 @@
 // TODO The ClickableLine component will be the line drawing tool for the sketcher
 import React, { useState, forwardRef, useImperativeHandle, useEffect } from 'react';
 import { useThree } from '@react-three/fiber';
-import { Point, Points, Segment, Segments } from '@react-three/drei';
+import { Line, Point, Points } from '@react-three/drei';
 import * as THREE from 'three';
 import { useAppSelector, useAppDispatch } from '@/app/hooks';
 import {
@@ -118,24 +118,97 @@ const GeometryTool = forwardRef<any, any>(({}, ref) => {
 
   return (
     <>
-      <Segments lineWidth={0.5}>
+      {/* Old solution using Segements, does not support event handlers like onClick or onPointerOver */}
+      {/* <Segments lineWidth={0.5}>
         {pointsToDraw.length === 2 && <Segment key={-1} start={pointsToDraw[0]} end={pointsToDraw[1]} color="gray" />}
         {sketchLines.map((line) => {
           const p1 = sketchPointsMap[line.p1_id];
           const p2 = sketchPointsMap[line.p2_id];
           //console.log('id', line.id, 'line', line);
-          return <Segment key={line.id} start={[p1.x, p1.y, p1.z]} end={[p2.x, p2.y, p2.z]} color="white" />;
+          return (
+            <Segment
+              key={line.id}
+              start={[p1.x, p1.y, p1.z]}
+              end={[p2.x, p2.y, p2.z]}
+              color="white"
+              onClick={() => console.log('Line Segment OnClick')}
+              onPointerOver={() => console.log('onPointerOver line segment')}
+            />
+            //<SegmentWithEvents key={line.id} start={[p1.x, p1.y, p1.z]} end={[p2.x, p2.y, p2.z]} color="white" />
+          );
+          //return <LineObject key={line.id} start={[p1.x, p1.y, p1.z]} end={[p2.x, p2.y, p2.z]} color="white" />;
         })}
-      </Segments>
+      </Segments> */}
+
+      {pointsToDraw.length === 2 && (
+        <LineObject key={-1} id={-1} start={pointsToDraw[0]} end={pointsToDraw[1]} color="gray" />
+      )}
+      {sketchLines.map((line) => {
+        const p1 = sketchPointsMap[line.p1_id];
+        const p2 = sketchPointsMap[line.p2_id];
+        //console.log('id', line.id, 'line', line);
+        return (
+          <LineObject key={line.id} id={line.id} start={[p1.x, p1.y, p1.z]} end={[p2.x, p2.y, p2.z]} color="white" />
+        );
+      })}
+
       <Points>
         <pointsMaterial vertexColors size={4} />
         {sketchPoints.map((point) => {
           //console.log('id', point.id, 'point', point);
-          return <Point key={point.id} position={[point.x, point.y, point.z]} color="red" />;
+          return (
+            <Point
+              key={point.id}
+              position={[point.x, point.y, point.z]}
+              color="red"
+              onClick={() => console.log('onClick')}
+              onPointerOver={() => console.log('onPointerOver')}
+            />
+          );
         })}
       </Points>
     </>
   );
 });
+
+// Functionality required for this custom Line component
+// - Highlight color on mouse over
+// - Selection with on click (then maybe different color)
+// - drag'n'drop - a bit more trick since it needs to update the data in the redux store as well
+const LineObject = ({
+  id,
+  start,
+  end,
+  color,
+}: {
+  id: number;
+  start: [x: number, y: number, z: number];
+  end: [x: number, y: number, z: number];
+  color?: string;
+}) => {
+  // Drag n drop, hover
+  const [hovered, setHovered] = useState(false);
+  //useEffect(() => void (document.body.style.cursor = hovered ? 'grab' : 'auto'), [hovered]);
+  //const bind = useDrag(({ down, xy: [x, y] }) => {
+  //  document.body.style.cursor = down ? 'grabbing' : 'grab';
+  //setPos(new THREE.Vector3((x / size.width) * 2 - 1, -(y / size.height) * 2 + 1, 0).unproject(camera).multiply({ x: 1, y: 1, z: 0 }).clone())
+  //});
+  return (
+    <Line
+      userData={{ id: id }}
+      points={[start, end]} // array of points
+      color={hovered ? 'black' : color}
+      onClick={(e) => console.log('LineObject with id ' + e.eventObject.userData.id + ' onclick', e)}
+      onPointerOver={() => {
+        console.log('onPointerOver');
+        setHovered(true);
+      }}
+      onPointerOut={() => setHovered(false)}
+      lineWidth={1.5} // default is 1
+      segments
+      dashed={false} // default
+    />
+  );
+};
 
 export default GeometryTool;
