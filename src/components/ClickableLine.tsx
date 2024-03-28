@@ -9,11 +9,17 @@
 // TODO The ClickableLine component will be the line drawing tool for the sketcher
 import React, { useState, forwardRef, useImperativeHandle, useEffect } from 'react';
 import { useThree } from '@react-three/fiber';
-import { Line } from '@react-three/drei';
-import { Vector3 } from 'three';
+import { Point, Points, Segment, Segments } from '@react-three/drei';
 import * as THREE from 'three';
 import { useAppSelector, useAppDispatch } from '@/app/hooks';
-import { addPoint, selectPoints } from '@/app/slices/sketchSlice';
+import {
+  addPoint,
+  resetLastPoint,
+  selectLines,
+  selectPoints,
+  selectPointsMap,
+  selectLastPoint,
+} from '@/app/slices/sketchSlice';
 import { calcIntersectionWithPlane } from '@/utils/threejs_utils';
 
 export interface ClickableLineRefType {
@@ -26,23 +32,15 @@ export interface ClickableLineRefType {
 const xyPlane = new THREE.Plane(new THREE.Vector3(0, 0, 1), 0);
 
 const ClickableLine = forwardRef<any, any>(({}, ref) => {
-  const [currentMousePos, setCurrentMousePos] = useState<Vector3 | undefined>(undefined);
-  const [pointsToDraw, setPointsToDraw] = useState<Vector3[]>([]);
+  const [currentMousePos, setCurrentMousePos] = useState<[x: number, y: number, z: number] | null>(null);
+  const [pointsToDraw, setPointsToDraw] = useState<[x: number, y: number, z: number][]>([]);
   const { camera, scene, raycaster } = useThree();
 
   const dispatch = useAppDispatch();
   const sketchPoints = useAppSelector(selectPoints);
-
-  // Convert the sketchPoints from redux state to pointsToDraw
-  useEffect(() => {
-    console.log('sketchPoints', sketchPoints);
-
-    const pointsLst = sketchPoints.map((p) => new Vector3(p.x, p.y, p.z));
-    if (currentMousePos) {
-      pointsLst.push(currentMousePos);
-    }
-    setPointsToDraw(pointsLst);
-  }, [sketchPoints]);
+  const sketchPointsMap = useAppSelector(selectPointsMap);
+  const sketchLines = useAppSelector(selectLines);
+  const sketchLastPoint = useAppSelector(selectLastPoint);
 
   useImperativeHandle(
     ref,
@@ -60,14 +58,14 @@ const ClickableLine = forwardRef<any, any>(({}, ref) => {
           event.target as HTMLElement
         );
         if (intersect) {
-          dispatch(addPoint({ ...intersect, id: 0 }));
+          dispatch(addPoint({ p: { ...intersect, id: 0 }, isLine: true }));
         }
-        console.log(intersect);
+        //console.log(intersect);
       },
       onPointerOver: (event: React.PointerEvent<HTMLDivElement>) => {
         event.stopPropagation();
 
-        console.log('onPointerOver', event);
+        //console.log('onPointerOver', event);
       },
       onPointerMove: (event: React.PointerEvent<HTMLDivElement>) => {
         event.stopPropagation();
@@ -82,35 +80,41 @@ const ClickableLine = forwardRef<any, any>(({}, ref) => {
           event.target as HTMLElement
         );
         if (intersect) {
-          setCurrentMousePos(intersect);
+          setCurrentMousePos([intersect.x, intersect.y, intersect.z]);
         }
       },
       reset: () => {
-        setCurrentMousePos(undefined);
+        setCurrentMousePos(null);
+        dispatch(resetLastPoint());
       },
     }),
     [camera, scene, raycaster]
   );
 
   useEffect(() => {
-    const pointsLst = sketchPoints.map((p) => new Vector3(p.x, p.y, p.z));
-    if (currentMousePos) {
-      setPointsToDraw([...pointsLst, currentMousePos]);
-    } else {
-      setPointsToDraw(pointsLst);
+    if (currentMousePos && sketchLastPoint) {
+      setPointsToDraw([[sketchLastPoint.x, sketchLastPoint.y, sketchLastPoint.z], currentMousePos]);
+    } else if (!currentMousePos) {
+      setPointsToDraw([]);
     }
   }, [currentMousePos]);
 
   return (
     <>
-      {pointsToDraw.length > 1 && (
-        <Line
-          points={pointsToDraw} // Array of THREE.Vector3
-          color="pink"
-          lineWidth={1} // In pixels (default)
-          dashed={false} // Default
-        />
-      )}
+      <Segments lineWidth={0.5}>
+        {pointsToDraw.length === 2 && <Segment start={pointsToDraw[0]} end={pointsToDraw[1]} color="gray" />}
+        {sketchLines.map((line) => {
+          const p1 = sketchPointsMap[line.p1_id];
+          const p2 = sketchPointsMap[line.p2_id];
+          return <Segment start={[p1.x, p1.y, p1.z]} end={[p2.x, p2.y, p2.z]} color="white" />;
+        })}
+      </Segments>
+      <Points>
+        <pointsMaterial vertexColors size={4} />
+        {sketchPoints.map((point) => (
+          <Point position={[point.x, point.y, point.z]} color="red" />
+        ))}
+      </Points>
     </>
   );
 });

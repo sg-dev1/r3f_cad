@@ -1,0 +1,126 @@
+
+
+# Draw points (possible to select it?) - wrapper around THREE.Points
+https://github.com/pmndrs/drei?tab=readme-ov-file#points
+
+# For multiple line segement (wrapper around THREE.LineSegments)
+https://github.com/pmndrs/drei?tab=readme-ov-file#segments
+
+# Line (already using in ClickableLine)
+https://github.com/pmndrs/drei?tab=readme-ov-file#line
+
+https://threejs.org/docs/index.html#api/en/objects/Line
+https://threejs.org/docs/index.html#api/en/objects/LineSegments
+
+## --> could use this example (uses QuadraticBezierLine instead of Line but similar to the implementation I need)
+https://codesandbox.io/p/sandbox/bezier-curves-nodes-3k4g6?file=%2Fsrc%2FNodes.js%3A4%2C10-4%2C29
+
+# CircleGeometry: Could be used for feature, as in example
+https://threejs.org/docs/index.html#api/en/geometries/CircleGeometry
+
+For points Points from drei looks most reasonable (use onClick etc. events for effects):
+
+<Points
+  limit={1000} // Optional: max amount of items (for calculating buffer size)
+  range={1000} // Optional: draw-range
+>
+  // e.g. dynamically generated with map
+  <pointsMaterial vertexColors />
+  <Point position={[1, 2, 3]} color="red" onClick={onClick} onPointerOver={onPointerOver} ... />
+  // As many as you want, make them conditional, mount/unmount them, lazy load them, etc ...
+</Points>
+
+For lines could use Segements (instead of current implementation)
+<Segments
+  limit={1000}
+  lineWidth={1.0}
+  // All THREE.LineMaterial props are valid
+  {...materialProps}
+>
+  // e.g. dynamically generated with map
+  <Segment start={[0, 0, 0]} end={[0, 10, 0]} color="red" />
+  <Segment start={[0, 0, 0]} end={[0, 10, 10]} color={[1, 0, 1]} />
+</Segments>
+
+// Need to refactor the ClickableLine to use this types (or to create more components)
+
+---------
+
+# TODOs
+
+- Change Line to use [number, number, number] instead of Vector3
+
+# Datamodel - Sketch
+
+1) Current
+- points: Point3DType[]   // all points of a single line
+
+2) Needed
+- List of lines   --> current points is one line of this kind,  for drawing all lines
+   - one list of points is the active one (e.g. where the next line is shown on mouse over as currently with points)
+   - the others are just passive and need to be rendered (each segement should be selectable, so maybe draw new Line object for each line between two points)
+- List of points  --> for drawing points, shall this include points from lines, e.g. so they can be highlighted?
+   - need to prevent duplicated information / easily reference a point from lines (e.g. via a map, list of lines just contains ids)
+
+{
+  lines: [{id, p1_id, p2_id}]          // to get points (coordinates) use the pointsMap
+  points: [{id, [x, y, z]}],
+  pointsMap[key: id]: {[x, y, z]}      // need to be synched with points
+}
+
+- Needs to be easily mapped between 
+  - displayed (rendered) data
+  - data in redux
+  - data in backend (constraint solver)
+
+# Backend Datamodel
+
+Request:
+{
+    "workplane": "xy",
+    "entities": [
+      # value format: [<x>, <y>]
+      {"id": 100, "t": "point", "v": [10.0, 20.0]},
+      {"id": 101, "t": "point", "v": [20.0, 10.0]},
+      # value format: [<p1-id>, <p2-id>]
+      {"id": 102, "t": "line", "v": [100, 101]}
+      # three more points
+      {"id": 103, "t": "point", "v": [100.0, 120.0]},
+      {"id": 104, "t": "point", "v": [120.0, 110.0]},
+      {"id": 105, "t": "point", "v": [115.0, 115.0]},
+      # arc - value format: [<center-pt>, <start-pt>, <end-pt>]
+      {"id": 106, "t": "arc", "v": [103, 104, 105]},
+      # one more point and distance
+      {"id": 107, "t": "point", "v": [200.0, 200.0]},
+      # circle - value format: [<center-pt>, <radius>]
+      # Note: distance not modelled here, but used as unit,
+      #       backend needs to take care of it
+      {"id": 108, "t": "circle", "v": [107, 30.0]},
+    ],
+    "constraints": [
+      # The length of our line segment is 30.0 units.
+      # value format: [<distance>, <pt1>, <pt2>]
+      {"id": 1, "t": SLVS_C_PT_PT_DISTANCE, "v": [30.0, 100, 101]},
+      # The distance from our line segment (102) to the origin is 10.0 units
+      # value format: [<distance>, <pt>, <line>], "origin": -1
+      {"id": 2, "t": SLVS_C_PT_LINE_DISTANCE, "v": [10.0, -1, 102]},
+      # Line segement is vertical - value format: [<line>]
+      {"id": 3, "t": SLVS_C_VERTICAL, "v": [102]},
+      # The distance from one endpoint to the origin is 15.0 units
+      {"id": 4, "t": SLVS_C_PT_PT_DISTANCE, "v": [15.0, 100, -1]},
+      # The arc and the circle have equal radius - format: [<arc-circle1>, <arc-circle2>]
+      {"id": 5, "t": SLVS_C_EQUAL_RADIUS, "v": [106, 108]},
+      # The arc has radius 17.0 units (diameter = 34) - format: [<diam-value>, <arc-or-circle>]
+      {"id": 6, "t": SLVS_C_DIAMETER, "v": [34.0, 106]}
+    ]
+}
+
+Result:
+{
+    "code": 0,
+    # list of constraint ids
+    "failed": [],
+    # list of (modified) entities
+    "entities": [],
+    "dof": 6
+}

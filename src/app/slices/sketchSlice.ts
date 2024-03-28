@@ -9,12 +9,20 @@ export interface SketchState {
   counter: number;
 
   points: Point3DType[];
+
+  pointsMap: Point3DMapType;
+  lines: Line3DType[];
+  lastPoint3D: Point3DType | null;
 }
 
 // Define the initial state using that type
 const initialState: SketchState = {
   counter: 0,
   points: [],
+
+  pointsMap: {},
+  lines: [],
+  lastPoint3D: null,
 };
 
 export const sketchSlice = createSlice({
@@ -23,18 +31,35 @@ export const sketchSlice = createSlice({
   initialState,
   reducers: {
     addPoint: {
-      reducer(state, action: PayloadAction<Point3DType, string>) {
-        const _id = state.counter;
-
-        state.points.push({ ...action.payload, id: _id });
+      reducer(state, action: PayloadAction<{ p: Point3DType; isLine: boolean }, string>) {
+        const newPoint = { ...action.payload.p, id: state.counter };
         state.counter++;
+
+        if (action.payload.isLine) {
+          if (state.lastPoint3D) {
+            state.points.push(state.lastPoint3D);
+            state.pointsMap[state.lastPoint3D.id] = state.lastPoint3D;
+            state.points.push(newPoint);
+            state.pointsMap[newPoint.id] = newPoint;
+            // add the line
+            state.lines.push({ p1_id: state.lastPoint3D.id, p2_id: newPoint.id, id: state.counter });
+            state.counter++;
+          }
+          state.lastPoint3D = newPoint;
+        } else {
+          state.points.push(newPoint);
+          state.pointsMap[newPoint.id] = newPoint;
+        }
       },
-      prepare(payload: Point3DType) {
+      prepare(payload: { p: Point3DType; isLine: boolean }) {
         //return { payload: { ...payload, id: 1 } };
         return { payload };
       },
       //reducer: (state, { payload }) => {},
       //prepare: (payload: PayloadAction<Point3DType>) => ({ payload: { ...payload, id: 0 } }),
+    },
+    resetLastPoint: (state) => {
+      state.lastPoint3D = null;
     },
     /*
     addLine: (state, { payload }) => {
@@ -47,8 +72,11 @@ export const sketchSlice = createSlice({
   },
 });
 
-export const { addPoint } = sketchSlice.actions;
+export const { addPoint, resetLastPoint } = sketchSlice.actions;
 
 export const selectPoints = (state: RootState) => state.sketchs.points;
+export const selectPointsMap = (state: RootState) => state.sketchs.pointsMap;
+export const selectLines = (state: RootState) => state.sketchs.lines;
+export const selectLastPoint = (state: RootState) => state.sketchs.lastPoint3D;
 
 export default sketchSlice.reducer;
