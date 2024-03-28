@@ -23,15 +23,17 @@ import {
 import { calcIntersectionWithPlane } from '@/utils/threejs_utils';
 
 export interface ClickableLineRefType {
-  onClick: (event: React.MouseEvent<HTMLDivElement, MouseEvent>) => void;
+  lineToolOnClick: (event: React.MouseEvent<HTMLDivElement, MouseEvent>) => void;
+  lineToolOnPointerMove: (event: React.PointerEvent<HTMLDivElement>) => void;
+  pointToolOnClick: (event: React.MouseEvent<HTMLDivElement, MouseEvent>) => void;
+
   onPointerOver: (event: React.PointerEvent<HTMLDivElement>) => void;
-  onPointerMove: (event: React.PointerEvent<HTMLDivElement>) => void;
   reset: () => void;
 }
 
 const xyPlane = new THREE.Plane(new THREE.Vector3(0, 0, 1), 0);
 
-const ClickableLine = forwardRef<any, any>(({}, ref) => {
+const GeometryTool = forwardRef<any, any>(({}, ref) => {
   const [currentMousePos, setCurrentMousePos] = useState<[x: number, y: number, z: number] | null>(null);
   const [pointsToDraw, setPointsToDraw] = useState<[x: number, y: number, z: number][]>([]);
   const { camera, scene, raycaster } = useThree();
@@ -45,7 +47,7 @@ const ClickableLine = forwardRef<any, any>(({}, ref) => {
   useImperativeHandle(
     ref,
     () => ({
-      onClick: (event: React.MouseEvent<HTMLElement>) => {
+      lineToolOnClick: (event: React.MouseEvent<HTMLElement>) => {
         event.stopPropagation();
         //console.log(event);
 
@@ -67,7 +69,7 @@ const ClickableLine = forwardRef<any, any>(({}, ref) => {
 
         //console.log('onPointerOver', event);
       },
-      onPointerMove: (event: React.PointerEvent<HTMLDivElement>) => {
+      lineToolOnPointerMove: (event: React.PointerEvent<HTMLDivElement>) => {
         event.stopPropagation();
 
         //console.log('onPointerMove', event);
@@ -81,6 +83,21 @@ const ClickableLine = forwardRef<any, any>(({}, ref) => {
         );
         if (intersect) {
           setCurrentMousePos([intersect.x, intersect.y, intersect.z]);
+        }
+      },
+      pointToolOnClick: (event: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
+        event.stopPropagation();
+
+        const intersect = calcIntersectionWithPlane(
+          raycaster,
+          camera,
+          xyPlane,
+          event.clientX,
+          event.clientY,
+          event.target as HTMLElement
+        );
+        if (intersect) {
+          dispatch(addPoint({ p: { ...intersect, id: 0 }, isLine: false }));
         }
       },
       reset: () => {
@@ -119,4 +136,4 @@ const ClickableLine = forwardRef<any, any>(({}, ref) => {
   );
 });
 
-export default ClickableLine;
+export default GeometryTool;

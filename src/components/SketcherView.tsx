@@ -6,8 +6,6 @@
 // NOTE: To fix this issue use Plane instead (mathematical infinite plane)
 // https://www.columbia.edu/~njn2118/journal/2019/2/18.html
 //
-// TODO Should display points
-// TODO Should allow multiple lines --> currently we only have one long line
 // TODO Points and lines should be selectable (highlight on mouse over) --> preparation for constraint tools
 //   --> all this will require changes in data model (redux)
 //
@@ -22,7 +20,7 @@
 import React, { useState, useEffect } from 'react';
 import { Canvas } from '@react-three/fiber';
 import { CameraControls, OrthographicCamera } from '@react-three/drei';
-import ClickableLine, { ClickableLineRefType } from './ClickableLine';
+import GeometryTool, { ClickableLineRefType } from './GeometryTool';
 import { Button } from 'antd';
 
 enum ToolState {
@@ -39,7 +37,7 @@ const SketcherView = () => {
   const [toolState, setToolState] = useState<ToolState>(ToolState.LINE_TOOL);
   const [stateIndicator, setStateIndicator] = useState<string>('');
 
-  const clickableLineRef = React.useRef<ClickableLineRefType>(null);
+  const geometryToolRef = React.useRef<ClickableLineRefType>(null);
 
   useEffect(() => {
     switch (toolState) {
@@ -90,14 +88,16 @@ const SketcherView = () => {
         className="sketcherview"
         onClick={(e) => {
           if (ToolState.LINE_TOOL === toolState) {
-            clickableLineRef.current?.onClick(e);
+            geometryToolRef.current?.lineToolOnClick(e);
+          } else if (ToolState.POINT_TOOL === toolState) {
+            geometryToolRef.current?.pointToolOnClick(e);
           }
         }}
         onPointerMove={(e) => {
           if (ToolState.LINE_TOOL === toolState) {
-            clickableLineRef.current?.onPointerMove(e);
+            geometryToolRef.current?.lineToolOnPointerMove(e);
           } else {
-            clickableLineRef.current?.reset();
+            geometryToolRef.current?.reset();
           }
         }}
       >
@@ -106,7 +106,7 @@ const SketcherView = () => {
         <ambientLight intensity={0.25} />
         <pointLight intensity={0.75} position={[500, 500, 1000]} />
 
-        <ClickableLine ref={clickableLineRef} />
+        <GeometryTool ref={geometryToolRef} />
 
         <OrthographicCamera
           makeDefault
