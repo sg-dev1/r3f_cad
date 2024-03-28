@@ -37,8 +37,10 @@ export const sketchSlice = createSlice({
 
         if (action.payload.isLine) {
           if (state.lastPoint3D) {
-            state.points.push(state.lastPoint3D);
-            state.pointsMap[state.lastPoint3D.id] = state.lastPoint3D;
+            if (!(state.lastPoint3D.id in state.pointsMap)) {
+              state.points.push(state.lastPoint3D);
+              state.pointsMap[state.lastPoint3D.id] = state.lastPoint3D;
+            }
             state.points.push(newPoint);
             state.pointsMap[newPoint.id] = newPoint;
             // add the line

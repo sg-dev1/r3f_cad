@@ -119,18 +119,20 @@ const GeometryTool = forwardRef<any, any>(({}, ref) => {
   return (
     <>
       <Segments lineWidth={0.5}>
-        {pointsToDraw.length === 2 && <Segment start={pointsToDraw[0]} end={pointsToDraw[1]} color="gray" />}
+        {pointsToDraw.length === 2 && <Segment key={-1} start={pointsToDraw[0]} end={pointsToDraw[1]} color="gray" />}
         {sketchLines.map((line) => {
           const p1 = sketchPointsMap[line.p1_id];
           const p2 = sketchPointsMap[line.p2_id];
-          return <Segment start={[p1.x, p1.y, p1.z]} end={[p2.x, p2.y, p2.z]} color="white" />;
+          //console.log('id', line.id, 'line', line);
+          return <Segment key={line.id} start={[p1.x, p1.y, p1.z]} end={[p2.x, p2.y, p2.z]} color="white" />;
         })}
       </Segments>
       <Points>
         <pointsMaterial vertexColors size={4} />
-        {sketchPoints.map((point) => (
-          <Point position={[point.x, point.y, point.z]} color="red" />
-        ))}
+        {sketchPoints.map((point) => {
+          //console.log('id', point.id, 'point', point);
+          return <Point key={point.id} position={[point.x, point.y, point.z]} color="red" />;
+        })}
       </Points>
     </>
   );
