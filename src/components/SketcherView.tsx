@@ -30,6 +30,10 @@ enum ToolState {
   CONSTRAINT_VERTICAL,
 }
 
+// TODO length constraint
+// TODO add zero point (and coordinate cross) so sketch can be constraint there
+//  + functionality in python backend
+
 const SketcherView = () => {
   const [toolState, setToolState] = useState<ToolState>(ToolState.LINE_TOOL);
   const [stateIndicator, setStateIndicator] = useState<string>('');
@@ -78,7 +82,11 @@ const SketcherView = () => {
         console.log(objectsClicked);
         if (objectsClicked.length === 1) {
           dispatch(
-            addConstraint({ id: 0, t: SlvsConstraints.SLVS_C_POINTS_COINCIDENT, v: [objectsClicked[0].id, id] })
+            addConstraint({
+              id: 0,
+              t: SlvsConstraints.SLVS_C_POINTS_COINCIDENT,
+              v: [0, objectsClicked[0].id, id, 0, 0],
+            })
           );
           setObjectsClicked([]);
         } else if (objectsClicked.length === 0) {
@@ -88,13 +96,13 @@ const SketcherView = () => {
       // line not supported - TODO indicate that visually
     } else if (ToolState.CONSTRAINT_HORIZONTAL === toolState) {
       if (type === GeometryType.LINE) {
-        dispatch(addConstraint({ id: 0, t: SlvsConstraints.SLVS_C_HORIZONTAL, v: [id] }));
+        dispatch(addConstraint({ id: 0, t: SlvsConstraints.SLVS_C_HORIZONTAL, v: [0, 0, 0, id, 0] }));
       }
       // TODO support for two points
       // TODO indicate for everything else that it is not supported
     } else if (ToolState.CONSTRAINT_VERTICAL === toolState) {
       if (type === GeometryType.LINE) {
-        dispatch(addConstraint({ id: 0, t: SlvsConstraints.SLVS_C_VERTICAL, v: [id] }));
+        dispatch(addConstraint({ id: 0, t: SlvsConstraints.SLVS_C_VERTICAL, v: [0, 0, 0, id, 0] }));
       }
       // TODO support for two points
       // TODO indicate for everything else that it is not supported

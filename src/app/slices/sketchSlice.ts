@@ -30,7 +30,7 @@ const initialState: SketchState = {
   lastSolverResultCode: -1,
   lastSolverDof: -1,
 
-  entityIdCounter: 0,
+  entityIdCounter: 1,
   points: [],
   pointsMap: {},
   lines: [],
