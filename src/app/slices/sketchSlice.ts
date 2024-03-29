@@ -1,4 +1,4 @@
-import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { createAsyncThunk, createSlice, PayloadAction } from '@reduxjs/toolkit';
 import type { RootState } from '../../app/store';
 import { Point3DMapType, Point3DType } from '../types/Point3DType';
 import { Line3DType } from '../types/Line3DType';
@@ -28,6 +28,47 @@ const initialState: SketchState = {
   constraints: [],
 };
 
+// This requires a .env file where the NEXT_PUBLIC_API_BASE_URI env variable is set properly, e.g.
+//   NEXT_PUBLIC_API_BASE_URI=http://127.0.0.1:7777
+// (note the port then depends on the (python) backend)
+// export const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URI || '';
+
+export const callSketchSolverBackend = createAsyncThunk<any, void>('solver/solve', async (_, { rejectWithValue }) => {
+  // TODO decide about Request method and url
+  // TODO add axios as dependency
+  // const requestUrl = ApiEndpoint.getCompanyPath();
+  // const payload = ApiEndpoint.makeApiPayload(requestUrl, 'GET', true, {});
+  // try {
+  //   const response = await axios(payload);
+  //   return response.data;
+  // } catch (error: any) {
+  //   return rejectWithValue(error.response.data);
+  // }
+});
+
+// Feature: Call solver backend on each state change (geometry added, constraint added)
+//
+// (V1)
+// To send a request to the (solver) backend, upon each addPoint/ addConstraint the following changes are needed:
+//   - addPoint/ addConstraint needs to be converted to extraReducer
+//   - usage of the callSketchSolverBackend thunk to make the request to the backend
+//   - current implementation of addPoint/ addConstraint to be moved to callSketchSolverBackend.pending
+// Issues I currently see
+//  - Instead of the reducer the thunk callSketchSolverBackend, so we may need to of them with same functionality (but because of differences in addPoint/ addConstraint)
+//  - How to pass the parameters then, e.g. action.payload, to callSketchSolverBackend.pending?
+//       Does .pending has a action.payload (or something else, e.g. userData) we could use?
+//
+// See https://stackoverflow.com/a/67030875 (it seems an old version of React is used but this may also work for this new version)
+//
+// (V2)
+// Other solution: Decouple it - do not call the thunk from the reducer directly, but
+//   - listen to state changes with selector
+//   - on each new state --> call the async thunk with data  (may require cancle ongoing requests, performance? - will also depend on performance of backend)
+//   - the request object needs to be built from the sketch state data anyways
+//
+// (V2) prefered because much simpler
+
+// TODO the addPoint may be renamed to addGeometry object (maybe with generic GeometryType instead of boolean)
 export const sketchSlice = createSlice({
   name: 'sketch',
   // `createSlice` will infer the state type from the `initialState` argument
