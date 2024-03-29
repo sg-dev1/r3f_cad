@@ -3,9 +3,16 @@ import type { RootState } from '../../app/store';
 import { Point3DMapType, Point3DType } from '../types/Point3DType';
 import { Line3DType } from '../types/Line3DType';
 import { ConstraintType } from '../types/Constraints';
+import axios from 'axios';
+import { SolverRequestType } from '../types/SolverTypes';
 
 // Define a type for the slice state
 export interface SketchState {
+  isSolverRequestPending: boolean;
+  isSolverRequestError: any | null;
+  lastSolverResultCode: number;
+  lastSolverDof: number;
+
   entityIdCounter: number;
   points: Point3DType[];
   pointsMap: Point3DMapType;
@@ -18,6 +25,11 @@ export interface SketchState {
 
 // Define the initial state using that type
 const initialState: SketchState = {
+  isSolverRequestPending: false,
+  isSolverRequestError: null,
+  lastSolverResultCode: -1,
+  lastSolverDof: -1,
+
   entityIdCounter: 0,
   points: [],
   pointsMap: {},
@@ -28,23 +40,53 @@ const initialState: SketchState = {
   constraints: [],
 };
 
+export const buildSolverRequestType = (input: {
+  workplane: string;
+  points: Point3DType[];
+  lines: Line3DType[];
+  constraints: ConstraintType[];
+}): SolverRequestType => {
+  return {
+    workplane: input.workplane,
+    entities: input.points
+      .map<{ id: number; t: 'point' | 'line' | 'circle' | 'arc'; v: number[] }>((p) => ({
+        id: p.id,
+        t: 'point',
+        v: [p.x, p.y, p.z],
+      }))
+      .concat(input.lines.map((line) => ({ id: line.id, t: 'line', v: [line.p1_id, line.p2_id] }))),
+    constraints: input.constraints,
+  };
+};
+
 // This requires a .env file where the NEXT_PUBLIC_API_BASE_URI env variable is set properly, e.g.
 //   NEXT_PUBLIC_API_BASE_URI=http://127.0.0.1:7777
 // (note the port then depends on the (python) backend)
 // export const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URI || '';
+const BASE_URL = 'http://127.0.0.1:7777';
 
-export const callSketchSolverBackend = createAsyncThunk<any, void>('solver/solve', async (_, { rejectWithValue }) => {
-  // TODO decide about Request method and url
-  // TODO add axios as dependency
-  // const requestUrl = ApiEndpoint.getCompanyPath();
-  // const payload = ApiEndpoint.makeApiPayload(requestUrl, 'GET', true, {});
-  // try {
-  //   const response = await axios(payload);
-  //   return response.data;
-  // } catch (error: any) {
-  //   return rejectWithValue(error.response.data);
-  // }
-});
+export const callSketchSolverBackend = createAsyncThunk<any, SolverRequestType>(
+  'solver/solve',
+  async (data, { rejectWithValue }) => {
+    // TODO decide about Request method and url
+    // TODO add axios as dependency
+    const requestUrl = BASE_URL + '/solve';
+    try {
+      const response = await axios.post(requestUrl, data);
+      return response.data;
+    } catch (error: any) {
+      return rejectWithValue(error.response.data);
+    }
+    // const requestUrl = ApiEndpoint.getCompanyPath();
+    // const payload = ApiEndpoint.makeApiPayload(requestUrl, 'GET', true, {});
+    // try {
+    //   const response = await axios(payload);
+    //   return response.data;
+    // } catch (error: any) {
+    //   return rejectWithValue(error.response.data);
+    // }
+  }
+);
 
 // Feature: Call solver backend on each state change (geometry added, constraint added)
 //
@@ -119,6 +161,30 @@ export const sketchSlice = createSlice({
       state.counter++;
     },
     */
+  },
+  extraReducers: (builder) => {
+    builder
+      .addCase(callSketchSolverBackend.pending, (state) => {
+        state.isSolverRequestPending = true;
+        state.isSolverRequestError = null;
+      })
+      .addCase(callSketchSolverBackend.fulfilled, (state, action) => {
+        state.isSolverRequestPending = false;
+
+        state.lastSolverResultCode = action.payload.code;
+        state.lastSolverDof = action.payload.dof;
+        if (0 === action.payload.code) {
+          // TODO parse the action.payload.entities
+          console.log('received entities ', action.payload.entities);
+        } else {
+          // TODO parse the action.payload.failed
+          console.log('received failed ', action.payload.failed);
+        }
+      })
+      .addCase(callSketchSolverBackend.rejected, (state, action) => {
+        state.isSolverRequestPending = false;
+        state.isSolverRequestError = action.payload;
+      });
   },
 });
 

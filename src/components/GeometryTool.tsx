@@ -18,6 +18,9 @@ import {
   selectPoints,
   selectPointsMap,
   selectLastPoint,
+  callSketchSolverBackend,
+  selectConstraints,
+  buildSolverRequestType,
 } from '@/app/slices/sketchSlice';
 import { calcIntersectionWithPlane } from '@/utils/threejs_utils';
 import { GeometryType } from '@/app/types/GeometryType';
@@ -47,6 +50,20 @@ const GeometryTool = forwardRef<any, any>(({ onGeometryClick }: GeometryToolProp
   const sketchPointsMap = useAppSelector(selectPointsMap);
   const sketchLines = useAppSelector(selectLines);
   const sketchLastPoint = useAppSelector(selectLastPoint);
+  const sketchConstraints = useAppSelector(selectConstraints);
+
+  useEffect(() => {
+    dispatch(
+      callSketchSolverBackend(
+        buildSolverRequestType({
+          workplane: 'xy',
+          points: sketchPoints,
+          lines: sketchLines,
+          constraints: sketchConstraints,
+        })
+      )
+    );
+  }, [sketchPoints, sketchLines, sketchConstraints]);
 
   useImperativeHandle(
     ref,
