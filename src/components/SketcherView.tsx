@@ -16,6 +16,9 @@ import { CameraControls, OrthographicCamera } from '@react-three/drei';
 import GeometryTool, { GeometryToolRefType } from './GeometryTool';
 import { Button } from 'antd';
 import { GeometryType } from '@/app/types/GeometryType';
+import { useAppDispatch, useAppSelector } from '@/app/hooks';
+import { addConstraint, selectConstraints } from '@/app/slices/sketchSlice';
+import { SlvsConstraints } from '@/app/types/Constraints';
 
 enum ToolState {
   DISABLED = 0,
@@ -32,6 +35,14 @@ const SketcherView = () => {
   const [stateIndicator, setStateIndicator] = useState<string>('');
 
   const geometryToolRef = React.useRef<GeometryToolRefType>(null);
+  const dispatch = useAppDispatch();
+  const sketchConstraints = useAppSelector(selectConstraints);
+  const [objectsClicked, setObjectsClicked] = useState<{ type: GeometryType; id: number }[]>([]);
+
+  // Just for debugging
+  useEffect(() => {
+    console.log('sketchConstraints', sketchConstraints);
+  }, [sketchConstraints]);
 
   useEffect(() => {
     switch (toolState) {
@@ -60,7 +71,34 @@ const SketcherView = () => {
 
   const onGeometryClick = (type: GeometryType, id: number) => {
     console.log('Geometry with type ' + type + ' and id ' + id + ' clicked');
-    // TODO add constraint in case a constraint tool was selected
+
+    // Add constraint in case a constraint tool was selected
+    if (ToolState.CONSTRAINT_COINCIDENCE === toolState) {
+      if (type === GeometryType.POINT) {
+        console.log(objectsClicked);
+        if (objectsClicked.length === 1) {
+          dispatch(
+            addConstraint({ id: 0, t: SlvsConstraints.SLVS_C_POINTS_COINCIDENT, v: [objectsClicked[0].id, id] })
+          );
+          setObjectsClicked([]);
+        } else if (objectsClicked.length === 0) {
+          setObjectsClicked([{ type: type, id: id }]);
+        }
+      }
+      // line not supported - TODO indicate that visually
+    } else if (ToolState.CONSTRAINT_HORIZONTAL === toolState) {
+      if (type === GeometryType.LINE) {
+        dispatch(addConstraint({ id: 0, t: SlvsConstraints.SLVS_C_HORIZONTAL, v: [id] }));
+      }
+      // TODO support for two points
+      // TODO indicate for everything else that it is not supported
+    } else if (ToolState.CONSTRAINT_VERTICAL === toolState) {
+      if (type === GeometryType.LINE) {
+        dispatch(addConstraint({ id: 0, t: SlvsConstraints.SLVS_C_VERTICAL, v: [id] }));
+      }
+      // TODO support for two points
+      // TODO indicate for everything else that it is not supported
+    }
   };
 
   return (
