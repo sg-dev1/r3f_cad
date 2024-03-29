@@ -6,7 +6,6 @@
 //
 // TODO check if this implementation of line drawing (using a raycaster its setFromCamera function) is the best way to do it,
 //      e.g. it requires the creation of THREE.Vector2 instance all the time, are there alternative ways?
-// TODO The ClickableLine component will be the line drawing tool for the sketcher
 import React, { useState, forwardRef, useImperativeHandle, useEffect } from 'react';
 import { useThree } from '@react-three/fiber';
 import { Line, Point, Points } from '@react-three/drei';
@@ -21,8 +20,9 @@ import {
   selectLastPoint,
 } from '@/app/slices/sketchSlice';
 import { calcIntersectionWithPlane } from '@/utils/threejs_utils';
+import { GeometryType } from '@/app/types/GeometryType';
 
-export interface ClickableLineRefType {
+export interface GeometryToolRefType {
   lineToolOnClick: (event: React.MouseEvent<HTMLDivElement, MouseEvent>) => void;
   lineToolOnPointerMove: (event: React.PointerEvent<HTMLDivElement>) => void;
   pointToolOnClick: (event: React.MouseEvent<HTMLDivElement, MouseEvent>) => void;
@@ -31,9 +31,13 @@ export interface ClickableLineRefType {
   reset: () => void;
 }
 
+export interface GeometryToolProps {
+  onGeometryClick: (type: GeometryType, id: number) => void;
+}
+
 const xyPlane = new THREE.Plane(new THREE.Vector3(0, 0, 1), 0);
 
-const GeometryTool = forwardRef<any, any>(({}, ref) => {
+const GeometryTool = forwardRef<any, any>(({ onGeometryClick }: GeometryToolProps, ref) => {
   const [currentMousePos, setCurrentMousePos] = useState<[x: number, y: number, z: number] | null>(null);
   const [pointsToDraw, setPointsToDraw] = useState<[x: number, y: number, z: number][]>([]);
   const { camera, scene, raycaster } = useThree();
@@ -141,28 +145,39 @@ const GeometryTool = forwardRef<any, any>(({}, ref) => {
       </Segments> */}
 
       {pointsToDraw.length === 2 && (
-        <LineObject key={-1} id={-1} start={pointsToDraw[0]} end={pointsToDraw[1]} color="gray" />
+        <Line
+          points={[pointsToDraw[0], pointsToDraw[1]]} // array of points
+          color={'gray'}
+          lineWidth={1.5} // default is 1
+          segments
+          dashed={false} // default
+        />
       )}
       {sketchLines.map((line) => {
         const p1 = sketchPointsMap[line.p1_id];
         const p2 = sketchPointsMap[line.p2_id];
         //console.log('id', line.id, 'line', line);
         return (
-          <LineObject key={line.id} id={line.id} start={[p1.x, p1.y, p1.z]} end={[p2.x, p2.y, p2.z]} color="white" />
+          <LineObject
+            key={line.id}
+            id={line.id}
+            start={[p1.x, p1.y, p1.z]}
+            end={[p2.x, p2.y, p2.z]}
+            onGeometryClick={onGeometryClick}
+          />
         );
       })}
 
       <Points>
-        <pointsMaterial vertexColors size={4} />
+        <pointsMaterial vertexColors size={6} />
         {sketchPoints.map((point) => {
           //console.log('id', point.id, 'point', point);
           return (
-            <Point
+            <PointObject
               key={point.id}
+              id={point.id}
               position={[point.x, point.y, point.z]}
-              color="red"
-              onClick={() => console.log('onClick')}
-              onPointerOver={() => console.log('onPointerOver')}
+              onGeometryClick={onGeometryClick}
             />
           );
         })}
@@ -172,19 +187,20 @@ const GeometryTool = forwardRef<any, any>(({}, ref) => {
 });
 
 // Functionality required for this custom Line component
-// - Highlight color on mouse over
-// - Selection with on click (then maybe different color)
-// - drag'n'drop - a bit more trick since it needs to update the data in the redux store as well
+// - Highlight color + make thicker on mouse over                (done)
+// - Selection with on click (then maybe different color)        // selection not needed now
+// - drag'n'drop - a bit more trick since it needs to            // will be implemented later
+//   update the data in the redux store as well
 const LineObject = ({
   id,
   start,
   end,
-  color,
+  onGeometryClick,
 }: {
   id: number;
   start: [x: number, y: number, z: number];
   end: [x: number, y: number, z: number];
-  color?: string;
+  onGeometryClick: (type: GeometryType, id: number) => void;
 }) => {
   // Drag n drop, hover
   const [hovered, setHovered] = useState(false);
@@ -197,16 +213,43 @@ const LineObject = ({
     <Line
       userData={{ id: id }}
       points={[start, end]} // array of points
-      color={hovered ? 'black' : color}
-      onClick={(e) => console.log('LineObject with id ' + e.eventObject.userData.id + ' onclick', e)}
+      color={hovered ? 'black' : 'white'} // TODO color should be configured via redux store
+      onClick={(e) => onGeometryClick(GeometryType.LINE, e.eventObject.userData.id)}
       onPointerOver={() => {
-        console.log('onPointerOver');
+        //console.log('onPointerOver');
         setHovered(true);
       }}
       onPointerOut={() => setHovered(false)}
-      lineWidth={1.5} // default is 1
+      lineWidth={hovered ? 2.5 : 1.5} // default is 1
       segments
       dashed={false} // default
+    />
+  );
+};
+
+const PointObject = ({
+  id,
+  position,
+  onGeometryClick,
+}: {
+  id: number;
+  position: [x: number, y: number, z: number];
+  onGeometryClick: (type: GeometryType, id: number) => void;
+}) => {
+  const [hovered, setHovered] = useState(false);
+
+  return (
+    <Point
+      userData={{ id: id }}
+      position={position}
+      color={hovered ? 'darkred' : 'red'} // TODO color should be configured via redux store
+      onClick={(e) => onGeometryClick(GeometryType.POINT, e.eventObject.userData.id)}
+      onPointerOver={(e) => {
+        //console.log('onPointerOver point', e);
+        setHovered(true);
+      }}
+      onPointerOut={() => setHovered(false)}
+      //size={hovered ? 8 : 4}  // changing size seems to not work, most likely due to using Points component
     />
   );
 };

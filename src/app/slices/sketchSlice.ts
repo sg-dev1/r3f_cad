@@ -2,27 +2,30 @@ import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import type { RootState } from '../../app/store';
 import { Point3DMapType, Point3DType } from '../types/Point3DType';
 import { Line3DType } from '../types/Line3DType';
+import { ConstraintType } from '../types/Constraints';
 
 // Define a type for the slice state
 export interface SketchState {
-  // Just a simple counter for demo purpose
-  counter: number;
-
+  entityIdCounter: number;
   points: Point3DType[];
-
   pointsMap: Point3DMapType;
   lines: Line3DType[];
   lastPoint3D: Point3DType | null;
+
+  constraintIdCounter: number;
+  constraints: ConstraintType[];
 }
 
 // Define the initial state using that type
 const initialState: SketchState = {
-  counter: 0,
+  entityIdCounter: 0,
   points: [],
-
   pointsMap: {},
   lines: [],
   lastPoint3D: null,
+
+  constraintIdCounter: 0,
+  constraints: [],
 };
 
 export const sketchSlice = createSlice({
@@ -32,8 +35,8 @@ export const sketchSlice = createSlice({
   reducers: {
     addPoint: {
       reducer(state, action: PayloadAction<{ p: Point3DType; isLine: boolean }, string>) {
-        const newPoint = { ...action.payload.p, id: state.counter };
-        state.counter++;
+        const newPoint = { ...action.payload.p, id: state.entityIdCounter };
+        state.entityIdCounter++;
 
         if (action.payload.isLine) {
           if (state.lastPoint3D) {
@@ -44,8 +47,8 @@ export const sketchSlice = createSlice({
             state.points.push(newPoint);
             state.pointsMap[newPoint.id] = newPoint;
             // add the line
-            state.lines.push({ p1_id: state.lastPoint3D.id, p2_id: newPoint.id, id: state.counter });
-            state.counter++;
+            state.lines.push({ p1_id: state.lastPoint3D.id, p2_id: newPoint.id, id: state.entityIdCounter });
+            state.entityIdCounter++;
           }
           state.lastPoint3D = newPoint;
         } else {
@@ -63,6 +66,10 @@ export const sketchSlice = createSlice({
     resetLastPoint: (state) => {
       state.lastPoint3D = null;
     },
+    addConstraint: (state, { payload }) => {
+      state.constraints.push({ ...payload, id: state.constraintIdCounter });
+      state.constraintIdCounter++;
+    },
     /*
     addLine: (state, { payload }) => {
       const _id = state.counter;
@@ -74,11 +81,13 @@ export const sketchSlice = createSlice({
   },
 });
 
-export const { addPoint, resetLastPoint } = sketchSlice.actions;
+export const { addPoint, resetLastPoint, addConstraint } = sketchSlice.actions;
 
 export const selectPoints = (state: RootState) => state.sketchs.points;
 export const selectPointsMap = (state: RootState) => state.sketchs.pointsMap;
 export const selectLines = (state: RootState) => state.sketchs.lines;
 export const selectLastPoint = (state: RootState) => state.sketchs.lastPoint3D;
+
+export const selectConstraints = (state: RootState) => state.sketchs.constraints;
 
 export default sketchSlice.reducer;

@@ -1,10 +1,3 @@
-// Add a (hidden plane) as background, e.g. to not need the boxes and more as drawing surface and to have only single drawing surface
-//      --> this is the "sketch plane"
-//      Plane should lie on the X and Y axes, e.g. looking from front on it with ortographic camera  (XY plane)  - in future all different planes shall be supported
-//      - current issue of solution is that plane is limited in size
-//      - app also behaves strangely together with orbit controls (maybe disable it - only support zooming and panning and no rotation)
-// NOTE: To fix this issue use Plane instead (mathematical infinite plane)
-// https://www.columbia.edu/~njn2118/journal/2019/2/18.html
 //
 // TODO Points and lines should be selectable (highlight on mouse over) --> preparation for constraint tools
 //   --> all this will require changes in data model (redux)
@@ -20,8 +13,9 @@
 import React, { useState, useEffect } from 'react';
 import { Canvas } from '@react-three/fiber';
 import { CameraControls, OrthographicCamera } from '@react-three/drei';
-import GeometryTool, { ClickableLineRefType } from './GeometryTool';
+import GeometryTool, { GeometryToolRefType } from './GeometryTool';
 import { Button } from 'antd';
+import { GeometryType } from '@/app/types/GeometryType';
 
 enum ToolState {
   DISABLED = 0,
@@ -37,7 +31,7 @@ const SketcherView = () => {
   const [toolState, setToolState] = useState<ToolState>(ToolState.LINE_TOOL);
   const [stateIndicator, setStateIndicator] = useState<string>('');
 
-  const geometryToolRef = React.useRef<ClickableLineRefType>(null);
+  const geometryToolRef = React.useRef<GeometryToolRefType>(null);
 
   useEffect(() => {
     switch (toolState) {
@@ -63,6 +57,11 @@ const SketcherView = () => {
         console.error('Should not get here. Invalid Tool State.');
     }
   }, [toolState]);
+
+  const onGeometryClick = (type: GeometryType, id: number) => {
+    console.log('Geometry with type ' + type + ' and id ' + id + ' clicked');
+    // TODO add constraint in case a constraint tool was selected
+  };
 
   return (
     <>
@@ -106,7 +105,7 @@ const SketcherView = () => {
         <ambientLight intensity={0.25} />
         <pointLight intensity={0.75} position={[500, 500, 1000]} />
 
-        <GeometryTool ref={geometryToolRef} />
+        <GeometryTool onGeometryClick={onGeometryClick} ref={geometryToolRef} />
 
         <OrthographicCamera
           makeDefault
