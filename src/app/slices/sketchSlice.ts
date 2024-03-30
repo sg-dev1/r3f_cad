@@ -4,14 +4,15 @@ import { Point3DMapType, Point3DType } from '../types/Point3DType';
 import { Line3DType } from '../types/Line3DType';
 import { ConstraintType } from '../types/Constraints';
 import axios from 'axios';
-import { SolverRequestType } from '../types/SolverTypes';
+import { SolverRequestType, SolverEntityType } from '../types/SolverTypes';
 
 // Define a type for the slice state
 export interface SketchState {
   isSolverRequestPending: boolean;
-  isSolverRequestError: any | null;
+  solverRequestError: any | null;
   lastSolverResultCode: number;
   lastSolverDof: number;
+  lastSolverFailedConstraints: number[];
 
   entityIdCounter: number;
   points: Point3DType[];
@@ -26,9 +27,10 @@ export interface SketchState {
 // Define the initial state using that type
 const initialState: SketchState = {
   isSolverRequestPending: false,
-  isSolverRequestError: null,
+  solverRequestError: null,
   lastSolverResultCode: -1,
   lastSolverDof: -1,
+  lastSolverFailedConstraints: [],
 
   entityIdCounter: 1,
   points: [],
@@ -49,7 +51,7 @@ export const buildSolverRequestType = (input: {
   return {
     workplane: input.workplane,
     entities: input.points
-      .map<{ id: number; t: 'point' | 'line' | 'circle' | 'arc'; v: number[] }>((p) => ({
+      .map<SolverEntityType>((p) => ({
         id: p.id,
         t: 'point',
         v: [p.x, p.y, p.z],
@@ -73,6 +75,7 @@ export const callSketchSolverBackend = createAsyncThunk<any, SolverRequestType>(
     const requestUrl = BASE_URL + '/solve';
     try {
       const response = await axios.post(requestUrl, data);
+      //console.log('axios response', response);
       return response.data;
     } catch (error: any) {
       return rejectWithValue(error.response.data);
@@ -87,28 +90,6 @@ export const callSketchSolverBackend = createAsyncThunk<any, SolverRequestType>(
     // }
   }
 );
-
-// Feature: Call solver backend on each state change (geometry added, constraint added)
-//
-// (V1)
-// To send a request to the (solver) backend, upon each addPoint/ addConstraint the following changes are needed:
-//   - addPoint/ addConstraint needs to be converted to extraReducer
-//   - usage of the callSketchSolverBackend thunk to make the request to the backend
-//   - current implementation of addPoint/ addConstraint to be moved to callSketchSolverBackend.pending
-// Issues I currently see
-//  - Instead of the reducer the thunk callSketchSolverBackend, so we may need to of them with same functionality (but because of differences in addPoint/ addConstraint)
-//  - How to pass the parameters then, e.g. action.payload, to callSketchSolverBackend.pending?
-//       Does .pending has a action.payload (or something else, e.g. userData) we could use?
-//
-// See https://stackoverflow.com/a/67030875 (it seems an old version of React is used but this may also work for this new version)
-//
-// (V2)
-// Other solution: Decouple it - do not call the thunk from the reducer directly, but
-//   - listen to state changes with selector
-//   - on each new state --> call the async thunk with data  (may require cancle ongoing requests, performance? - will also depend on performance of backend)
-//   - the request object needs to be built from the sketch state data anyways
-//
-// (V2) prefered because much simpler
 
 // TODO the addPoint may be renamed to addGeometry object (maybe with generic GeometryType instead of boolean)
 export const sketchSlice = createSlice({
@@ -166,7 +147,7 @@ export const sketchSlice = createSlice({
     builder
       .addCase(callSketchSolverBackend.pending, (state) => {
         state.isSolverRequestPending = true;
-        state.isSolverRequestError = null;
+        state.solverRequestError = null;
       })
       .addCase(callSketchSolverBackend.fulfilled, (state, action) => {
         state.isSolverRequestPending = false;
@@ -174,16 +155,33 @@ export const sketchSlice = createSlice({
         state.lastSolverResultCode = action.payload.code;
         state.lastSolverDof = action.payload.dof;
         if (0 === action.payload.code) {
-          // TODO parse the action.payload.entities
-          console.log('received entities ', action.payload.entities);
+          //console.log('received entities ', action.payload.entities);
+          // Update points and pointsMap of state
+          action.payload.entities.forEach((element: SolverEntityType) => {
+            if (element.t === 'point') {
+              // TODO this needs to be adapted when we support more planes other than xy
+              state.pointsMap[element.id].x = element.v[0];
+              state.pointsMap[element.id].y = element.v[1];
+              const pointIndex = state.points.findIndex((p) => p.id === element.id);
+              if (pointIndex !== -1) {
+                state.points[pointIndex].x = element.v[0];
+                state.points[pointIndex].y = element.v[1];
+              } else {
+                console.error(
+                  'Point index was -1. Inconsistent state between state.pointsMap and state.points of this sketch'
+                );
+              }
+            }
+            // TODO support other types, e.g. circles and arcs
+          });
         } else {
-          // TODO parse the action.payload.failed
-          console.log('received failed ', action.payload.failed);
+          // TODO parse the action.payload.failed - need to highlight them (at first they need to be shown at all)
+          console.log('Failed constraints ', action.payload.failed);
         }
       })
       .addCase(callSketchSolverBackend.rejected, (state, action) => {
         state.isSolverRequestPending = false;
-        state.isSolverRequestError = action.payload;
+        state.solverRequestError = action.payload;
       });
   },
 });
@@ -196,5 +194,8 @@ export const selectLines = (state: RootState) => state.sketchs.lines;
 export const selectLastPoint = (state: RootState) => state.sketchs.lastPoint3D;
 
 export const selectConstraints = (state: RootState) => state.sketchs.constraints;
+export const selectLastSolverResultCode = (state: RootState) => state.sketchs.lastSolverResultCode;
+export const selectLastDof = (state: RootState) => state.sketchs.lastSolverDof;
+export const selectLastSolverFailedConstraints = (state: RootState) => state.sketchs.lastSolverFailedConstraints;
 
 export default sketchSlice.reducer;

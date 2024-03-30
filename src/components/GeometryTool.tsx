@@ -1,8 +1,3 @@
-// TODOs
-// - snap to parallel for x/y axis
-// - tangent, parallel, ... contraints  --> needs a constraint solver   (e.g. use solvespace in a "backend")
-// TODO it would be also good to have a behaviour where the lines are closed, e.g. detect when a new point is close to and existing
-//      --> then use the existing one  --> coincidence constraint in solver
 //
 // TODO check if this implementation of line drawing (using a raycaster its setFromCamera function) is the best way to do it,
 //      e.g. it requires the creation of THREE.Vector2 instance all the time, are there alternative ways?

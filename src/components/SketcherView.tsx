@@ -1,6 +1,10 @@
 //
-// TODO Points and lines should be selectable (highlight on mouse over) --> preparation for constraint tools
-//   --> all this will require changes in data model (redux)
+// TODO Display of constraints (e.g. have on the left a table/list of constraints as in Freecad)
+//   - also needed to implement remove of constraints
+//   - display errors of constraint solver, e.g. which constraints failed
+// TODO Display of entities in table/list
+//
+// TODO drag'n'drop of lines (needs to consider constraints)
 //
 // TODO add more tools:
 //   - Currently we simply have a simple line drawing tool that saves its points into the redux state
@@ -17,7 +21,13 @@ import GeometryTool, { GeometryToolRefType } from './GeometryTool';
 import { Button } from 'antd';
 import { GeometryType } from '@/app/types/GeometryType';
 import { useAppDispatch, useAppSelector } from '@/app/hooks';
-import { addConstraint, selectConstraints } from '@/app/slices/sketchSlice';
+import {
+  addConstraint,
+  selectConstraints,
+  selectLastDof,
+  selectLastSolverFailedConstraints,
+  selectLastSolverResultCode,
+} from '@/app/slices/sketchSlice';
 import { SlvsConstraints } from '@/app/types/Constraints';
 
 enum ToolState {
@@ -37,16 +47,30 @@ enum ToolState {
 const SketcherView = () => {
   const [toolState, setToolState] = useState<ToolState>(ToolState.LINE_TOOL);
   const [stateIndicator, setStateIndicator] = useState<string>('');
+  const [solverResult, setSolverResult] = useState<string>('');
 
   const geometryToolRef = React.useRef<GeometryToolRefType>(null);
   const dispatch = useAppDispatch();
   const sketchConstraints = useAppSelector(selectConstraints);
+  const sketchLastSolverResultCode = useAppSelector(selectLastSolverResultCode);
+  const sketchLastDof = useAppSelector(selectLastDof);
+  const sketchLastSolverFailedConstraints = useAppSelector(selectLastSolverFailedConstraints);
+
+  // Needed for (constraint) tools
   const [objectsClicked, setObjectsClicked] = useState<{ type: GeometryType; id: number }[]>([]);
 
   // Just for debugging
   useEffect(() => {
     console.log('sketchConstraints', sketchConstraints);
   }, [sketchConstraints]);
+
+  useEffect(() => {
+    if (sketchLastSolverResultCode === 0) {
+      setSolverResult('Solver OK, Dof=' + sketchLastDof);
+    } else {
+      setSolverResult('Solver Error, Failed Constraints=' + sketchLastSolverFailedConstraints.map(String));
+    }
+  }, [sketchLastSolverResultCode, sketchLastDof]);
 
   useEffect(() => {
     switch (toolState) {
@@ -127,7 +151,9 @@ const SketcherView = () => {
         Vertical
       </Button>
 
-      <div>{stateIndicator}</div>
+      <div>
+        {stateIndicator} | {solverResult}
+      </div>
 
       <Canvas
         className="sketcherview"
