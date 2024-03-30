@@ -3,7 +3,7 @@
 //      e.g. it requires the creation of THREE.Vector2 instance all the time, are there alternative ways?
 import React, { useState, forwardRef, useImperativeHandle, useEffect } from 'react';
 import { useThree } from '@react-three/fiber';
-import { Line, Point, Points } from '@react-three/drei';
+import { Html, Line, Point, Points, Text } from '@react-three/drei';
 import * as THREE from 'three';
 import { useAppSelector, useAppDispatch } from '@/app/hooks';
 import {
@@ -19,6 +19,7 @@ import {
 } from '@/app/slices/sketchSlice';
 import { calcIntersectionWithPlane } from '@/utils/threejs_utils';
 import { GeometryType } from '@/app/types/GeometryType';
+import { SlvsConstraints } from '@/app/types/Constraints';
 
 export interface GeometryToolRefType {
   lineToolOnClick: (event: React.MouseEvent<HTMLDivElement, MouseEvent>) => void;
@@ -214,6 +215,11 @@ const LineObject = ({
   end: [x: number, y: number, z: number];
   onGeometryClick: (type: GeometryType, id: number) => void;
 }) => {
+  const sketchConstraints = useAppSelector(selectConstraints);
+  const constraintsAffectingLine = sketchConstraints.filter((c) => c.v[3] === id || c.v[4] === id);
+  const horizontalConstraints = constraintsAffectingLine.filter((c) => c.t === SlvsConstraints.SLVS_C_HORIZONTAL);
+  const verticalConstraints = constraintsAffectingLine.filter((c) => c.t === SlvsConstraints.SLVS_C_VERTICAL);
+
   // Drag n drop, hover
   const [hovered, setHovered] = useState(false);
   //useEffect(() => void (document.body.style.cursor = hovered ? 'grab' : 'auto'), [hovered]);
@@ -221,21 +227,64 @@ const LineObject = ({
   //  document.body.style.cursor = down ? 'grabbing' : 'grab';
   //setPos(new THREE.Vector3((x / size.width) * 2 - 1, -(y / size.height) * 2 + 1, 0).unproject(camera).multiply({ x: 1, y: 1, z: 0 }).clone())
   //});
+
   return (
-    <Line
-      userData={{ id: id }}
-      points={[start, end]} // array of points
-      color={hovered ? 'black' : 'white'} // TODO color should be configured via redux store
-      onClick={(e) => onGeometryClick(GeometryType.LINE, e.eventObject.userData.id)}
-      onPointerOver={() => {
-        //console.log('onPointerOver');
-        setHovered(true);
-      }}
-      onPointerOut={() => setHovered(false)}
-      lineWidth={hovered ? 2.5 : 1.5} // default is 1
-      segments
-      dashed={false} // default
-    />
+    <>
+      <Line
+        userData={{ id: id }}
+        points={[start, end]} // array of points
+        color={hovered ? 'black' : 'white'} // TODO color should be configured via redux store
+        onClick={(e) => onGeometryClick(GeometryType.LINE, e.eventObject.userData.id)}
+        onPointerOver={() => {
+          //console.log('onPointerOver');
+          setHovered(true);
+        }}
+        onPointerOut={() => setHovered(false)}
+        lineWidth={hovered ? 2.5 : 1.5} // default is 1
+        segments
+        dashed={false} // default
+      />
+      {/* Crude way to display constraints visually on the canvas using Text/ Html from drei
+          Text is position on mid point of line adding some "offset" to align it - values found out via try and error */}
+      {verticalConstraints.length > 0 ? (
+        // Here it looks with Text better ...
+        <Text
+          color="red"
+          position={[(start[0] + end[0]) / 2 + 3, (start[1] + end[1]) / 2 + 5, (start[2] + end[2]) / 2]}
+          rotation={[0, Math.PI, 0]}
+          fontSize={12}
+        >
+          |
+        </Text>
+      ) : (
+        // <Html position={[(start[0] + end[0]) / 2 + 3, (start[1] + end[1]) / 2 + 5, (start[2] + end[2]) / 2]}>
+        //   <div style={{ color: 'red', fontSize: 16, fontWeight: 'bold' }}>|</div>
+        // </Html>
+        ''
+      )}
+      {horizontalConstraints.length > 0 ? (
+        // ... wherease here the Html looks better.
+        // <Text
+        //   color="red"
+        //   position={[(start[0] + end[0]) / 2, (start[1] + end[1]) / 2 + 7, (start[2] + end[2]) / 2]}
+        //   rotation={[0, Math.PI, 0]}
+        //   fontSize={12}
+        // >
+        //   -
+        // </Text>
+        <Html position={[(start[0] + end[0]) / 2, (start[1] + end[1]) / 2 + 15, (start[2] + end[2]) / 2]}>
+          <div style={{ color: 'red', fontSize: 50 }}>-</div>
+        </Html>
+      ) : (
+        ''
+      )}
+
+      {/* Here some example code to add a text input next to a line, e.g. to insert a constraint
+          Also tried Input von antd but this behaved strangely ... */}
+      {/* <Html position={[(start[0] + end[0]) / 2, (start[1] + end[1]) / 2, (start[2] + end[2]) / 2]}>
+        <input placeholder="fill in a number" />
+      </Html> */}
+    </>
   );
 };
 

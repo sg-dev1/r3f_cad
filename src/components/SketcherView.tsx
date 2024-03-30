@@ -40,7 +40,7 @@ enum ToolState {
   CONSTRAINT_VERTICAL,
 }
 
-// TODO length constraint
+// TODO length constraint  --> SLVS_C_PT_PT_DISTANCE
 // TODO add zero point (and coordinate cross) so sketch can be constraint there
 //  + functionality in python backend
 
