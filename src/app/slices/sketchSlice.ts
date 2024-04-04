@@ -2,7 +2,7 @@ import { createAsyncThunk, createSlice, PayloadAction } from '@reduxjs/toolkit';
 import type { RootState } from '../../app/store';
 import { Point3DMapType, Point3DType } from '../types/Point3DType';
 import { Line3DType } from '../types/Line3DType';
-import { ConstraintType } from '../types/Constraints';
+import { ConstraintType, SlvsConstraints } from '../types/Constraints';
 import axios from 'axios';
 import { SolverRequestType, SolverEntityType } from '../types/SolverTypes';
 
@@ -22,6 +22,9 @@ export interface SketchState {
 
   constraintIdCounter: number;
   constraints: ConstraintType[];
+
+  // Tool states
+  lengthConstraintLineId: number;
 }
 
 // Define the initial state using that type
@@ -40,6 +43,8 @@ const initialState: SketchState = {
 
   constraintIdCounter: 0,
   constraints: [],
+
+  lengthConstraintLineId: -1,
 };
 
 export const buildSolverRequestType = (input: {
@@ -131,8 +136,29 @@ export const sketchSlice = createSlice({
       state.lastPoint3D = null;
     },
     addConstraint: (state, { payload }) => {
-      state.constraints.push({ ...payload, id: state.constraintIdCounter });
-      state.constraintIdCounter++;
+      if (payload.t === SlvsConstraints.SLVS_C_PT_PT_DISTANCE) {
+        // We get the line, but for the backend we need the points
+        const line = state.lines.filter((line) => line.id === payload.v[3]);
+        if (line.length >= 1) {
+          const pt1 = state.pointsMap[line[0].p1_id];
+          const pt2 = state.pointsMap[line[0].p2_id];
+          line[0].length = payload.v[0]; // update the length
+          state.constraints.push({
+            id: state.constraintIdCounter,
+            t: SlvsConstraints.SLVS_C_PT_PT_DISTANCE,
+            v: [payload.v[0], pt1.id, pt2.id, 0, 0],
+          });
+          state.constraintIdCounter++;
+        } else {
+          console.warn('Line with id ', payload.v[3], ' could not be found. Cannot add constraint ', payload);
+        }
+      } else {
+        state.constraints.push({ ...payload, id: state.constraintIdCounter });
+        state.constraintIdCounter++;
+      }
+    },
+    setLengthConstraintLineId: (state, { payload }) => {
+      state.lengthConstraintLineId = payload;
     },
     /*
     addLine: (state, { payload }) => {
@@ -186,7 +212,7 @@ export const sketchSlice = createSlice({
   },
 });
 
-export const { addPoint, resetLastPoint, addConstraint } = sketchSlice.actions;
+export const { addPoint, resetLastPoint, addConstraint, setLengthConstraintLineId } = sketchSlice.actions;
 
 export const selectPoints = (state: RootState) => state.sketchs.points;
 export const selectPointsMap = (state: RootState) => state.sketchs.pointsMap;
@@ -197,5 +223,7 @@ export const selectConstraints = (state: RootState) => state.sketchs.constraints
 export const selectLastSolverResultCode = (state: RootState) => state.sketchs.lastSolverResultCode;
 export const selectLastDof = (state: RootState) => state.sketchs.lastSolverDof;
 export const selectLastSolverFailedConstraints = (state: RootState) => state.sketchs.lastSolverFailedConstraints;
+
+export const selectLengthConstraintLineId = (state: RootState) => state.sketchs.lengthConstraintLineId;
 
 export default sketchSlice.reducer;

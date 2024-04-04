@@ -27,6 +27,7 @@ import {
   selectLastDof,
   selectLastSolverFailedConstraints,
   selectLastSolverResultCode,
+  setLengthConstraintLineId,
 } from '@/app/slices/sketchSlice';
 import { SlvsConstraints } from '@/app/types/Constraints';
 
@@ -38,9 +39,9 @@ enum ToolState {
   CONSTRAINT_COINCIDENCE,
   CONSTRAINT_HORIZONTAL,
   CONSTRAINT_VERTICAL,
+  CONSTRAINT_LENGTH,
 }
 
-// TODO length constraint  --> SLVS_C_PT_PT_DISTANCE
 // TODO add zero point (and coordinate cross) so sketch can be constraint there
 //  + functionality in python backend
 
@@ -92,6 +93,9 @@ const SketcherView = () => {
       case ToolState.CONSTRAINT_VERTICAL:
         setStateIndicator('Vertical Constraint Tool');
         break;
+      case ToolState.CONSTRAINT_LENGTH:
+        setStateIndicator('Length Constraint Tool');
+        break;
       default:
         console.error('Should not get here. Invalid Tool State.');
     }
@@ -130,6 +134,11 @@ const SketcherView = () => {
       }
       // TODO support for two points
       // TODO indicate for everything else that it is not supported
+    } else if (ToolState.CONSTRAINT_LENGTH === toolState) {
+      if (type === GeometryType.LINE) {
+        dispatch(setLengthConstraintLineId(id));
+      }
+      // Point type not supported - TODO indicate that visually
     }
   };
 
@@ -149,6 +158,9 @@ const SketcherView = () => {
       </Button>
       <Button type="primary" className="primary-button" onClick={() => setToolState(ToolState.CONSTRAINT_VERTICAL)}>
         Vertical
+      </Button>
+      <Button type="primary" className="primary-button" onClick={() => setToolState(ToolState.CONSTRAINT_LENGTH)}>
+        Length
       </Button>
 
       <div>

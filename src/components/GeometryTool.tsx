@@ -1,9 +1,13 @@
 //
 // TODO check if this implementation of line drawing (using a raycaster its setFromCamera function) is the best way to do it,
 //      e.g. it requires the creation of THREE.Vector2 instance all the time, are there alternative ways?
+//
+// TODO fix bug where lines are not shown in proper dimensions after applying constraints
+//      They are only shown in proper dimensions after the window was resized
+//
 import React, { useState, forwardRef, useImperativeHandle, useEffect } from 'react';
 import { useThree } from '@react-three/fiber';
-import { Html, Line, Point, Points, Text } from '@react-three/drei';
+import { Line, Points } from '@react-three/drei';
 import * as THREE from 'three';
 import { useAppSelector, useAppDispatch } from '@/app/hooks';
 import {
@@ -19,7 +23,8 @@ import {
 } from '@/app/slices/sketchSlice';
 import { calcIntersectionWithPlane } from '@/utils/threejs_utils';
 import { GeometryType } from '@/app/types/GeometryType';
-import { SlvsConstraints } from '@/app/types/Constraints';
+import LineObject from './LineObject';
+import PointObject from './PointObject';
 
 export interface GeometryToolRefType {
   lineToolOnClick: (event: React.MouseEvent<HTMLDivElement, MouseEvent>) => void;
@@ -177,6 +182,7 @@ const GeometryTool = forwardRef<any, any>(({ onGeometryClick }: GeometryToolProp
             start={[p1.x, p1.y, p1.z]}
             end={[p2.x, p2.y, p2.z]}
             onGeometryClick={onGeometryClick}
+            length={line.length}
           />
         );
       })}
@@ -198,121 +204,5 @@ const GeometryTool = forwardRef<any, any>(({ onGeometryClick }: GeometryToolProp
     </>
   );
 });
-
-// Functionality required for this custom Line component
-// - Highlight color + make thicker on mouse over                (done)
-// - Selection with on click (then maybe different color)        // selection not needed now
-// - drag'n'drop - a bit more trick since it needs to            // will be implemented later
-//   update the data in the redux store as well
-const LineObject = ({
-  id,
-  start,
-  end,
-  onGeometryClick,
-}: {
-  id: number;
-  start: [x: number, y: number, z: number];
-  end: [x: number, y: number, z: number];
-  onGeometryClick: (type: GeometryType, id: number) => void;
-}) => {
-  const sketchConstraints = useAppSelector(selectConstraints);
-  const constraintsAffectingLine = sketchConstraints.filter((c) => c.v[3] === id || c.v[4] === id);
-  const horizontalConstraints = constraintsAffectingLine.filter((c) => c.t === SlvsConstraints.SLVS_C_HORIZONTAL);
-  const verticalConstraints = constraintsAffectingLine.filter((c) => c.t === SlvsConstraints.SLVS_C_VERTICAL);
-
-  // Drag n drop, hover
-  const [hovered, setHovered] = useState(false);
-  //useEffect(() => void (document.body.style.cursor = hovered ? 'grab' : 'auto'), [hovered]);
-  //const bind = useDrag(({ down, xy: [x, y] }) => {
-  //  document.body.style.cursor = down ? 'grabbing' : 'grab';
-  //setPos(new THREE.Vector3((x / size.width) * 2 - 1, -(y / size.height) * 2 + 1, 0).unproject(camera).multiply({ x: 1, y: 1, z: 0 }).clone())
-  //});
-
-  return (
-    <>
-      <Line
-        userData={{ id: id }}
-        points={[start, end]} // array of points
-        color={hovered ? 'black' : 'white'} // TODO color should be configured via redux store
-        onClick={(e) => onGeometryClick(GeometryType.LINE, e.eventObject.userData.id)}
-        onPointerOver={() => {
-          //console.log('onPointerOver');
-          setHovered(true);
-        }}
-        onPointerOut={() => setHovered(false)}
-        lineWidth={hovered ? 2.5 : 1.5} // default is 1
-        segments
-        dashed={false} // default
-      />
-      {/* Crude way to display constraints visually on the canvas using Text/ Html from drei
-          Text is position on mid point of line adding some "offset" to align it - values found out via try and error */}
-      {verticalConstraints.length > 0 ? (
-        // Here it looks with Text better ...
-        <Text
-          color="red"
-          position={[(start[0] + end[0]) / 2 + 3, (start[1] + end[1]) / 2 + 5, (start[2] + end[2]) / 2]}
-          rotation={[0, Math.PI, 0]}
-          fontSize={12}
-        >
-          |
-        </Text>
-      ) : (
-        // <Html position={[(start[0] + end[0]) / 2 + 3, (start[1] + end[1]) / 2 + 5, (start[2] + end[2]) / 2]}>
-        //   <div style={{ color: 'red', fontSize: 16, fontWeight: 'bold' }}>|</div>
-        // </Html>
-        ''
-      )}
-      {horizontalConstraints.length > 0 ? (
-        // ... wherease here the Html looks better.
-        // <Text
-        //   color="red"
-        //   position={[(start[0] + end[0]) / 2, (start[1] + end[1]) / 2 + 7, (start[2] + end[2]) / 2]}
-        //   rotation={[0, Math.PI, 0]}
-        //   fontSize={12}
-        // >
-        //   -
-        // </Text>
-        <Html position={[(start[0] + end[0]) / 2, (start[1] + end[1]) / 2 + 15, (start[2] + end[2]) / 2]}>
-          <div style={{ color: 'red', fontSize: 50 }}>-</div>
-        </Html>
-      ) : (
-        ''
-      )}
-
-      {/* Here some example code to add a text input next to a line, e.g. to insert a constraint
-          Also tried Input von antd but this behaved strangely ... */}
-      {/* <Html position={[(start[0] + end[0]) / 2, (start[1] + end[1]) / 2, (start[2] + end[2]) / 2]}>
-        <input placeholder="fill in a number" />
-      </Html> */}
-    </>
-  );
-};
-
-const PointObject = ({
-  id,
-  position,
-  onGeometryClick,
-}: {
-  id: number;
-  position: [x: number, y: number, z: number];
-  onGeometryClick: (type: GeometryType, id: number) => void;
-}) => {
-  const [hovered, setHovered] = useState(false);
-
-  return (
-    <Point
-      userData={{ id: id }}
-      position={position}
-      color={hovered ? 'darkred' : 'red'} // TODO color should be configured via redux store
-      onClick={(e) => onGeometryClick(GeometryType.POINT, e.eventObject.userData.id)}
-      onPointerOver={(e) => {
-        //console.log('onPointerOver point', e);
-        setHovered(true);
-      }}
-      onPointerOut={() => setHovered(false)}
-      //size={hovered ? 8 : 4}  // changing size seems to not work, most likely due to using Points component
-    />
-  );
-};
 
 export default GeometryTool;
