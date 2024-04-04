@@ -4,19 +4,28 @@
 //   - display errors of constraint solver, e.g. which constraints failed
 // TODO Display of entities in table/list
 //
+// TODO improve positioning of constraints drawn on canvas
+//
+// TODO update of constraints (on canvas, on constraint display when built)
+// TODO delete of constraints (on canvas, on constraint display when built)
+//
+// TODO show all lines in green when sketch is fully constrained
+// TODO                in red when there are errors (and properly display them)
+//
 // TODO drag'n'drop of lines (needs to consider constraints)
 //
 // TODO add more tools:
-//   - Currently we simply have a simple line drawing tool that saves its points into the redux state
-//   - We need tools to draw other primitives (e.g. points, circles) and to add constraints (coincident, parallel, ...)
+//   - Currently we simply have a simple line drawing tool that saves its points into the redux state and some basic constraint tools
+//   - We need tools to draw other primitives (e.g. circles, arcs) and to add additional constraints (parallel, equal, mid point, ...)
+//
+// TODO put common settings in a "settingsSlice" s.t. they can be changed, e.g. color of lines etc.
 //
 // TODO improve the forward ref (what types to use instead of any)
-// TODO disable camera rotation (only zooming and paning should be allowed) - rotation creates weird behaviour
 'use client';
 
 import React, { useState, useEffect } from 'react';
 import { Canvas } from '@react-three/fiber';
-import { CameraControls, OrthographicCamera } from '@react-three/drei';
+import { OrbitControls } from '@react-three/drei';
 import GeometryTool, { GeometryToolRefType } from './GeometryTool';
 import { Button } from 'antd';
 import { GeometryType } from '@/app/types/GeometryType';
@@ -31,6 +40,7 @@ import {
   setLengthConstraintLineId,
 } from '@/app/slices/sketchSlice';
 import { SlvsConstraints } from '@/app/types/Constraints';
+import ZeroCoordinateCross from './ZeroCoordinateCross';
 
 enum ToolState {
   DISABLED = 0,
@@ -42,9 +52,6 @@ enum ToolState {
   CONSTRAINT_VERTICAL,
   CONSTRAINT_LENGTH,
 }
-
-// TODO add zero point (and coordinate cross) so sketch can be constraint there
-//  + functionality in python backend
 
 const SketcherView = () => {
   const [toolState, setToolState] = useState<ToolState>(ToolState.LINE_TOOL);
@@ -177,7 +184,8 @@ const SketcherView = () => {
 
       <Canvas
         orthographic
-        camera={{ zoom: 1, position: [0, 0, 200], top: 200, bottom: -200, left: 200, right: -200, near: 1, far: 2000 }}
+        //camera={{ zoom: 1, position: [0, 0, 200], top: 200, bottom: -200, left: 200, right: -200, near: 1, far: 2000 }}
+        camera={{ zoom: 2 }}
         className="sketcherview"
         onClick={(e) => {
           if (ToolState.LINE_TOOL === toolState) {
@@ -194,12 +202,15 @@ const SketcherView = () => {
           }
         }}
       >
-        <CameraControls minDistance={1.2} maxDistance={4} />
+        {/* <CameraControls minDistance={1.2} maxDistance={4} /> */}
+        <OrbitControls minDistance={1} maxDistance={4} enableRotate={false} />
 
         <ambientLight intensity={0.25} />
         <pointLight intensity={0.75} position={[500, 500, 1000]} />
 
         <GeometryTool onGeometryClick={onGeometryClick} ref={geometryToolRef} />
+
+        <ZeroCoordinateCross onGeometryClick={onGeometryClick} />
 
         {/* If the camera is used like that it behaves a bit strange - scene gets rerendered when it is resized.
             This lead to the issue where lines on the screen are not shown in correct aspect ratio. */}

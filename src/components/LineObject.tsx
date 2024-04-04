@@ -58,7 +58,7 @@ const LineObject = ({
           setHovered(true);
         }}
         onPointerOut={() => setHovered(false)}
-        lineWidth={hovered ? 2.5 : 1.5} // default is 1
+        lineWidth={hovered ? 4 : 1.5} // default is 1
         segments
         dashed={false} // default
       />

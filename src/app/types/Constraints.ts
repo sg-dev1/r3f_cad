@@ -2,6 +2,7 @@ export interface ConstraintType {
   id: number; // integer id unique among constraints
   t: SlvsConstraints; // constraint type
   v: number[]; // constraint value, format: [<valA>, <ptA>, <ptB>, <entityA>, <entityB>]
+  // <ptA>, <ptB>, <entityA>, <entityB> either an integer or "zero"
 }
 
 export enum SlvsConstraints {

@@ -185,7 +185,7 @@ const GeometryTool = forwardRef<any, any>(({ onGeometryClick }: GeometryToolProp
       })}
 
       <Points>
-        <pointsMaterial vertexColors size={6} />
+        <pointsMaterial vertexColors size={8} />
         {sketchPoints.map((point) => {
           //console.log('id', point.id, 'point', point);
           return (
