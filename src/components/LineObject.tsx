@@ -85,15 +85,22 @@ const LineObject = ({
             type="number"
             placeholder=""
             size={3}
+            autoFocus
             onKeyDown={(e) => {
               if (e.key === 'Enter') {
                 const input = e.target as HTMLInputElement;
-                console.log('onKeyDown', e, input.value);
+                //console.log('onKeyDown', e, input.value);
+                const value = parseFloat(input.value);
+                if (isNaN(value)) {
+                  console.error('Value was Nan. Cannot add constraint');
+                  input.value = '';
+                  return;
+                }
                 dispatch(
                   addConstraint({
                     id: 0,
                     t: SlvsConstraints.SLVS_C_PT_PT_DISTANCE,
-                    v: [parseFloat(input.value), 0, 0, id, 0],
+                    v: [value, 0, 0, id, 0],
                   })
                 );
                 dispatch(setLengthConstraintLineId(-1));

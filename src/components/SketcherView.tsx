@@ -27,6 +27,7 @@ import {
   selectLastDof,
   selectLastSolverFailedConstraints,
   selectLastSolverResultCode,
+  selectLengthConstraintLineId,
   setLengthConstraintLineId,
 } from '@/app/slices/sketchSlice';
 import { SlvsConstraints } from '@/app/types/Constraints';
@@ -56,6 +57,8 @@ const SketcherView = () => {
   const sketchLastSolverResultCode = useAppSelector(selectLastSolverResultCode);
   const sketchLastDof = useAppSelector(selectLastDof);
   const sketchLastSolverFailedConstraints = useAppSelector(selectLastSolverFailedConstraints);
+
+  const sketchLengthConstraintLineId = useAppSelector(selectLengthConstraintLineId);
 
   // Needed for (constraint) tools
   const [objectsClicked, setObjectsClicked] = useState<{ type: GeometryType; id: number }[]>([]);
@@ -98,6 +101,11 @@ const SketcherView = () => {
         break;
       default:
         console.error('Should not get here. Invalid Tool State.');
+    }
+
+    // remove the length constraint edit input
+    if (ToolState.CONSTRAINT_LENGTH !== toolState && sketchLengthConstraintLineId !== -1) {
+      dispatch(setLengthConstraintLineId(-1));
     }
   }, [toolState]);
 
@@ -168,6 +176,8 @@ const SketcherView = () => {
       </div>
 
       <Canvas
+        orthographic
+        camera={{ zoom: 1, position: [0, 0, 200], top: 200, bottom: -200, left: 200, right: -200, near: 1, far: 2000 }}
         className="sketcherview"
         onClick={(e) => {
           if (ToolState.LINE_TOOL === toolState) {
@@ -191,7 +201,9 @@ const SketcherView = () => {
 
         <GeometryTool onGeometryClick={onGeometryClick} ref={geometryToolRef} />
 
-        <OrthographicCamera
+        {/* If the camera is used like that it behaves a bit strange - scene gets rerendered when it is resized.
+            This lead to the issue where lines on the screen are not shown in correct aspect ratio. */}
+        {/* <OrthographicCamera
           makeDefault
           zoom={1}
           top={200}
@@ -201,7 +213,7 @@ const SketcherView = () => {
           near={1}
           far={2000}
           position={[0, 0, 200]}
-        />
+        /> */}
       </Canvas>
     </>
   );
