@@ -50,6 +50,7 @@ Check out our [Next.js deployment documentation](https://nextjs.org/docs/deploym
     // default was 80 which is a bit few
   - Prettier: Print Width set to 120
     // default was also 80 causing similar behaviour like Wrap Line Length
+- styled-colors: Very handy to visualize CSS colors in JavaScript and TypeScript files
 
 Other Extensions:
 

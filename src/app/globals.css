@@ -8,16 +8,14 @@
   box-sizing: border-box;
 }
 
-body {
-  background-color: slategray;
-}
-
 .mainview {
   height: 100vh !important;
 }
 
 .sketcherview {
-  height: 100vh !important;
+  /* if this gets to high the page gets a scrollbar
+     not the best solution, but for now it works */
+  height: 87vh !important;
 }
 
 /* Apply a margin to all primary buttons */

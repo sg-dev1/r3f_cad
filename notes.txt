@@ -47,6 +47,13 @@ For lines could use Segments (instead of current implementation)
 
 ---------
 
+Antd styling and theme customization
+
+https://ant.design/docs/react/customize-theme
+https://ant.design/docs/react/compatible-style
+
+---------
+
 # TODOs
 
 - Change Line to use [number, number, number] instead of Vector3

@@ -1,13 +1,13 @@
 //
-// TODO Display of constraints (e.g. have on the left a table/list of constraints as in Freecad)
-//   - also needed to implement remove of constraints
-//   - display errors of constraint solver, e.g. which constraints failed
-// TODO Display of entities in table/list
+// TODO examine possiblilities how to save redux state (e.g. to local storage etc.)
+//   - e.g. add persistence because currently all data is lost after a reload
+//
+// TODO Display of entities in table/list (+ remove entries)
 //
 // TODO improve positioning of constraints drawn on canvas
 //
-// TODO update of constraints (on canvas, on constraint display when built)
-// TODO delete of constraints (on canvas, on constraint display when built)
+// TODO update of constraints on canvas
+// TODO delete of constraints on canvas
 //
 // TODO show all lines in green when sketch is fully constrained
 // TODO                in red when there are errors (and properly display them)
@@ -27,7 +27,7 @@ import React, { useState, useEffect } from 'react';
 import { Canvas } from '@react-three/fiber';
 import { OrbitControls } from '@react-three/drei';
 import GeometryTool, { GeometryToolRefType } from './GeometryTool';
-import { Button } from 'antd';
+import { Button, Layout } from 'antd';
 import { GeometryType } from '@/app/types/GeometryType';
 import { useAppDispatch, useAppSelector } from '@/app/hooks';
 import {
@@ -41,6 +41,9 @@ import {
 } from '@/app/slices/sketchSlice';
 import { SlvsConstraints } from '@/app/types/Constraints';
 import ZeroCoordinateCross from './ZeroCoordinateCross';
+import ConstraintTable from './ConstraintTable';
+
+const { Header, Content, Sider } = Layout;
 
 enum ToolState {
   DISABLED = 0,
@@ -159,73 +162,102 @@ const SketcherView = () => {
 
   return (
     <>
-      <Button type="primary" className="primary-button" onClick={() => setToolState(ToolState.LINE_TOOL)}>
-        Line
-      </Button>
-      <Button type="primary" className="primary-button" onClick={() => setToolState(ToolState.POINT_TOOL)}>
-        Point
-      </Button>
-      <Button type="primary" className="primary-button" onClick={() => setToolState(ToolState.CONSTRAINT_COINCIDENCE)}>
-        Coincidence
-      </Button>
-      <Button type="primary" className="primary-button" onClick={() => setToolState(ToolState.CONSTRAINT_HORIZONTAL)}>
-        Horizontal
-      </Button>
-      <Button type="primary" className="primary-button" onClick={() => setToolState(ToolState.CONSTRAINT_VERTICAL)}>
-        Vertical
-      </Button>
-      <Button type="primary" className="primary-button" onClick={() => setToolState(ToolState.CONSTRAINT_LENGTH)}>
-        Length
-      </Button>
+      <Layout>
+        <Header style={{ display: 'flex', alignItems: 'center' }}>
+          <Button type="primary" className="primary-button" onClick={() => setToolState(ToolState.LINE_TOOL)}>
+            Line
+          </Button>
+          <Button type="primary" className="primary-button" onClick={() => setToolState(ToolState.POINT_TOOL)}>
+            Point
+          </Button>
+          <Button
+            type="primary"
+            className="primary-button"
+            onClick={() => setToolState(ToolState.CONSTRAINT_COINCIDENCE)}
+          >
+            Coincidence
+          </Button>
+          <Button
+            type="primary"
+            className="primary-button"
+            onClick={() => setToolState(ToolState.CONSTRAINT_HORIZONTAL)}
+          >
+            Horizontal
+          </Button>
+          <Button type="primary" className="primary-button" onClick={() => setToolState(ToolState.CONSTRAINT_VERTICAL)}>
+            Vertical
+          </Button>
+          <Button type="primary" className="primary-button" onClick={() => setToolState(ToolState.CONSTRAINT_LENGTH)}>
+            Length
+          </Button>
 
-      <div>
-        {stateIndicator} | {solverResult}
-      </div>
+          <div style={{ color: 'white' }}>
+            {stateIndicator} | {solverResult}
+          </div>
+        </Header>
 
-      <Canvas
-        orthographic
-        //camera={{ zoom: 1, position: [0, 0, 200], top: 200, bottom: -200, left: 200, right: -200, near: 1, far: 2000 }}
-        camera={{ zoom: 2 }}
-        className="sketcherview"
-        onClick={(e) => {
-          if (ToolState.LINE_TOOL === toolState) {
-            geometryToolRef.current?.lineToolOnClick(e);
-          } else if (ToolState.POINT_TOOL === toolState) {
-            geometryToolRef.current?.pointToolOnClick(e);
-          }
-        }}
-        onPointerMove={(e) => {
-          if (ToolState.LINE_TOOL === toolState) {
-            geometryToolRef.current?.lineToolOnPointerMove(e);
-          } else {
-            geometryToolRef.current?.reset();
-          }
-        }}
-      >
-        {/* <CameraControls minDistance={1.2} maxDistance={4} /> */}
-        <OrbitControls minDistance={1} maxDistance={4} enableRotate={false} />
+        <Layout>
+          <Sider
+            width={500}
+            style={{
+              overflow: 'auto',
+              //height: '100vh',
+              position: 'fixed',
+              left: 0,
+              top: 64,
+              bottom: 0,
+            }}
+          >
+            <ConstraintTable />
+          </Sider>
+          <Content style={{ marginLeft: 500, padding: '10px 24px 24px', backgroundColor: 'slategray' }}>
+            <Canvas
+              orthographic
+              //camera={{ zoom: 1, position: [0, 0, 200], top: 200, bottom: -200, left: 200, right: -200, near: 1, far: 2000 }}
+              camera={{ zoom: 2 }}
+              className="sketcherview"
+              onClick={(e) => {
+                if (ToolState.LINE_TOOL === toolState) {
+                  geometryToolRef.current?.lineToolOnClick(e);
+                } else if (ToolState.POINT_TOOL === toolState) {
+                  geometryToolRef.current?.pointToolOnClick(e);
+                }
+              }}
+              onPointerMove={(e) => {
+                if (ToolState.LINE_TOOL === toolState) {
+                  geometryToolRef.current?.lineToolOnPointerMove(e);
+                } else {
+                  geometryToolRef.current?.reset();
+                }
+              }}
+            >
+              {/* <CameraControls minDistance={1.2} maxDistance={4} /> */}
+              <OrbitControls minDistance={1} maxDistance={4} enableRotate={false} />
 
-        <ambientLight intensity={0.25} />
-        <pointLight intensity={0.75} position={[500, 500, 1000]} />
+              <ambientLight intensity={0.25} />
+              <pointLight intensity={0.75} position={[500, 500, 1000]} />
 
-        <GeometryTool onGeometryClick={onGeometryClick} ref={geometryToolRef} />
+              <GeometryTool onGeometryClick={onGeometryClick} ref={geometryToolRef} />
 
-        <ZeroCoordinateCross onGeometryClick={onGeometryClick} />
+              <ZeroCoordinateCross onGeometryClick={onGeometryClick} />
 
-        {/* If the camera is used like that it behaves a bit strange - scene gets rerendered when it is resized.
-            This lead to the issue where lines on the screen are not shown in correct aspect ratio. */}
-        {/* <OrthographicCamera
-          makeDefault
-          zoom={1}
-          top={200}
-          bottom={-200}
-          left={200}
-          right={-200}
-          near={1}
-          far={2000}
-          position={[0, 0, 200]}
-        /> */}
-      </Canvas>
+              {/* If the camera is used like that it behaves a bit strange - scene gets rerendered when it is resized.
+                  This lead to the issue where lines on the screen are not shown in correct aspect ratio. */}
+              {/* <OrthographicCamera
+                    makeDefault
+                    zoom={1}
+                    top={200}
+                    bottom={-200}
+                    left={200}
+                    right={-200}
+                    near={1}
+                    far={2000}
+                    position={[0, 0, 200]}
+              /> */}
+            </Canvas>
+          </Content>
+        </Layout>
+      </Layout>
     </>
   );
 };
