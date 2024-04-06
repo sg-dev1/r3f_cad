@@ -157,6 +157,21 @@ export const sketchSlice = createSlice({
         state.constraintIdCounter++;
       }
     },
+    updateConstraint: (state, { payload }) => {
+      const index = state.constraints.findIndex((constraint) => constraint.id === payload.id);
+      if (index !== -1) {
+        const constraint = state.constraints[index];
+        if (constraint.t === SlvsConstraints.SLVS_C_PT_PT_DISTANCE) {
+          const pt1 = state.pointsMap[payload.v[1]];
+          const pt2 = state.pointsMap[payload.v[2]];
+          const line = state.lines.filter((line) => line.p1_id === pt1.id && line.p2_id === pt2.id);
+          if (line.length >= 1) {
+            line[0].length = payload.v[0]; // update the length
+          }
+        }
+        state.constraints.splice(index, 1, { ...constraint, ...payload });
+      }
+    },
     setLengthConstraintLineId: (state, { payload }) => {
       state.lengthConstraintLineId = payload;
     },
@@ -212,7 +227,8 @@ export const sketchSlice = createSlice({
   },
 });
 
-export const { addPoint, resetLastPoint, addConstraint, setLengthConstraintLineId } = sketchSlice.actions;
+export const { addPoint, resetLastPoint, addConstraint, updateConstraint, setLengthConstraintLineId } =
+  sketchSlice.actions;
 
 export const selectPoints = (state: RootState) => state.sketchs.points;
 export const selectPointsMap = (state: RootState) => state.sketchs.pointsMap;

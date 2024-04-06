@@ -1,9 +1,13 @@
 export interface ConstraintType {
   id: number; // integer id unique among constraints
   t: SlvsConstraints; // constraint type
-  v: number[]; // constraint value, format: [<valA>, <ptA>, <ptB>, <entityA>, <entityB>]
-  // <ptA>, <ptB>, <entityA>, <entityB> either an integer or "zero"
+  v: ConstraintValueType;
 }
+
+// Constraint value, format: [<valA>, <ptA>, <ptB>, <entityA>, <entityB>]
+//  - <ptA>, <ptB>, <entityA>, <entityB> are integer
+//  - <ptA>, <ptB> may also be the string literal "zero"
+export type ConstraintValueType = (number | 'zero')[];
 
 export enum SlvsConstraints {
   SLVS_C_POINTS_COINCIDENT = 100000,

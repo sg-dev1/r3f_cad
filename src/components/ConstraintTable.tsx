@@ -1,17 +1,148 @@
 //
 // TODOs
-//  - edit constraints
 //  - delete constraints
-//  - improve display, e.g. only show relevant info (depends on constraint type)
 //  - display constraint solver errors, e.g. errornous constraints written in red
 //
-import { useAppSelector } from '@/app/hooks';
-import { selectConstraints } from '@/app/slices/sketchSlice';
+// Improvements:
+//  - edit constraints:
+//      - Current way to edit leaves many ways the user can mess up with the data/ input invalid data
+//      - Proper error handling needed / edit will be different per constraint type (as display)
+//
+// Future TODOs:
+//  - If new constraints are supported the way to (1) display it, (2) edit it needs to be updated
+//  - Per default the whole v (Values) array is shown - parts of it are not relevant for a particular constraint
+//
+import { useAppDispatch, useAppSelector } from '@/app/hooks';
+import { selectConstraints, updateConstraint } from '@/app/slices/sketchSlice';
 import { ConstraintType, SlvsConstraints } from '@/app/types/Constraints';
-import { Card, Table } from 'antd';
-import { ColumnsType } from 'antd/es/table';
+import type { GetRef, InputRef } from 'antd';
+import { Card, Form, Input, Table } from 'antd';
 import { SorterResult } from 'antd/es/table/interface';
-import React, { useEffect, useState } from 'react';
+import React, { useContext, useEffect, useRef, useState } from 'react';
+
+import '../app/globals.css';
+
+// ---
+// Base on Editable Cells example
+// https://ant.design/components/table#components-table-demo-edit-cell
+// https://codepen.io/pen?editors=0010
+// https://stackblitz.com/run?file=index.css,demo.tsx
+
+type FormInstance<T> = GetRef<typeof Form<T>>;
+
+const EditableContext = React.createContext<FormInstance<any> | null>(null);
+
+interface EditableRowProps {
+  index: number;
+}
+
+const EditableRow: React.FC<EditableRowProps> = ({ index, ...props }) => {
+  const [form] = Form.useForm();
+  return (
+    <Form form={form} component={false}>
+      <EditableContext.Provider value={form}>
+        <tr {...props} />
+      </EditableContext.Provider>
+    </Form>
+  );
+};
+
+interface EditableCellProps {
+  title: React.ReactNode;
+  editable: boolean;
+  children: React.ReactNode;
+  dataIndex: keyof DataType;
+  record: DataType;
+  handleSave: (record: DataType) => void;
+}
+
+const EditableCell: React.FC<EditableCellProps> = ({
+  title,
+  editable,
+  children,
+  dataIndex,
+  record,
+  handleSave,
+  ...restProps
+}) => {
+  const [editing, setEditing] = useState(false);
+  const inputRef = useRef<InputRef>(null);
+  const form = useContext(EditableContext)!;
+
+  useEffect(() => {
+    if (editing) {
+      inputRef.current?.focus();
+    }
+  }, [editing]);
+
+  const toggleEdit = () => {
+    // title: "Values", e.g. title of header
+    // dataIndex: "v", as specified in columns array
+    // record: the whole record of ConstraintType type
+    // children: The html (ReactNode) return by render (for the v dataIndex) as specified in the columns arry
+    //console.log('toggleEdit', title, dataIndex, record, children);
+
+    setEditing(!editing);
+    form.setFieldsValue({ [dataIndex]: record[dataIndex] });
+  };
+
+  const save = async () => {
+    try {
+      let values = await form.validateFields();
+      // Note: values contains the whole object as record
+
+      //console.log(typeof values[dataIndex]);
+      if (typeof values[dataIndex] === 'string') {
+        //console.log('values are string');
+        const elements = values[dataIndex].split(',');
+        values[dataIndex] = elements.map((elem: string) => {
+          if ('zero' === elem) {
+            return elem;
+          }
+          return parseFloat(elem);
+        });
+      }
+
+      //console.log('save: values', values);
+
+      toggleEdit();
+      handleSave({ ...record, ...values });
+    } catch (errInfo) {
+      console.log('Save failed:', errInfo);
+    }
+  };
+
+  let childNode = children;
+
+  if (editable) {
+    childNode = editing ? (
+      <Form.Item
+        style={{ margin: 0 }}
+        name={dataIndex}
+        rules={[
+          {
+            required: true,
+            message: `${title} is required.`,
+          },
+        ]}
+      >
+        <Input ref={inputRef} onPressEnter={save} onBlur={save} />
+      </Form.Item>
+    ) : (
+      <div className="editable-cell-value-wrap" style={{ paddingRight: 24 }} onClick={toggleEdit}>
+        {children}
+      </div>
+    );
+  }
+
+  return <td {...restProps}>{childNode}</td>;
+};
+
+type EditableTableProps = Parameters<typeof Table>[0];
+
+type ColumnTypes = Exclude<EditableTableProps['columns'], undefined>;
+
+// ---
 
 interface DataType extends ConstraintType {
   key: string;
@@ -22,12 +153,13 @@ const ConstraintTable = () => {
   const [tableData, setTableData] = useState<DataType[]>([]);
 
   const [sortedInfo, setSortedInfo] = useState<SorterResult<DataType>>({});
+  const dispatch = useAppDispatch();
 
   useEffect(() => {
     setTableData(constraints.map((constraint) => ({ ...constraint, key: String(constraint.id) })));
   }, [constraints]);
 
-  const columns: ColumnsType<DataType> = [
+  const defaultColumns: (ColumnTypes[number] & { editable?: boolean; dataIndex: string })[] = [
     {
       title: 'Id',
       dataIndex: 'id',
@@ -150,15 +282,62 @@ const ConstraintTable = () => {
       dataIndex: 'v',
       key: 'v',
       width: '62%',
-      render: (value: number[]) => {
-        return (
-          <p>
-            val={value[0]}, ptA={value[1]}, ptB={value[2]}, entityA={value[3]}, entityB={value[4]}
-          </p>
-        );
+      render: (value: number[], record) => {
+        let displayData;
+        switch (record.t) {
+          case SlvsConstraints.SLVS_C_POINTS_COINCIDENT:
+            displayData = 'ptA=' + value[1] + ', ptB=' + value[2];
+            break;
+          case SlvsConstraints.SLVS_C_PT_PT_DISTANCE:
+            displayData = 'val=' + value[0] + ', ptA=' + value[1] + ', ptB=' + value[2];
+            break;
+          case SlvsConstraints.SLVS_C_HORIZONTAL:
+            displayData = 'entityA=' + value[3];
+            break;
+          case SlvsConstraints.SLVS_C_VERTICAL:
+            displayData = 'entityA=' + value[3];
+            break;
+          default:
+            displayData =
+              'val=' +
+              value[0] +
+              ', ptA=' +
+              value[1] +
+              ', ptB=' +
+              value[2] +
+              ', entityA=' +
+              value[3] +
+              ', entityB=' +
+              value[4];
+        }
+
+        return <p>{displayData}</p>;
       },
+      editable: true,
     },
   ];
+
+  const handleSave = (row: DataType) => {
+    //console.log('handleSave', row);
+    const { ['key']: removedKey, ...constraintData } = row;
+    dispatch(updateConstraint(constraintData));
+  };
+
+  const columns = defaultColumns.map((col) => {
+    if (!col.editable) {
+      return col;
+    }
+    return {
+      ...col,
+      onCell: (record: DataType) => ({
+        record,
+        editable: col.editable,
+        dataIndex: col.dataIndex,
+        title: col.title,
+        handleSave,
+      }),
+    };
+  });
 
   return (
     <>
@@ -166,9 +345,15 @@ const ConstraintTable = () => {
         <Table
           //style={{ height: '100%' }}
           //onChange={handleTableChange}
+          components={{
+            body: {
+              row: EditableRow,
+              cell: EditableCell,
+            },
+          }}
           pagination={false}
           scroll={{ y: 500 }}
-          columns={columns}
+          columns={columns as ColumnTypes}
           dataSource={tableData}
           //loading={dataLoading}
         />

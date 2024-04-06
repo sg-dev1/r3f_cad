@@ -1,4 +1,4 @@
-import { SlvsConstraints } from './Constraints';
+import { SlvsConstraints, ConstraintValueType } from './Constraints';
 
 export interface SolverEntityType {
   id: number;
@@ -9,7 +9,7 @@ export interface SolverEntityType {
 export interface SolverRequestType {
   workplane: string;
   entities: SolverEntityType[];
-  constraints: { id: number; t: SlvsConstraints; v: number[] }[];
+  constraints: { id: number; t: SlvsConstraints; v: ConstraintValueType }[];
 }
 
 export interface SolverResponseType {
