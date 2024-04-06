@@ -1,7 +1,5 @@
 //
 // TODOs
-//  - delete constraints
-//  - display constraint solver errors, e.g. errornous constraints written in red
 //
 // Improvements:
 //  - edit constraints:
@@ -13,14 +11,20 @@
 //  - Per default the whole v (Values) array is shown - parts of it are not relevant for a particular constraint
 //
 import { useAppDispatch, useAppSelector } from '@/app/hooks';
-import { selectConstraints, updateConstraint } from '@/app/slices/sketchSlice';
+import {
+  deleteConstraint,
+  selectConstraints,
+  selectLastSolverFailedConstraints,
+  updateConstraint,
+} from '@/app/slices/sketchSlice';
 import { ConstraintType, SlvsConstraints } from '@/app/types/Constraints';
 import type { GetRef, InputRef } from 'antd';
-import { Card, Form, Input, Table } from 'antd';
+import { Card, Form, Input, Popconfirm, Table } from 'antd';
 import { SorterResult } from 'antd/es/table/interface';
 import React, { useContext, useEffect, useRef, useState } from 'react';
 
 import '../app/globals.css';
+import { DeleteOutlined } from '@ant-design/icons';
 
 // ---
 // Base on Editable Cells example
@@ -146,18 +150,30 @@ type ColumnTypes = Exclude<EditableTableProps['columns'], undefined>;
 
 interface DataType extends ConstraintType {
   key: string;
+  isError: boolean;
 }
 
 const ConstraintTable = () => {
   const constraints = useAppSelector(selectConstraints);
   const [tableData, setTableData] = useState<DataType[]>([]);
+  const sketchLastSolverFailedConstraints = useAppSelector(selectLastSolverFailedConstraints);
 
   const [sortedInfo, setSortedInfo] = useState<SorterResult<DataType>>({});
   const dispatch = useAppDispatch();
 
   useEffect(() => {
-    setTableData(constraints.map((constraint) => ({ ...constraint, key: String(constraint.id) })));
-  }, [constraints]);
+    setTableData(
+      constraints.map((constraint) => ({
+        ...constraint,
+        key: String(constraint.id),
+        isError: sketchLastSolverFailedConstraints.indexOf(constraint.id) !== -1,
+      }))
+    );
+  }, [constraints, sketchLastSolverFailedConstraints]);
+
+  const handleDelete = (record: DataType) => {
+    dispatch(deleteConstraint(record));
+  };
 
   const defaultColumns: (ColumnTypes[number] & { editable?: boolean; dataIndex: string })[] = [
     {
@@ -281,7 +297,7 @@ const ConstraintTable = () => {
       title: 'Values',
       dataIndex: 'v',
       key: 'v',
-      width: '62%',
+      width: '52%',
       render: (value: number[], record) => {
         let displayData;
         switch (record.t) {
@@ -315,11 +331,24 @@ const ConstraintTable = () => {
       },
       editable: true,
     },
+    {
+      title: '',
+      dataIndex: 'action',
+      key: 'action',
+      width: '10%',
+      render: (_, record) => {
+        return (
+          <Popconfirm title="Sure to delete?" onConfirm={() => handleDelete(record as DataType)}>
+            <DeleteOutlined />
+          </Popconfirm>
+        );
+      },
+    },
   ];
 
   const handleSave = (row: DataType) => {
     //console.log('handleSave', row);
-    const { ['key']: removedKey, ...constraintData } = row;
+    const { ['key']: removedKey, ['isError']: _, ...constraintData } = row;
     dispatch(updateConstraint(constraintData));
   };
 
@@ -351,6 +380,7 @@ const ConstraintTable = () => {
               cell: EditableCell,
             },
           }}
+          rowClassName={(record, index) => (record.isError ? 'red-text' : '')}
           pagination={false}
           scroll={{ y: 500 }}
           columns={columns as ColumnTypes}

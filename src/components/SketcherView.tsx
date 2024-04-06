@@ -191,7 +191,7 @@ const SketcherView = () => {
             Length
           </Button>
 
-          <div style={{ color: 'white' }}>
+          <div className={sketchLastSolverResultCode === 0 ? 'white-text' : 'red-text'}>
             {stateIndicator} | {solverResult}
           </div>
         </Header>

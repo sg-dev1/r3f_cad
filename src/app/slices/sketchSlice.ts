@@ -75,8 +75,6 @@ const BASE_URL = 'http://127.0.0.1:7777';
 export const callSketchSolverBackend = createAsyncThunk<any, SolverRequestType>(
   'solver/solve',
   async (data, { rejectWithValue }) => {
-    // TODO decide about Request method and url
-    // TODO add axios as dependency
     const requestUrl = BASE_URL + '/solve';
     try {
       const response = await axios.post(requestUrl, data);
@@ -85,14 +83,6 @@ export const callSketchSolverBackend = createAsyncThunk<any, SolverRequestType>(
     } catch (error: any) {
       return rejectWithValue(error.response.data);
     }
-    // const requestUrl = ApiEndpoint.getCompanyPath();
-    // const payload = ApiEndpoint.makeApiPayload(requestUrl, 'GET', true, {});
-    // try {
-    //   const response = await axios(payload);
-    //   return response.data;
-    // } catch (error: any) {
-    //   return rejectWithValue(error.response.data);
-    // }
   }
 );
 
@@ -172,6 +162,17 @@ export const sketchSlice = createSlice({
         state.constraints.splice(index, 1, { ...constraint, ...payload });
       }
     },
+    deleteConstraint: (state, { payload }) => {
+      state.constraints = state.constraints.filter((constraint) => constraint.id !== payload.id);
+      if (payload.t === SlvsConstraints.SLVS_C_PT_PT_DISTANCE) {
+        const pt1 = state.pointsMap[payload.v[1]];
+        const pt2 = state.pointsMap[payload.v[2]];
+        const line = state.lines.filter((line) => line.p1_id === pt1.id && line.p2_id === pt2.id);
+        if (line.length >= 1) {
+          line[0].length = undefined; // update the length
+        }
+      }
+    },
     setLengthConstraintLineId: (state, { payload }) => {
       state.lengthConstraintLineId = payload;
     },
@@ -189,6 +190,8 @@ export const sketchSlice = createSlice({
       .addCase(callSketchSolverBackend.pending, (state) => {
         state.isSolverRequestPending = true;
         state.solverRequestError = null;
+
+        state.lastSolverFailedConstraints = [];
       })
       .addCase(callSketchSolverBackend.fulfilled, (state, action) => {
         state.isSolverRequestPending = false;
@@ -216,8 +219,8 @@ export const sketchSlice = createSlice({
             // TODO support other types, e.g. circles and arcs
           });
         } else {
-          // TODO parse the action.payload.failed - need to highlight them (at first they need to be shown at all)
-          console.log('Failed constraints ', action.payload.failed);
+          // Save the action.payload.failed
+          state.lastSolverFailedConstraints = action.payload.failed;
         }
       })
       .addCase(callSketchSolverBackend.rejected, (state, action) => {
@@ -227,8 +230,14 @@ export const sketchSlice = createSlice({
   },
 });
 
-export const { addPoint, resetLastPoint, addConstraint, updateConstraint, setLengthConstraintLineId } =
-  sketchSlice.actions;
+export const {
+  addPoint,
+  resetLastPoint,
+  addConstraint,
+  updateConstraint,
+  deleteConstraint,
+  setLengthConstraintLineId,
+} = sketchSlice.actions;
 
 export const selectPoints = (state: RootState) => state.sketchs.points;
 export const selectPointsMap = (state: RootState) => state.sketchs.pointsMap;
