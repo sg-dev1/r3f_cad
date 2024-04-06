@@ -1,12 +1,15 @@
 // Functionality required for this custom Line component
 // - Highlight color + make thicker on mouse over                (done)
 // - Selection with on click (then maybe different color)        // selection not needed now
-// - drag'n'drop - a bit more trick since it needs to            // will be implemented later
+// - drag'n'drop - a bit more tricky since it needs to           // will be implemented later
+//                 consider constraints
 
 import { useAppDispatch, useAppSelector } from '@/app/hooks';
 import {
   addConstraint,
   selectConstraints,
+  selectLastDof,
+  selectLastSolverResultCode,
   selectLengthConstraintLineId,
   setLengthConstraintLineId,
 } from '@/app/slices/sketchSlice';
@@ -33,6 +36,8 @@ const LineObject = ({
   const constraintsAffectingLine = sketchConstraints.filter((c) => c.v[3] === id || c.v[4] === id);
   const horizontalConstraints = constraintsAffectingLine.filter((c) => c.t === SlvsConstraints.SLVS_C_HORIZONTAL);
   const verticalConstraints = constraintsAffectingLine.filter((c) => c.t === SlvsConstraints.SLVS_C_VERTICAL);
+  const sketchLastSolverResultCode = useAppSelector(selectLastSolverResultCode);
+  const sketchLastDof = useAppSelector(selectLastDof);
 
   const sketchLengthConstraintLineId = useAppSelector(selectLengthConstraintLineId);
 
@@ -51,7 +56,8 @@ const LineObject = ({
       <Line
         userData={{ id: id }}
         points={[start, end]} // array of points
-        color={hovered ? 'black' : 'white'} // TODO color should be configured via redux store
+        // use green color for fully constraint
+        color={sketchLastSolverResultCode !== 0 ? 'red' : sketchLastDof === 0 ? 'green' : hovered ? 'black' : 'white'} // TODO color should be configured via redux store
         onClick={(e) => onGeometryClick(GeometryType.LINE, e.eventObject.userData.id)}
         onPointerOver={() => {
           //console.log('onPointerOver');

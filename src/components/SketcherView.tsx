@@ -4,15 +4,12 @@
 //
 // TODO Display of entities in table/list (+ remove entries)
 //
+// TODO drag'n'drop of lines (needs to consider constraints)
+//
 // TODO improve positioning of constraints drawn on canvas
 //
 // TODO update of constraints on canvas
 // TODO delete of constraints on canvas
-//
-// TODO show all lines in green when sketch is fully constrained
-// TODO                in red when there are errors (and properly display them)
-//
-// TODO drag'n'drop of lines (needs to consider constraints)
 //
 // TODO add more tools:
 //   - Currently we simply have a simple line drawing tool that saves its points into the redux state and some basic constraint tools
