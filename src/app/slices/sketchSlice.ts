@@ -18,7 +18,7 @@ export interface SketchState {
   points: Point3DType[];
   pointsMap: Point3DMapType;
   lines: Line3DType[];
-  lastPoint3D: Point3DType | null;
+  lastPoint3D: Point3DType | null; // required for drawing of lines (stores the last point)
 
   constraintIdCounter: number;
   constraints: ConstraintType[];

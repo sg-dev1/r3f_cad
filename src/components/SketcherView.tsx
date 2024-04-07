@@ -1,5 +1,24 @@
 //
-// TODO Display of entities in table/list (+ remove entries)
+// TODO Implement remove entities in sketcher slice (in Entities table + on canvas later on)
+//  - Change sketchSlice -> addPoint to addEntity (with proper entity type)
+//  - Change GeometryType.ts to EntityType.ts (preserve GeometryType enum)
+//    and add EntityType (DataType in EntitiesTable should then extend from it)
+//  - implement removeEntity in sketcherSlice
+//  - call it in EntitiesTable
+//  - later on it shall also be called via canvas: Select an Entity --> press ENTF key to delete it
+//    (click listener on Entity for selection; then event listener on keyboard - could be combined with drag'n'drop of lines)
+//
+// TODO sketch slice refactoring: Split it into parts
+//   - current state of sketcher tool (lengthConstraintLineId, selectedEntityId) - no persistence needed
+//   - current state of sketch - persistence needed
+//          - entities (entityIdCounter, points, pointsMap, lines, lastPoint3D)
+//          - constraints (constraintIdCounter, constraints)
+//          - solver state // the state itself need to be here but the thunk needs to have access to the points to manipulate them
+// TODO sketch slice refactoring: Extending it for multi sketch support
+//   - Each sketch has its own id
+//   - Maybe this should also go into its own slice (needs to be persistetd)
+//   - Provide functionality to store the state from the sketch slice (and load it again into the sketch slice)
+//        - e.g. trigger this functionality on open/ close of the sketcher tool
 //
 // TODO drag'n'drop of lines (needs to consider constraints)
 //
