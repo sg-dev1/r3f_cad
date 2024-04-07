@@ -25,6 +25,7 @@ export interface SketchState {
 
   // Tool states
   lengthConstraintLineId: number;
+  selectedEntityId: number;
 }
 
 // Define the initial state using that type
@@ -45,6 +46,7 @@ const initialState: SketchState = {
   constraints: [],
 
   lengthConstraintLineId: -1,
+  selectedEntityId: -1,
 };
 
 export const buildSolverRequestType = (input: {
@@ -176,6 +178,10 @@ export const sketchSlice = createSlice({
     setLengthConstraintLineId: (state, { payload }) => {
       state.lengthConstraintLineId = payload;
     },
+    setSelectedEntityId: (state, { payload }) => {
+      console.log('Set selected entity id to ', payload);
+      state.selectedEntityId = payload;
+    },
     /*
     addLine: (state, { payload }) => {
       const _id = state.counter;
@@ -237,6 +243,7 @@ export const {
   updateConstraint,
   deleteConstraint,
   setLengthConstraintLineId,
+  setSelectedEntityId,
 } = sketchSlice.actions;
 
 export const selectPoints = (state: RootState) => state.sketchs.points;
@@ -250,5 +257,6 @@ export const selectLastDof = (state: RootState) => state.sketchs.lastSolverDof;
 export const selectLastSolverFailedConstraints = (state: RootState) => state.sketchs.lastSolverFailedConstraints;
 
 export const selectLengthConstraintLineId = (state: RootState) => state.sketchs.lengthConstraintLineId;
+export const selectSelectedEntityId = (state: RootState) => state.sketchs.selectedEntityId;
 
 export default sketchSlice.reducer;

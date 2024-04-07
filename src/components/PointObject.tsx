@@ -1,3 +1,5 @@
+import { useAppSelector } from '@/app/hooks';
+import { selectSelectedEntityId } from '@/app/slices/sketchSlice';
 import { GeometryType } from '@/app/types/GeometryType';
 import { Point } from '@react-three/drei';
 import { useState } from 'react';
@@ -12,12 +14,13 @@ const PointObject = ({
   onGeometryClick: (type: GeometryType, id: number) => void;
 }) => {
   const [hovered, setHovered] = useState(false);
+  const sketchSelectedEntityId = useAppSelector(selectSelectedEntityId);
 
   return (
     <Point
       userData={{ id: id }}
       position={position}
-      color={hovered ? 'darkred' : 'red'} // TODO color should be configured via redux store
+      color={sketchSelectedEntityId === id ? 'yellow' : hovered ? 'darkred' : 'red'} // TODO color should be configured via redux store
       onClick={(e) => onGeometryClick(GeometryType.POINT, e.eventObject.userData.id)}
       onPointerOver={(e) => {
         //console.log('onPointerOver point', e);

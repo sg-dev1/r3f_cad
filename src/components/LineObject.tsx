@@ -11,12 +11,13 @@ import {
   selectLastDof,
   selectLastSolverResultCode,
   selectLengthConstraintLineId,
+  selectSelectedEntityId,
   setLengthConstraintLineId,
 } from '@/app/slices/sketchSlice';
 import { SlvsConstraints } from '@/app/types/Constraints';
 import { GeometryType } from '@/app/types/GeometryType';
 import { Html, Line } from '@react-three/drei';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 //   update the data in the redux store as well
 const LineObject = ({
@@ -40,6 +41,7 @@ const LineObject = ({
   const sketchLastDof = useAppSelector(selectLastDof);
 
   const sketchLengthConstraintLineId = useAppSelector(selectLengthConstraintLineId);
+  const sketchSelectedEntityId = useAppSelector(selectSelectedEntityId);
 
   const dispatch = useAppDispatch();
 
@@ -57,7 +59,17 @@ const LineObject = ({
         userData={{ id: id }}
         points={[start, end]} // array of points
         // use green color for fully constraint
-        color={sketchLastSolverResultCode !== 0 ? 'red' : sketchLastDof === 0 ? 'green' : hovered ? 'black' : 'white'} // TODO color should be configured via redux store
+        color={
+          sketchSelectedEntityId === id
+            ? 'yellow'
+            : sketchLastSolverResultCode !== 0
+            ? 'red'
+            : sketchLastDof === 0
+            ? 'green'
+            : hovered
+            ? 'black'
+            : 'white'
+        } // TODO color should be configured via redux store
         onClick={(e) => onGeometryClick(GeometryType.LINE, e.eventObject.userData.id)}
         onPointerOver={() => {
           //console.log('onPointerOver');

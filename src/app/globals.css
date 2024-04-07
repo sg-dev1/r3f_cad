@@ -48,3 +48,7 @@
 .white-text {
   color: white;
 }
+
+.selected-row {
+  background-color: yellow;
+}

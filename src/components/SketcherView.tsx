@@ -1,7 +1,4 @@
 //
-// TODO examine possiblilities how to save redux state (e.g. to local storage etc.)
-//   - e.g. add persistence because currently all data is lost after a reload
-//
 // TODO Display of entities in table/list (+ remove entries)
 //
 // TODO drag'n'drop of lines (needs to consider constraints)
@@ -10,6 +7,11 @@
 //
 // TODO update of constraints on canvas
 // TODO delete of constraints on canvas
+//
+// TODO integration of redux persist
+//   Examine possiblilities how to save redux state (e.g. to local storage etc.)
+//     - e.g. add persistence because currently all data is lost after a reload
+//     Use Redux Persist: https://blog.logrocket.com/persist-state-redux-persist-redux-toolkit-react/
 //
 // TODO add more tools:
 //   - Currently we simply have a simple line drawing tool that saves its points into the redux state and some basic constraint tools
@@ -39,6 +41,7 @@ import {
 import { SlvsConstraints } from '@/app/types/Constraints';
 import ZeroCoordinateCross from './ZeroCoordinateCross';
 import ConstraintTable from './ConstraintTable';
+import EntitiesTable from './EntitiesTable';
 
 const { Header, Content, Sider } = Layout;
 
@@ -206,6 +209,7 @@ const SketcherView = () => {
             }}
           >
             <ConstraintTable />
+            <EntitiesTable />
           </Sider>
           <Content style={{ marginLeft: 500, padding: '10px 24px 24px', backgroundColor: 'slategray' }}>
             <Canvas

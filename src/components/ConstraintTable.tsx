@@ -19,7 +19,7 @@ import {
 } from '@/app/slices/sketchSlice';
 import { ConstraintType, SlvsConstraints } from '@/app/types/Constraints';
 import type { GetRef, InputRef } from 'antd';
-import { Card, Form, Input, Popconfirm, Table } from 'antd';
+import { Form, Input, Popconfirm, Table } from 'antd';
 import { SorterResult } from 'antd/es/table/interface';
 import React, { useContext, useEffect, useRef, useState } from 'react';
 
@@ -370,24 +370,24 @@ const ConstraintTable = () => {
 
   return (
     <>
-      <Card title="Constraints" bordered={false} style={{ height: '100%' }}>
-        <Table
-          //style={{ height: '100%' }}
-          //onChange={handleTableChange}
-          components={{
-            body: {
-              row: EditableRow,
-              cell: EditableCell,
-            },
-          }}
-          rowClassName={(record, index) => (record.isError ? 'red-text' : '')}
-          pagination={false}
-          scroll={{ y: 500 }}
-          columns={columns as ColumnTypes}
-          dataSource={tableData}
-          //loading={dataLoading}
-        />
-      </Card>
+      <Table
+        style={{ height: '50%', overflow: 'auto' }}
+        //style={{ overflow: 'scroll' }}
+        //onChange={handleTableChange}
+        components={{
+          body: {
+            row: EditableRow,
+            cell: EditableCell,
+          },
+        }}
+        rowClassName={(record, index) => (record.isError ? 'red-text' : '')}
+        pagination={false}
+        scroll={{ y: '35vh' }}
+        columns={columns as ColumnTypes}
+        dataSource={tableData}
+        title={() => <b>Constraints</b>}
+        //loading={dataLoading}
+      />
     </>
   );
 };
