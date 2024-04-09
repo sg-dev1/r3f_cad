@@ -1,4 +1,4 @@
-import { GeometryType } from '@/app/types/GeometryType';
+import { GeometryType } from '@/app/types/EntityType';
 import { Line, Point, Points } from '@react-three/drei';
 import React, { useState } from 'react';
 

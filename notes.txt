@@ -54,6 +54,22 @@ https://ant.design/docs/react/compatible-style
 
 ---------
 
+Redux - reducer with a prepare function (e.g. generate an id)
+
+addEntity: {
+  reducer(state, action: PayloadAction<{ p: Point3DType; type: GeometryType }, string>) {
+    // ... implementation
+  },
+  prepare(payload: { p: Point3DType; type: GeometryType }) {
+    //return { payload: { ...payload, id: 1 } };
+    return { payload };
+  },
+  //reducer: (state, { payload }) => {},
+  //prepare: (payload: PayloadAction<Point3DType>) => ({ payload: { ...payload, id: 0 } }),
+},
+
+---------
+
 # TODOs
 
 - Change Line to use [number, number, number] instead of Vector3

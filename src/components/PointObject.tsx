@@ -1,6 +1,6 @@
 import { useAppSelector } from '@/app/hooks';
 import { selectSelectedEntityId } from '@/app/slices/sketchSlice';
-import { GeometryType } from '@/app/types/GeometryType';
+import { GeometryType } from '@/app/types/EntityType';
 import { Point } from '@react-three/drei';
 import { useState } from 'react';
 

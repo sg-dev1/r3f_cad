@@ -5,6 +5,7 @@ import { Line3DType } from '../types/Line3DType';
 import { ConstraintType, SlvsConstraints } from '../types/Constraints';
 import axios from 'axios';
 import { SolverRequestType, SolverEntityType } from '../types/SolverTypes';
+import { GeometryType, geometryTypeToString } from '../types/EntityType';
 
 // Define a type for the slice state
 export interface SketchState {
@@ -88,41 +89,56 @@ export const callSketchSolverBackend = createAsyncThunk<any, SolverRequestType>(
   }
 );
 
-// TODO the addPoint may be renamed to addGeometry object (maybe with generic GeometryType instead of boolean)
 export const sketchSlice = createSlice({
   name: 'sketch',
   // `createSlice` will infer the state type from the `initialState` argument
   initialState,
   reducers: {
-    addPoint: {
-      reducer(state, action: PayloadAction<{ p: Point3DType; isLine: boolean }, string>) {
-        const newPoint = { ...action.payload.p, id: state.entityIdCounter };
-        state.entityIdCounter++;
+    addEntity: (state, action: PayloadAction<{ p: Point3DType; type: GeometryType }, string>) => {
+      const newPoint = { ...action.payload.p, id: state.entityIdCounter };
+      state.entityIdCounter++;
 
-        if (action.payload.isLine) {
-          if (state.lastPoint3D) {
-            if (!(state.lastPoint3D.id in state.pointsMap)) {
-              state.points.push(state.lastPoint3D);
-              state.pointsMap[state.lastPoint3D.id] = state.lastPoint3D;
-            }
-            state.points.push(newPoint);
-            state.pointsMap[newPoint.id] = newPoint;
-            // add the line
-            state.lines.push({ p1_id: state.lastPoint3D.id, p2_id: newPoint.id, id: state.entityIdCounter });
-            state.entityIdCounter++;
+      // TODO properly handle other types when they are supported
+      if (GeometryType.LINE === action.payload.type) {
+        if (state.lastPoint3D) {
+          if (!(state.lastPoint3D.id in state.pointsMap)) {
+            state.points.push(state.lastPoint3D);
+            state.pointsMap[state.lastPoint3D.id] = state.lastPoint3D;
           }
-          state.lastPoint3D = newPoint;
-        } else {
           state.points.push(newPoint);
           state.pointsMap[newPoint.id] = newPoint;
+          // add the line
+          state.lines.push({ p1_id: state.lastPoint3D.id, p2_id: newPoint.id, id: state.entityIdCounter });
+          state.entityIdCounter++;
         }
-      },
-      prepare(payload: { p: Point3DType; isLine: boolean }) {
-        //return { payload: { ...payload, id: 1 } };
-        return { payload };
-      },
-      //reducer: (state, { payload }) => {},
-      //prepare: (payload: PayloadAction<Point3DType>) => ({ payload: { ...payload, id: 0 } }),
+        state.lastPoint3D = newPoint;
+      } else if (GeometryType.POINT === action.payload.type) {
+        state.points.push(newPoint);
+        state.pointsMap[newPoint.id] = newPoint;
+      } else {
+        console.error(
+          'The given Geometry type ' + geometryTypeToString(action.payload.type) + ' is not yet implemented'
+        );
+      }
+    },
+    removeEntity: (state, { payload }) => {
+      // TODO properly handle other types when they are supported
+      if (GeometryType.LINE === payload.type) {
+        state.lines = state.lines.filter((line) => line.id !== payload.id);
+        // also have to delete constraints referencing this line
+        state.constraints = state.constraints.filter(
+          (constraint) => constraint.v[3] !== payload.id && constraint.v[4] !== payload.id
+        );
+      } else if (GeometryType.POINT === payload.type) {
+        state.points = state.points.filter((point) => point.id !== payload.id);
+        delete state.pointsMap[payload.id];
+        // also have to delete constraints referencing this point
+        state.constraints = state.constraints.filter(
+          (constraint) => constraint.v[1] !== payload.id && constraint.v[2] !== payload.id
+        );
+      } else {
+        console.error('The given Geometry type ' + geometryTypeToString(payload.type) + ' is not yet implemented');
+      }
     },
     resetLastPoint: (state) => {
       state.lastPoint3D = null;
@@ -182,14 +198,6 @@ export const sketchSlice = createSlice({
       console.log('Set selected entity id to ', payload);
       state.selectedEntityId = payload;
     },
-    /*
-    addLine: (state, { payload }) => {
-      const _id = state.counter;
-
-      state.lines.push({ ...payload, id: _id });
-      state.counter++;
-    },
-    */
   },
   extraReducers: (builder) => {
     builder
@@ -237,7 +245,8 @@ export const sketchSlice = createSlice({
 });
 
 export const {
-  addPoint,
+  addEntity,
+  removeEntity,
   resetLastPoint,
   addConstraint,
   updateConstraint,

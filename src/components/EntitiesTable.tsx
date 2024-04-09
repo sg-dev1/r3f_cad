@@ -1,15 +1,13 @@
 import { useAppDispatch, useAppSelector } from '@/app/hooks';
-import { selectLines, selectPoints, setSelectedEntityId } from '@/app/slices/sketchSlice';
-import { GeometryType } from '@/app/types/GeometryType';
+import { selectLines, selectPoints, setSelectedEntityId, removeEntity } from '@/app/slices/sketchSlice';
+import EntityType, { GeometryType } from '@/app/types/EntityType';
 import { DeleteOutlined } from '@ant-design/icons';
 import { Popconfirm, Table } from 'antd';
 import { ColumnsType } from 'antd/es/table';
 import React, { useEffect, useState } from 'react';
 
-interface DataType {
+interface DataType extends EntityType {
   key: string;
-  id: number;
-  type: GeometryType;
 }
 
 const EntitiesTable = () => {
@@ -29,7 +27,7 @@ const EntitiesTable = () => {
 
   const handleDelete = (record: DataType) => {
     console.log('delete', record);
-    // TODO
+    dispatch(removeEntity(record));
   };
 
   const columns: ColumnsType<DataType> = [

@@ -15,7 +15,7 @@ import {
   setLengthConstraintLineId,
 } from '@/app/slices/sketchSlice';
 import { SlvsConstraints } from '@/app/types/Constraints';
-import { GeometryType } from '@/app/types/GeometryType';
+import { GeometryType } from '@/app/types/EntityType';
 import { Html, Line } from '@react-three/drei';
 import { useEffect, useState } from 'react';
 

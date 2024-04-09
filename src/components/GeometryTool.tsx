@@ -8,7 +8,7 @@ import { Line, Points } from '@react-three/drei';
 import * as THREE from 'three';
 import { useAppSelector, useAppDispatch } from '@/app/hooks';
 import {
-  addPoint,
+  addEntity,
   resetLastPoint,
   selectLines,
   selectPoints,
@@ -19,7 +19,7 @@ import {
   buildSolverRequestType,
 } from '@/app/slices/sketchSlice';
 import { calcIntersectionWithPlane } from '@/utils/threejs_utils';
-import { GeometryType } from '@/app/types/GeometryType';
+import { GeometryType } from '@/app/types/EntityType';
 import LineObject from './LineObject';
 import PointObject from './PointObject';
 
@@ -79,7 +79,7 @@ const GeometryTool = forwardRef<any, any>(({ onGeometryClick }: GeometryToolProp
           event.target as HTMLElement
         );
         if (intersect) {
-          dispatch(addPoint({ p: { ...intersect, id: 0 }, isLine: true }));
+          dispatch(addEntity({ p: { ...intersect, id: 0 }, type: GeometryType.LINE }));
         }
         //console.log(intersect);
       },
@@ -116,7 +116,7 @@ const GeometryTool = forwardRef<any, any>(({ onGeometryClick }: GeometryToolProp
           event.target as HTMLElement
         );
         if (intersect) {
-          dispatch(addPoint({ p: { ...intersect, id: 0 }, isLine: false }));
+          dispatch(addEntity({ p: { ...intersect, id: 0 }, type: GeometryType.POINT }));
         }
       },
       reset: () => {

@@ -1,13 +1,4 @@
 //
-// TODO Implement remove entities in sketcher slice (in Entities table + on canvas later on)
-//  - Change sketchSlice -> addPoint to addEntity (with proper entity type)
-//  - Change GeometryType.ts to EntityType.ts (preserve GeometryType enum)
-//    and add EntityType (DataType in EntitiesTable should then extend from it)
-//  - implement removeEntity in sketcherSlice
-//  - call it in EntitiesTable
-//  - later on it shall also be called via canvas: Select an Entity --> press ENTF key to delete it
-//    (click listener on Entity for selection; then event listener on keyboard - could be combined with drag'n'drop of lines)
-//
 // TODO sketch slice refactoring: Split it into parts
 //   - current state of sketcher tool (lengthConstraintLineId, selectedEntityId) - no persistence needed
 //   - current state of sketch - persistence needed
@@ -24,13 +15,17 @@
 //
 // TODO improve positioning of constraints drawn on canvas
 //
-// TODO update of constraints on canvas
+// TODO update of constraints on canvas (e.g. makes sense for length constraint), improved update on ConstraintsTable.tsx
 // TODO delete of constraints on canvas
 //
 // TODO integration of redux persist
 //   Examine possiblilities how to save redux state (e.g. to local storage etc.)
 //     - e.g. add persistence because currently all data is lost after a reload
 //     Use Redux Persist: https://blog.logrocket.com/persist-state-redux-persist-redux-toolkit-react/
+//
+// TODO Implement remove entities in sketcher slice via canvas
+//  - Select an Entity (e.g. a line, a point) --> press ENTF key to delete it
+//    (click listener on Entity for selection; then event listener on keyboard - could be combined with drag'n'drop of lines)
 //
 // TODO add more tools:
 //   - Currently we simply have a simple line drawing tool that saves its points into the redux state and some basic constraint tools
@@ -46,7 +41,7 @@ import { Canvas } from '@react-three/fiber';
 import { OrbitControls } from '@react-three/drei';
 import GeometryTool, { GeometryToolRefType } from './GeometryTool';
 import { Button, Layout } from 'antd';
-import { GeometryType } from '@/app/types/GeometryType';
+import { GeometryType, geometryTypeToString } from '@/app/types/EntityType';
 import { useAppDispatch, useAppSelector } from '@/app/hooks';
 import {
   addConstraint,
@@ -94,7 +89,7 @@ const SketcherView = () => {
 
   // Just for debugging
   useEffect(() => {
-    console.log('sketchConstraints', sketchConstraints);
+    console.log('[SketcherView.useEffect(_,[sketchConstraints])', sketchConstraints);
   }, [sketchConstraints]);
 
   useEffect(() => {
@@ -139,7 +134,9 @@ const SketcherView = () => {
   }, [toolState]);
 
   const onGeometryClick = (type: GeometryType, id: number) => {
-    console.log('Geometry with type ' + type + ' and id ' + id + ' clicked');
+    console.log(
+      '[SketcherView.onGeometryClick] Geometry with type ' + geometryTypeToString(type) + ' and id ' + id + ' clicked'
+    );
 
     // Add constraint in case a constraint tool was selected
     if (ToolState.CONSTRAINT_COINCIDENCE === toolState) {
