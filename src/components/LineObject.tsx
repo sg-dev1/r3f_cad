@@ -5,15 +5,12 @@
 //                 consider constraints
 
 import { useAppDispatch, useAppSelector } from '@/app/hooks';
+import { addConstraint, selectConstraints, selectLastDof, selectLastSolverResultCode } from '@/app/slices/sketchSlice';
 import {
-  addConstraint,
-  selectConstraints,
-  selectLastDof,
-  selectLastSolverResultCode,
   selectLengthConstraintLineId,
   selectSelectedEntityId,
   setLengthConstraintLineId,
-} from '@/app/slices/sketchSlice';
+} from '@/app/slices/sketchToolStateSlice';
 import { SlvsConstraints } from '@/app/types/Constraints';
 import { GeometryType } from '@/app/types/EntityType';
 import { Html, Line } from '@react-three/drei';

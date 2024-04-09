@@ -1,13 +1,12 @@
 import { configureStore } from '@reduxjs/toolkit';
 import sketchReducer from './slices/sketchSlice';
+import sketchToolReducer from './slices/sketchToolStateSlice';
 // ...
 
 export const store = configureStore({
   reducer: {
-    //    posts: postsReducer,
-    //    comments: commentsReducer,
-    //    users: usersReducer
     sketchs: sketchReducer,
+    sketchTool: sketchToolReducer,
   },
 });
 

@@ -19,14 +19,11 @@ export interface SketchState {
   points: Point3DType[];
   pointsMap: Point3DMapType;
   lines: Line3DType[];
-  lastPoint3D: Point3DType | null; // required for drawing of lines (stores the last point)
+  // required for drawing of lines (stores the last point), not needed to persist
+  lastPoint3D: Point3DType | null;
 
   constraintIdCounter: number;
   constraints: ConstraintType[];
-
-  // Tool states
-  lengthConstraintLineId: number;
-  selectedEntityId: number;
 }
 
 // Define the initial state using that type
@@ -45,9 +42,6 @@ const initialState: SketchState = {
 
   constraintIdCounter: 0,
   constraints: [],
-
-  lengthConstraintLineId: -1,
-  selectedEntityId: -1,
 };
 
 export const buildSolverRequestType = (input: {
@@ -191,13 +185,6 @@ export const sketchSlice = createSlice({
         }
       }
     },
-    setLengthConstraintLineId: (state, { payload }) => {
-      state.lengthConstraintLineId = payload;
-    },
-    setSelectedEntityId: (state, { payload }) => {
-      console.log('Set selected entity id to ', payload);
-      state.selectedEntityId = payload;
-    },
   },
   extraReducers: (builder) => {
     builder
@@ -244,16 +231,8 @@ export const sketchSlice = createSlice({
   },
 });
 
-export const {
-  addEntity,
-  removeEntity,
-  resetLastPoint,
-  addConstraint,
-  updateConstraint,
-  deleteConstraint,
-  setLengthConstraintLineId,
-  setSelectedEntityId,
-} = sketchSlice.actions;
+export const { addEntity, removeEntity, resetLastPoint, addConstraint, updateConstraint, deleteConstraint } =
+  sketchSlice.actions;
 
 export const selectPoints = (state: RootState) => state.sketchs.points;
 export const selectPointsMap = (state: RootState) => state.sketchs.pointsMap;
@@ -264,8 +243,5 @@ export const selectConstraints = (state: RootState) => state.sketchs.constraints
 export const selectLastSolverResultCode = (state: RootState) => state.sketchs.lastSolverResultCode;
 export const selectLastDof = (state: RootState) => state.sketchs.lastSolverDof;
 export const selectLastSolverFailedConstraints = (state: RootState) => state.sketchs.lastSolverFailedConstraints;
-
-export const selectLengthConstraintLineId = (state: RootState) => state.sketchs.lengthConstraintLineId;
-export const selectSelectedEntityId = (state: RootState) => state.sketchs.selectedEntityId;
 
 export default sketchSlice.reducer;

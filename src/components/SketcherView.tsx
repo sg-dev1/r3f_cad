@@ -1,10 +1,4 @@
 //
-// TODO sketch slice refactoring: Split it into parts
-//   - current state of sketcher tool (lengthConstraintLineId, selectedEntityId) - no persistence needed
-//   - current state of sketch - persistence needed
-//          - entities (entityIdCounter, points, pointsMap, lines, lastPoint3D)
-//          - constraints (constraintIdCounter, constraints)
-//          - solver state // the state itself need to be here but the thunk needs to have access to the points to manipulate them
 // TODO sketch slice refactoring: Extending it for multi sketch support
 //   - Each sketch has its own id
 //   - Maybe this should also go into its own slice (needs to be persistetd)
@@ -49,9 +43,8 @@ import {
   selectLastDof,
   selectLastSolverFailedConstraints,
   selectLastSolverResultCode,
-  selectLengthConstraintLineId,
-  setLengthConstraintLineId,
 } from '@/app/slices/sketchSlice';
+import { selectLengthConstraintLineId, setLengthConstraintLineId } from '@/app/slices/sketchToolStateSlice';
 import { SlvsConstraints } from '@/app/types/Constraints';
 import ZeroCoordinateCross from './ZeroCoordinateCross';
 import ConstraintTable from './ConstraintTable';

@@ -1,5 +1,6 @@
 import { useAppDispatch, useAppSelector } from '@/app/hooks';
-import { selectLines, selectPoints, setSelectedEntityId, removeEntity } from '@/app/slices/sketchSlice';
+import { selectLines, selectPoints, removeEntity } from '@/app/slices/sketchSlice';
+import { setSelectedEntityId } from '@/app/slices/sketchToolStateSlice';
 import EntityType, { GeometryType } from '@/app/types/EntityType';
 import { DeleteOutlined } from '@ant-design/icons';
 import { Popconfirm, Table } from 'antd';
