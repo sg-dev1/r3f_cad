@@ -26,7 +26,9 @@ export interface SketchState {
   lastSolverDof: number;
   lastSolverFailedConstraints: number[];
 
-  sketch: SketchType;
+  sketchIdCount: number;
+  activeSketchId: number;
+  sketches: { [key: number]: SketchType };
 }
 
 // Define the initial state using that type
@@ -37,7 +39,9 @@ const initialState: SketchState = {
   lastSolverDof: -1,
   lastSolverFailedConstraints: [],
 
-  sketch: { ...emptySketch },
+  sketchIdCount: 0,
+  activeSketchId: -1,
+  sketches: {},
 };
 
 export const buildSolverRequestType = (input: {
@@ -84,23 +88,46 @@ export const sketchSlice = createSlice({
   // `createSlice` will infer the state type from the `initialState` argument
   initialState,
   reducers: {
+    createSketch: (state: SketchState) => {
+      state.sketches[state.sketchIdCount] = { ...emptySketch, id: state.sketchIdCount };
+      state.activeSketchId = state.sketchIdCount;
+      state.sketchIdCount++;
+    },
+    setActiveSketch: (state: SketchState, { payload: id }) => {
+      if (id < 0) {
+        console.error('There is no sketch with negative id.');
+        return;
+      }
+      if (!(id in state.sketches)) {
+        console.error('There is no sketch with id ' + id + '.');
+        return;
+      }
+      state.activeSketchId = id;
+    },
+    deleteSketch: (state: SketchState, { payload: id }) => {
+      if (!(id in state.sketches)) {
+        console.error('There is no sketch with id ' + id + '.');
+        return;
+      }
+      delete state.sketches[id];
+    },
     addEntity: (state: SketchState, action: PayloadAction<{ p: Point3DType; type: GeometryType }, string>) => {
-      sketchAddEntity(state.sketch, action.payload.p, action.payload.type);
+      sketchAddEntity(state.sketches[state.activeSketchId], action.payload.p, action.payload.type);
     },
     removeEntity: (state: SketchState, { payload }) => {
-      sketchRemoveEntity(state.sketch, payload.id, payload.type);
+      sketchRemoveEntity(state.sketches[state.activeSketchId], payload.id, payload.type);
     },
     resetLastPoint: (state: SketchState) => {
-      sketchResetLastPoint(state.sketch);
+      sketchResetLastPoint(state.sketches[state.activeSketchId]);
     },
     addConstraint: (state: SketchState, { payload }) => {
-      sketchAddConstraint(state.sketch, payload);
+      sketchAddConstraint(state.sketches[state.activeSketchId], payload);
     },
     updateConstraint: (state: SketchState, { payload }) => {
-      sketchUpdateConstraint(state.sketch, payload);
+      sketchUpdateConstraint(state.sketches[state.activeSketchId], payload);
     },
     deleteConstraint: (state: SketchState, { payload }) => {
-      sketchDeleteConstraint(state.sketch, payload);
+      sketchDeleteConstraint(state.sketches[state.activeSketchId], payload);
     },
   },
   extraReducers: (builder) => {
@@ -118,7 +145,7 @@ export const sketchSlice = createSlice({
         state.lastSolverDof = action.payload.dof;
         if (0 === action.payload.code) {
           //console.log('received entities ', action.payload.entities);
-          sketchUpdateEntities(state.sketch, action.payload.entities);
+          sketchUpdateEntities(state.sketches[state.activeSketchId], action.payload.entities);
         } else {
           // Save the action.payload.failed
           state.lastSolverFailedConstraints = action.payload.failed;
@@ -131,15 +158,26 @@ export const sketchSlice = createSlice({
   },
 });
 
-export const { addEntity, removeEntity, resetLastPoint, addConstraint, updateConstraint, deleteConstraint } =
-  sketchSlice.actions;
+export const {
+  createSketch,
+  setActiveSketch,
+  deleteSketch,
+  addEntity,
+  removeEntity,
+  resetLastPoint,
+  addConstraint,
+  updateConstraint,
+  deleteConstraint,
+} = sketchSlice.actions;
 
-export const selectPoints = (state: RootState) => state.sketchs.sketch.points;
-export const selectPointsMap = (state: RootState) => state.sketchs.sketch.pointsMap;
-export const selectLines = (state: RootState) => state.sketchs.sketch.lines;
-export const selectLastPoint = (state: RootState) => state.sketchs.sketch.lastPoint3D;
+export const selectActiveSketchId = (state: RootState) => state.sketchs.activeSketchId;
 
-export const selectConstraints = (state: RootState) => state.sketchs.sketch.constraints;
+export const selectPoints = (state: RootState) => state.sketchs.sketches[state.sketchs.activeSketchId].points;
+export const selectPointsMap = (state: RootState) => state.sketchs.sketches[state.sketchs.activeSketchId].pointsMap;
+export const selectLines = (state: RootState) => state.sketchs.sketches[state.sketchs.activeSketchId].lines;
+export const selectLastPoint = (state: RootState) => state.sketchs.sketches[state.sketchs.activeSketchId].lastPoint3D;
+export const selectConstraints = (state: RootState) => state.sketchs.sketches[state.sketchs.activeSketchId].constraints;
+
 export const selectLastSolverResultCode = (state: RootState) => state.sketchs.lastSolverResultCode;
 export const selectLastDof = (state: RootState) => state.sketchs.lastSolverDof;
 export const selectLastSolverFailedConstraints = (state: RootState) => state.sketchs.lastSolverFailedConstraints;

@@ -5,6 +5,8 @@ import { Point3DMapType, Point3DType } from '../types/Point3DType';
 import { SolverEntityType } from '../types/SolverTypes';
 
 export interface SketchType {
+  id: number;
+
   entityIdCounter: number;
   points: Point3DType[];
   pointsMap: Point3DMapType;
@@ -18,6 +20,8 @@ export interface SketchType {
 }
 
 export const emptySketch: SketchType = {
+  id: -1,
+
   entityIdCounter: 1,
   points: [],
   pointsMap: {},

@@ -72,22 +72,7 @@ addEntity: {
 
 # TODOs
 
-Sketch Slice refactoring for multi sketch support:
-  - sketchIdCounter    // derive sketch id
-  - activeSketchId     // id of sketch opened in sketcher (-1 if sketcher is not open)
-  - List of sketches: Sketch[]
-     - Sketch as class with its own id
-     - points (+ pointsMap)
-     - lines
-     - constraints
-     - methods:
-       - addPoint()
-       - removePoint()
-       - addLine()
-       - removeLine()
-       - addConstraint()
-       - updateConstraint()
-       - removeConstraint()
+
 
 # Datamodel - Sketch
 

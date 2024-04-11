@@ -1,10 +1,4 @@
 //
-// TODO sketch slice refactoring: Extending it for multi sketch support
-//   - Each sketch has its own id
-//   - Maybe this should also go into its own slice (needs to be persistetd)
-//   - Provide functionality to store the state from the sketch slice (and load it again into the sketch slice)
-//        - e.g. trigger this functionality on open/ close of the sketcher tool
-//
 // TODO drag'n'drop of lines (needs to consider constraints)
 //
 // TODO improve positioning of constraints drawn on canvas
