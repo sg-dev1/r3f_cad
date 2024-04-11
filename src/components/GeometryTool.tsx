@@ -22,6 +22,7 @@ import { calcIntersectionWithPlane } from '@/utils/threejs_utils';
 import { GeometryType } from '@/app/types/EntityType';
 import LineObject from './LineObject';
 import PointObject from './PointObject';
+import { XY_PLANE } from '@/utils/threejs_planes';
 
 export interface GeometryToolRefType {
   lineToolOnClick: (event: React.MouseEvent<HTMLDivElement, MouseEvent>) => void;
@@ -35,8 +36,6 @@ export interface GeometryToolRefType {
 export interface GeometryToolProps {
   onGeometryClick: (type: GeometryType, id: number) => void;
 }
-
-const xyPlane = new THREE.Plane(new THREE.Vector3(0, 0, 1), 0);
 
 const GeometryTool = forwardRef<any, any>(({ onGeometryClick }: GeometryToolProps, ref) => {
   const [currentMousePos, setCurrentMousePos] = useState<[x: number, y: number, z: number] | null>(null);
@@ -73,7 +72,7 @@ const GeometryTool = forwardRef<any, any>(({ onGeometryClick }: GeometryToolProp
         const intersect = calcIntersectionWithPlane(
           raycaster,
           camera,
-          xyPlane,
+          XY_PLANE,
           event.clientX,
           event.clientY,
           event.target as HTMLElement
@@ -95,7 +94,7 @@ const GeometryTool = forwardRef<any, any>(({ onGeometryClick }: GeometryToolProp
         const intersect = calcIntersectionWithPlane(
           raycaster,
           camera,
-          xyPlane,
+          XY_PLANE,
           event.clientX,
           event.clientY,
           event.target as HTMLElement
@@ -110,7 +109,7 @@ const GeometryTool = forwardRef<any, any>(({ onGeometryClick }: GeometryToolProp
         const intersect = calcIntersectionWithPlane(
           raycaster,
           camera,
-          xyPlane,
+          XY_PLANE,
           event.clientX,
           event.clientY,
           event.target as HTMLElement

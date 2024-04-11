@@ -16,6 +16,7 @@ import {
   SketchType,
   sketchUpdateConstraint,
   sketchUpdateEntities,
+  sketchUpdatePoint,
 } from './Sketch';
 
 // Define a type for the slice state
@@ -117,6 +118,9 @@ export const sketchSlice = createSlice({
     removeEntity: (state: SketchState, { payload }) => {
       sketchRemoveEntity(state.sketches[state.activeSketchId], payload.id, payload.type);
     },
+    updatePoint: (state: SketchState, { payload }) => {
+      sketchUpdatePoint(state.sketches[state.activeSketchId], payload.id, payload.position);
+    },
     resetLastPoint: (state: SketchState) => {
       sketchResetLastPoint(state.sketches[state.activeSketchId]);
     },
@@ -164,6 +168,7 @@ export const {
   deleteSketch,
   addEntity,
   removeEntity,
+  updatePoint,
   resetLastPoint,
   addConstraint,
   updateConstraint,

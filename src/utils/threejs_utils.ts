@@ -19,7 +19,37 @@ export const calcIntersectionWithPlane = (
   yCoord: number,
   target: HTMLElement
 ) => {
-  const rect = (target as HTMLElement).getBoundingClientRect();
+  const rect = target.getBoundingClientRect();
+  return calcIntersectionWithPlaneFromRect(raycaster, camera, plane, xCoord, yCoord, rect);
+};
+
+export interface RectType {
+  width: number;
+  height: number;
+  left: number;
+  top: number;
+}
+
+/**
+ * Calculates the intersection of a ray casted from the camera to a specific plane.
+ *
+ * @param raycaster The THREE.Raycaster instance, e.g. coming from useThree() hook.
+ * @param camera    The THREE.Camera instance, e.g. coming from useThree() hook.
+ * @param plane     The plane for which the intersection shall be calculated, e.g. xy plane.
+ * @param xCoord    The x coordinate of a mouse onClick or onPointerMove event (event.clientX).
+ * @param yCoord    The y coordinate of a mouse onClick or onPointerMove event (event.clientY).
+ * @param rect      The target rect to convert the screen coordinates (e.g. from a browser event) to rendering coordinates
+ *                  (e.g. on the Canvas)
+ * @returns         The THREE.Vector3 instance containing the intersection or null in case there was no intersection.
+ */
+export const calcIntersectionWithPlaneFromRect = (
+  raycaster: THREE.Raycaster,
+  camera: THREE.Camera,
+  plane: THREE.Plane,
+  xCoord: number,
+  yCoord: number,
+  rect: RectType
+) => {
   const x = ((xCoord - rect.left) / rect.width) * 2 - 1;
   const y = (-(yCoord - rect.top) / rect.height) * 2 + 1;
   const point = new THREE.Vector2(x, y);

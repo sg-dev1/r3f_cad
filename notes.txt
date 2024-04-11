@@ -72,7 +72,12 @@ addEntity: {
 
 # TODOs
 
-
+Drag'n'drop:
+  - Simple drag'n'drop of points implemented (behaves a bit weired because of constraints)
+  - TODO prevent drag'n'drop when fully constrained
+  - TODO add simple selection tool (this only enables the drag'n'drop functionality)
+  - TODO consider constraints to remove a bit of the weirdness - how?
+  - TODO drag'n'drop of lines
 
 # Datamodel - Sketch
 

@@ -78,6 +78,16 @@ export const sketchRemoveEntity = (sketch: SketchType, id: number, type: Geometr
   return sketch;
 };
 
+export const sketchUpdatePoint = (sketch: SketchType, id: number, position: number[]): SketchType => {
+  const newPoint = { id: id, x: position[0], y: position[1], z: position[2] };
+
+  const index = sketch.points.findIndex((point) => point.id === id);
+  sketch.points.splice(index, 1, newPoint);
+  sketch.pointsMap[id] = newPoint;
+
+  return sketch;
+};
+
 export const sketchResetLastPoint = (sketch: SketchType): SketchType => {
   sketch.lastPoint3D = null;
   return sketch;

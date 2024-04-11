@@ -14,7 +14,7 @@ import {
 import { SlvsConstraints } from '@/app/types/Constraints';
 import { GeometryType } from '@/app/types/EntityType';
 import { Html, Line } from '@react-three/drei';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 
 //   update the data in the redux store as well
 const LineObject = ({
@@ -44,11 +44,19 @@ const LineObject = ({
 
   // Drag n drop, hover
   const [hovered, setHovered] = useState(false);
-  //useEffect(() => void (document.body.style.cursor = hovered ? 'grab' : 'auto'), [hovered]);
-  //const bind = useDrag(({ down, xy: [x, y] }) => {
-  //  document.body.style.cursor = down ? 'grabbing' : 'grab';
-  //setPos(new THREE.Vector3((x / size.width) * 2 - 1, -(y / size.height) * 2 + 1, 0).unproject(camera).multiply({ x: 1, y: 1, z: 0 }).clone())
-  //});
+  /*
+  useEffect(() => void (document.body.style.cursor = hovered ? 'grab' : 'auto'), [hovered]);
+  const bind = useDrag(({ down, xy: [x, y] }) => {
+    document.body.style.cursor = down ? 'grabbing' : 'grab';
+    const newPos = new THREE.Vector3((x / size.width) * 2 - 1, -(y / size.height) * 2 + 1, 0)
+      .unproject(camera)
+      .multiply({ x: 1, y: 1, z: 0 })
+      .clone();
+    console.log('start', start, 'end', end, 'newPos', newPos);
+    //setPos(new THREE.Vector3((x / size.width) * 2 - 1, -(y / size.height) * 2 + 1, 0).unproject(camera).multiply({ x: 1, y: 1, z: 0 }).clone())
+  });
+  */
+  // {...(bind() as any)}
 
   return (
     <>
