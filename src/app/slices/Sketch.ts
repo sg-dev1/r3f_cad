@@ -32,7 +32,7 @@ export const emptySketch: SketchType = {
   constraints: [],
 };
 
-export const sketchAddEntity = (sketch: SketchType, p: Point3DType, type: GeometryType): SketchType => {
+export const sketchAddEntity = (sketch: SketchType, p: Point3DType, type: GeometryType) => {
   const newPoint = { ...p, id: sketch.entityIdCounter };
   sketch.entityIdCounter++;
 
@@ -56,11 +56,9 @@ export const sketchAddEntity = (sketch: SketchType, p: Point3DType, type: Geomet
   } else {
     console.error('The given Geometry type ' + geometryTypeToString(type) + ' is not yet implemented');
   }
-
-  return sketch;
 };
 
-export const sketchRemoveEntity = (sketch: SketchType, id: number, type: GeometryType): SketchType => {
+export const sketchRemoveEntity = (sketch: SketchType, id: number, type: GeometryType) => {
   // TODO properly handle other types when they are supported
   if (GeometryType.LINE === type) {
     sketch.lines = sketch.lines.filter((line) => line.id !== id);
@@ -74,26 +72,25 @@ export const sketchRemoveEntity = (sketch: SketchType, id: number, type: Geometr
   } else {
     console.error('The given Geometry type ' + geometryTypeToString(type) + ' is not yet implemented');
   }
-
-  return sketch;
 };
 
-export const sketchUpdatePoint = (sketch: SketchType, id: number, position: number[]): SketchType => {
-  const newPoint = { id: id, x: position[0], y: position[1], z: position[2] };
-
-  const index = sketch.points.findIndex((point) => point.id === id);
-  sketch.points.splice(index, 1, newPoint);
-  sketch.pointsMap[id] = newPoint;
-
-  return sketch;
+export const sketchUpdatePoint = (sketch: SketchType, id: number, position: number[]) => {
+  _updatePoint(sketch, { id: id, x: position[0], y: position[1], z: position[2] });
 };
 
-export const sketchResetLastPoint = (sketch: SketchType): SketchType => {
+export const sketchUpdateLinePoints = (sketch: SketchType, id: number, newStart: number[], newEnd: number[]) => {
+  const line = sketch.lines.find((line) => line.id === id);
+  if (line) {
+    _updatePoint(sketch, { id: line.p1_id, x: newStart[0], y: newStart[1], z: newStart[2] });
+    _updatePoint(sketch, { id: line.p2_id, x: newEnd[0], y: newEnd[1], z: newEnd[2] });
+  }
+};
+
+export const sketchResetLastPoint = (sketch: SketchType) => {
   sketch.lastPoint3D = null;
-  return sketch;
 };
 
-export const sketchAddConstraint = (sketch: SketchType, payload: ConstraintType): SketchType => {
+export const sketchAddConstraint = (sketch: SketchType, payload: ConstraintType) => {
   if (payload.t === SlvsConstraints.SLVS_C_PT_PT_DISTANCE) {
     // We get the line, but for the backend we need the points
     const line = sketch.lines.filter((line) => line.id === payload.v[3]);
@@ -114,11 +111,9 @@ export const sketchAddConstraint = (sketch: SketchType, payload: ConstraintType)
     sketch.constraints.push({ ...payload, id: sketch.constraintIdCounter });
     sketch.constraintIdCounter++;
   }
-
-  return sketch;
 };
 
-export const sketchUpdateConstraint = (sketch: SketchType, payload: ConstraintType): SketchType => {
+export const sketchUpdateConstraint = (sketch: SketchType, payload: ConstraintType) => {
   const index = sketch.constraints.findIndex((constraint) => constraint.id === payload.id);
   if (index !== -1) {
     const constraint = sketch.constraints[index];
@@ -132,11 +127,9 @@ export const sketchUpdateConstraint = (sketch: SketchType, payload: ConstraintTy
     }
     sketch.constraints.splice(index, 1, { ...constraint, ...payload });
   }
-
-  return sketch;
 };
 
-export const sketchDeleteConstraint = (sketch: SketchType, payload: ConstraintType): SketchType => {
+export const sketchDeleteConstraint = (sketch: SketchType, payload: ConstraintType) => {
   sketch.constraints = sketch.constraints.filter((constraint) => constraint.id !== payload.id);
   if (payload.t === SlvsConstraints.SLVS_C_PT_PT_DISTANCE) {
     const pt1 = sketch.pointsMap[payload.v[1] as number];
@@ -146,25 +139,28 @@ export const sketchDeleteConstraint = (sketch: SketchType, payload: ConstraintTy
       line[0].length = undefined; // update the length
     }
   }
-
-  return sketch;
 };
 
-export const sketchUpdateEntities = (sketch: SketchType, entities: SolverEntityType[]): SketchType => {
+export const sketchUpdateEntities = (sketch: SketchType, entities: SolverEntityType[]) => {
   entities.forEach((element: SolverEntityType) => {
     // Update points and pointsMap of sketch
     if (element.t === 'point') {
-      // TODO this needs to be adapted when we support more planes other than xy
-      sketch.pointsMap[element.id] = { ...sketch.pointsMap[element.id], x: element.v[0], y: element.v[1] };
-      const pointIndex = sketch.points.findIndex((p) => p.id === element.id);
-      if (pointIndex !== -1) {
-        sketch.points[pointIndex] = { ...sketch.points[pointIndex], x: element.v[0], y: element.v[1] };
-      } else {
-        console.error('Point index was -1. Inconsistent state between state.pointsMap and state.points of this sketch');
-      }
+      //console.log('element.v', element.v);
+      // TODO this needs to be adapted when we support more planes other than xy  (element.v currently only has to elements)
+      _updatePoint(sketch, { ...sketch.pointsMap[element.id], x: element.v[0], y: element.v[1] });
     }
     // TODO support other types, e.g. circles and arcs
   });
+};
 
-  return sketch;
+// ---
+
+const _updatePoint = (sketch: SketchType, newPoint: Point3DType) => {
+  sketch.pointsMap[newPoint.id] = newPoint;
+  const pointIndex = sketch.points.findIndex((p) => p.id === newPoint.id);
+  if (pointIndex !== -1) {
+    sketch.points.splice(pointIndex, 1, newPoint);
+  } else {
+    console.error('Point index was -1. Inconsistent state between state.pointsMap and state.points of this sketch');
+  }
 };

@@ -1,6 +1,4 @@
 //
-// TODO drag'n'drop of lines (needs to consider constraints)
-//
 // TODO improve positioning of constraints drawn on canvas
 //
 // TODO update of constraints on canvas (e.g. makes sense for length constraint), improved update on ConstraintsTable.tsx
@@ -18,6 +16,11 @@
 // TODO add more tools:
 //   - Currently we simply have a simple line drawing tool that saves its points into the redux state and some basic constraint tools
 //   - We need tools to draw other primitives (e.g. circles, arcs) and to add additional constraints (parallel, equal, mid point, ...)
+//
+// TODO drag'n'drop of lines and points improvements
+//  - consider constraints
+//  - improve behaviour of dragging of lines
+//  - remove the weirdness of current behaviour
 //
 // TODO put common settings in a "settingsSlice" s.t. they can be changed, e.g. color of lines etc.
 //

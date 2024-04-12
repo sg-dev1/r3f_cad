@@ -16,6 +16,7 @@ import {
   SketchType,
   sketchUpdateConstraint,
   sketchUpdateEntities,
+  sketchUpdateLinePoints,
   sketchUpdatePoint,
 } from './Sketch';
 
@@ -121,6 +122,9 @@ export const sketchSlice = createSlice({
     updatePoint: (state: SketchState, { payload }) => {
       sketchUpdatePoint(state.sketches[state.activeSketchId], payload.id, payload.position);
     },
+    updateLinePoints: (state: SketchState, { payload }) => {
+      sketchUpdateLinePoints(state.sketches[state.activeSketchId], payload.id, payload.newStart, payload.newEnd);
+    },
     resetLastPoint: (state: SketchState) => {
       sketchResetLastPoint(state.sketches[state.activeSketchId]);
     },
@@ -169,6 +173,7 @@ export const {
   addEntity,
   removeEntity,
   updatePoint,
+  updateLinePoints,
   resetLastPoint,
   addConstraint,
   updateConstraint,

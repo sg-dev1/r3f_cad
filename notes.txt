@@ -72,11 +72,6 @@ addEntity: {
 
 # TODOs
 
-Drag'n'drop:
-  - Simple drag'n'drop of points implemented (behaves a bit weired because of constraints)
-  - TODO drag'n'drop of lines
-  - TODO consider constraints to remove a bit of the weirdness - how?
-     - Hard to do because not working with current approach --> no influence on what the solver is doing and returning
   
 
 # Datamodel - Sketch

@@ -5,16 +5,28 @@
 //                 consider constraints
 
 import { useAppDispatch, useAppSelector } from '@/app/hooks';
-import { addConstraint, selectConstraints, selectLastDof, selectLastSolverResultCode } from '@/app/slices/sketchSlice';
 import {
+  addConstraint,
+  selectConstraints,
+  selectLastDof,
+  selectLastSolverResultCode,
+  updateLinePoints,
+} from '@/app/slices/sketchSlice';
+import {
+  ToolState,
   selectLengthConstraintLineId,
   selectSelectedEntityId,
+  selectToolState,
   setLengthConstraintLineId,
 } from '@/app/slices/sketchToolStateSlice';
 import { SlvsConstraints } from '@/app/types/Constraints';
 import { GeometryType } from '@/app/types/EntityType';
+import { XY_PLANE } from '@/utils/threejs_planes';
+import { calcIntersectionWithPlaneFromRect } from '@/utils/threejs_utils';
 import { Html, Line } from '@react-three/drei';
-import { useState } from 'react';
+import { useThree } from '@react-three/fiber';
+import { useDrag } from '@use-gesture/react';
+import { useEffect, useState } from 'react';
 
 //   update the data in the redux store as well
 const LineObject = ({
@@ -30,6 +42,8 @@ const LineObject = ({
   onGeometryClick: (type: GeometryType, id: number) => void;
   length?: number;
 }) => {
+  const [lastClickPos, setLastClickPos] = useState<number[]>([]);
+
   const sketchConstraints = useAppSelector(selectConstraints);
   const constraintsAffectingLine = sketchConstraints.filter((c) => c.v[3] === id || c.v[4] === id);
   const horizontalConstraints = constraintsAffectingLine.filter((c) => c.t === SlvsConstraints.SLVS_C_HORIZONTAL);
@@ -39,28 +53,53 @@ const LineObject = ({
 
   const sketchLengthConstraintLineId = useAppSelector(selectLengthConstraintLineId);
   const sketchSelectedEntityId = useAppSelector(selectSelectedEntityId);
+  const selectedToolState = useAppSelector(selectToolState);
 
   const dispatch = useAppDispatch();
+  const { size, camera, raycaster } = useThree();
 
   // Drag n drop, hover
   const [hovered, setHovered] = useState(false);
-  /*
-  useEffect(() => void (document.body.style.cursor = hovered ? 'grab' : 'auto'), [hovered]);
+  useEffect(() => {
+    if (selectedToolState === ToolState.CURSOR_TOOL && sketchLastDof !== 0) {
+      document.body.style.cursor = hovered ? 'grab' : 'auto';
+    } else {
+      document.body.style.cursor = 'auto';
+    }
+  }, [hovered, selectedToolState, sketchLastDof]);
   const bind = useDrag(({ down, xy: [x, y] }) => {
-    document.body.style.cursor = down ? 'grabbing' : 'grab';
-    const newPos = new THREE.Vector3((x / size.width) * 2 - 1, -(y / size.height) * 2 + 1, 0)
-      .unproject(camera)
-      .multiply({ x: 1, y: 1, z: 0 })
-      .clone();
-    console.log('start', start, 'end', end, 'newPos', newPos);
-    //setPos(new THREE.Vector3((x / size.width) * 2 - 1, -(y / size.height) * 2 + 1, 0).unproject(camera).multiply({ x: 1, y: 1, z: 0 }).clone())
+    if (selectedToolState === ToolState.CURSOR_TOOL && sketchLastDof !== 0) {
+      document.body.style.cursor = down ? 'grabbing' : 'grab';
+
+      const result = calcIntersectionWithPlaneFromRect(raycaster, camera, XY_PLANE, x, y, size);
+      if (result) {
+        //console.log('result', result);
+        //dispatch(updatePoint({ id: id, position: [result.x, result.y, result.z] }));
+        if (lastClickPos.length !== 0) {
+          const diff = [result.x - lastClickPos[0], result.y - lastClickPos[1]];
+          dispatch(
+            updateLinePoints({
+              id: id,
+              newStart: [start[0] + diff[0], start[1] + diff[1], start[2]],
+              newEnd: [end[0] + diff[0], end[1] + diff[0], end[2]],
+            })
+          );
+        }
+
+        setLastClickPos([result.x, result.y]);
+      } else {
+        setLastClickPos([]);
+      }
+
+      //setPos(new THREE.Vector3((x / size.width) * 2 - 1, -(y / size.height) * 2 + 1, 0).unproject(camera).multiply({ x: 1, y: 1, z: 0 }).clone())
+      //dispatch(updatePoint({ id: id, position: [newPos.x, newPos.y, newPos.z] }));
+    }
   });
-  */
-  // {...(bind() as any)}
 
   return (
     <>
       <Line
+        {...(bind() as any)}
         userData={{ id: id }}
         points={[start, end]} // array of points
         // use green color for fully constraint
