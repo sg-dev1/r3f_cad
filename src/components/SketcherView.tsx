@@ -38,7 +38,13 @@ import {
   selectLastSolverFailedConstraints,
   selectLastSolverResultCode,
 } from '@/app/slices/sketchSlice';
-import { selectLengthConstraintLineId, setLengthConstraintLineId } from '@/app/slices/sketchToolStateSlice';
+import {
+  ToolState,
+  selectLengthConstraintLineId,
+  selectToolState,
+  setLengthConstraintLineId,
+  setToolState,
+} from '@/app/slices/sketchToolStateSlice';
 import { SlvsConstraints } from '@/app/types/Constraints';
 import ZeroCoordinateCross from './ZeroCoordinateCross';
 import ConstraintTable from './ConstraintTable';
@@ -46,19 +52,7 @@ import EntitiesTable from './EntitiesTable';
 
 const { Header, Content, Sider } = Layout;
 
-enum ToolState {
-  DISABLED = 0,
-  LINE_TOOL,
-  POINT_TOOL,
-
-  CONSTRAINT_COINCIDENCE,
-  CONSTRAINT_HORIZONTAL,
-  CONSTRAINT_VERTICAL,
-  CONSTRAINT_LENGTH,
-}
-
 const SketcherView = () => {
-  const [toolState, setToolState] = useState<ToolState>(ToolState.LINE_TOOL);
   const [stateIndicator, setStateIndicator] = useState<string>('');
   const [solverResult, setSolverResult] = useState<string>('');
 
@@ -70,6 +64,7 @@ const SketcherView = () => {
   const sketchLastSolverFailedConstraints = useAppSelector(selectLastSolverFailedConstraints);
 
   const sketchLengthConstraintLineId = useAppSelector(selectLengthConstraintLineId);
+  const toolState = useAppSelector(selectToolState);
 
   // Needed for (constraint) tools
   const [objectsClicked, setObjectsClicked] = useState<{ type: GeometryType; id: number }[]>([]);
@@ -109,6 +104,9 @@ const SketcherView = () => {
         break;
       case ToolState.CONSTRAINT_LENGTH:
         setStateIndicator('Length Constraint Tool');
+        break;
+      case ToolState.CURSOR_TOOL:
+        setStateIndicator('Cursor Tool');
         break;
       default:
         console.error('Should not get here. Invalid Tool State.');
@@ -167,31 +165,50 @@ const SketcherView = () => {
     <>
       <Layout>
         <Header style={{ display: 'flex', alignItems: 'center' }}>
-          <Button type="primary" className="primary-button" onClick={() => setToolState(ToolState.LINE_TOOL)}>
+          <Button type="primary" className="primary-button" onClick={() => dispatch(setToolState(ToolState.LINE_TOOL))}>
             Line
           </Button>
-          <Button type="primary" className="primary-button" onClick={() => setToolState(ToolState.POINT_TOOL)}>
+          <Button
+            type="primary"
+            className="primary-button"
+            onClick={() => dispatch(setToolState(ToolState.POINT_TOOL))}
+          >
             Point
           </Button>
           <Button
             type="primary"
             className="primary-button"
-            onClick={() => setToolState(ToolState.CONSTRAINT_COINCIDENCE)}
+            onClick={() => dispatch(setToolState(ToolState.CONSTRAINT_COINCIDENCE))}
           >
             Coincidence
           </Button>
           <Button
             type="primary"
             className="primary-button"
-            onClick={() => setToolState(ToolState.CONSTRAINT_HORIZONTAL)}
+            onClick={() => dispatch(setToolState(ToolState.CONSTRAINT_HORIZONTAL))}
           >
             Horizontal
           </Button>
-          <Button type="primary" className="primary-button" onClick={() => setToolState(ToolState.CONSTRAINT_VERTICAL)}>
+          <Button
+            type="primary"
+            className="primary-button"
+            onClick={() => dispatch(setToolState(ToolState.CONSTRAINT_VERTICAL))}
+          >
             Vertical
           </Button>
-          <Button type="primary" className="primary-button" onClick={() => setToolState(ToolState.CONSTRAINT_LENGTH)}>
+          <Button
+            type="primary"
+            className="primary-button"
+            onClick={() => dispatch(setToolState(ToolState.CONSTRAINT_LENGTH))}
+          >
             Length
+          </Button>
+          <Button
+            type="primary"
+            className="primary-button"
+            onClick={() => dispatch(setToolState(ToolState.CURSOR_TOOL))}
+          >
+            Cursor
           </Button>
 
           <div className={sketchLastSolverResultCode === 0 ? 'white-text' : 'red-text'}>

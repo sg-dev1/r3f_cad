@@ -1,6 +1,6 @@
 import { useAppDispatch, useAppSelector } from '@/app/hooks';
-import { updatePoint } from '@/app/slices/sketchSlice';
-import { selectSelectedEntityId } from '@/app/slices/sketchToolStateSlice';
+import { selectLastDof, updatePoint } from '@/app/slices/sketchSlice';
+import { ToolState, selectSelectedEntityId, selectToolState } from '@/app/slices/sketchToolStateSlice';
 import { GeometryType } from '@/app/types/EntityType';
 import { XY_PLANE } from '@/utils/threejs_planes';
 import { calcIntersectionWithPlaneFromRect } from '@/utils/threejs_utils';
@@ -19,23 +19,33 @@ const PointObject = ({
   onGeometryClick: (type: GeometryType, id: number) => void;
 }) => {
   const [hovered, setHovered] = useState(false);
+  const sketchLastDof = useAppSelector(selectLastDof);
   const sketchSelectedEntityId = useAppSelector(selectSelectedEntityId);
+  const selectedToolState = useAppSelector(selectToolState);
 
   const dispatch = useAppDispatch();
   const { size, camera, raycaster } = useThree();
 
-  useEffect(() => void (document.body.style.cursor = hovered ? 'grab' : 'auto'), [hovered]);
-  const bind = useDrag(({ down, xy: [x, y] }) => {
-    document.body.style.cursor = down ? 'grabbing' : 'grab';
-
-    const result = calcIntersectionWithPlaneFromRect(raycaster, camera, XY_PLANE, x, y, size);
-    if (result) {
-      //console.log('result', result);
-      dispatch(updatePoint({ id: id, position: [result.x, result.y, result.z] }));
+  useEffect(() => {
+    if (selectedToolState === ToolState.CURSOR_TOOL && sketchLastDof !== 0) {
+      document.body.style.cursor = hovered ? 'grab' : 'auto';
+    } else {
+      document.body.style.cursor = 'auto';
     }
+  }, [hovered, selectedToolState, sketchLastDof]);
+  const bind = useDrag(({ down, xy: [x, y] }) => {
+    if (selectedToolState === ToolState.CURSOR_TOOL && sketchLastDof !== 0) {
+      document.body.style.cursor = down ? 'grabbing' : 'grab';
 
-    //setPos(new THREE.Vector3((x / size.width) * 2 - 1, -(y / size.height) * 2 + 1, 0).unproject(camera).multiply({ x: 1, y: 1, z: 0 }).clone())
-    //dispatch(updatePoint({ id: id, position: [newPos.x, newPos.y, newPos.z] }));
+      const result = calcIntersectionWithPlaneFromRect(raycaster, camera, XY_PLANE, x, y, size);
+      if (result) {
+        //console.log('result', result);
+        dispatch(updatePoint({ id: id, position: [result.x, result.y, result.z] }));
+      }
+
+      //setPos(new THREE.Vector3((x / size.width) * 2 - 1, -(y / size.height) * 2 + 1, 0).unproject(camera).multiply({ x: 1, y: 1, z: 0 }).clone())
+      //dispatch(updatePoint({ id: id, position: [newPos.x, newPos.y, newPos.z] }));
+    }
   });
 
   return (
