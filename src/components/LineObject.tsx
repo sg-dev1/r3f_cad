@@ -17,7 +17,7 @@ import { SlvsConstraints } from '@/app/types/Constraints';
 import { GeometryType } from '@/app/types/EntityType';
 import { XY_PLANE } from '@/utils/threejs_planes';
 import { calcIntersectionWithPlaneFromRect } from '@/utils/threejs_utils';
-import { Html, Line } from '@react-three/drei';
+import { Html, Line, Text } from '@react-three/drei';
 import { useThree } from '@react-three/fiber';
 import { useDrag } from '@use-gesture/react';
 import { useEffect, useState } from 'react';
@@ -127,18 +127,32 @@ const LineObject = ({
         segments
         dashed={false} // default
       />
-      {/* TODO the positioning of constraints needs to be improved - weird behaviour when zooming in and out */}
+
       {verticalConstraints.length > 0 ? (
-        <Html position={[(start[0] + end[0]) / 2 - 7, (start[1] + end[1]) / 2 + 8, (start[2] + end[2]) / 2]}>
-          <div style={{ color: 'red', fontSize: 20, fontWeight: 'bold' }}>|</div>
-        </Html>
+        <Text
+          position={[(start[0] + end[0]) / 2 - 5, (start[1] + end[1]) / 2 + 5, (start[2] + end[2]) / 2]}
+          color="red"
+          anchorX="center"
+          anchorY="middle"
+          fontSize={12}
+          fontWeight={1000}
+        >
+          |
+        </Text>
       ) : (
         ''
       )}
       {horizontalConstraints.length > 0 ? (
-        <Html position={[(start[0] + end[0]) / 2 + 1, (start[1] + end[1]) / 2 + 30, (start[2] + end[2]) / 2]}>
-          <div style={{ color: 'red', fontSize: 50 }}>-</div>
-        </Html>
+        <Text
+          position={[(start[0] + end[0]) / 2 + 3, (start[1] + end[1]) / 2 + 15, (start[2] + end[2]) / 2]}
+          color="red"
+          anchorX="center"
+          anchorY="middle"
+          fontSize={14}
+          fontWeight={1000}
+        >
+          _
+        </Text>
       ) : (
         ''
       )}
@@ -179,9 +193,16 @@ const LineObject = ({
 
       {/* Display a length - if available */}
       {length ? (
-        <Html position={[(start[0] + end[0]) / 2, (start[1] + end[1]) / 2 + 2, (start[2] + end[2]) / 2]}>
-          <div style={{ color: 'red', fontSize: 20 }}>{length}</div>
-        </Html>
+        <Text
+          position={[(start[0] + end[0]) / 2 + 15, (start[1] + end[1]) / 2 - 12, (start[2] + end[2]) / 2]}
+          color="red"
+          anchorX="center"
+          anchorY="middle"
+          fontSize={12}
+          fontWeight={500}
+        >
+          {length}
+        </Text>
       ) : (
         ''
       )}
