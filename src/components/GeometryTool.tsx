@@ -1,7 +1,3 @@
-//
-// TODO check if this implementation of line drawing (using a raycaster its setFromCamera function) is the best way to do it,
-//      e.g. it requires the creation of THREE.Vector2 instance all the time, are there alternative ways?
-//
 import React, { useState, forwardRef, useImperativeHandle, useEffect } from 'react';
 import { useThree } from '@react-three/fiber';
 import { Line, Points } from '@react-three/drei';

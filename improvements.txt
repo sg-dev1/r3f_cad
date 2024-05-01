@@ -1,0 +1,50 @@
+Priority of improvements (my ranking)
+  - 001, 002, 003
+  - 006
+  - 004
+  - 009
+  - 008
+  - 005
+  - 007  // most important work done, considering constraints hard to do,
+         // therefore least prio
+
+
+List of Improvements
+
+(001) Improvements of labels drawn on sketch (mainly includes Constraints)
+    - Symbols for horizontal, vertical constraint
+    - Symbol (number in mm) for length constraint
+    + Issue is that when zooming the relative position changes,
+      - most likely has to do with current implementation in LineObject.tsx using <Html> object
+      - objects are not affected by the zoom operation (have same size and position although size and position of lines change)
+    + Need to find alternative way of implementing it (e.g. use dedicated objects which also react to the zooming)
+
+(002) update of constraints on canvas (e.g. makes sense for length constraint)
+    - implement (001) first to have dedicated objects which can be selected (respond to click events)
+
+(003) delete of constraints on canvas
+    - implement (001) first to have dedicated objects which can be selected (respond to click events)
+
+(004) integration of redux persist
+    - Examine possiblilities how to save redux state (e.g. to local storage etc.)
+    - e.g. add persistence because currently all data is lost after a reload
+    --> Use Redux Persist: https://blog.logrocket.com/persist-state-redux-persist-redux-toolkit-react/
+
+(005) Implement remove entities in sketcher slice via canvas
+    - Select an Entity (e.g. a line, a point) --> press ENTF key to delete it
+    (click listener on Entity for selection; then event listener on keyboard - could be combined with drag'n'drop of lines)
+
+(006) Add more tools
+   - Currently we simply have a simple line drawing tool that saves its points into the redux state and some basic constraint tools
+   - We need tools to draw other primitives (e.g. circles, arcs) and to add additional constraints (parallel, equal, mid point, ...)
+
+(007) drag'n'drop of lines and points improvements
+   - consider constraints
+   - improve behaviour of dragging of lines              [done] --> still improvements possible, but for now enough
+   - remove the weirdness of current behaviour           [done]
+
+(008) put common settings in a "settingsSlice" s.t. they can be changed, e.g. color of lines etc.
+
+(009) Improve update of constraints in ConstraintsTable.tsx
+   - Current way to edit leaves many ways the user can mess up with the data/ input invalid data
+   - Proper error handling needed / edit will be different per constraint type (as display)

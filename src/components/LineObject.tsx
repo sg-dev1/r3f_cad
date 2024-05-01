@@ -1,9 +1,3 @@
-// Functionality required for this custom Line component
-// - Highlight color + make thicker on mouse over                (done)
-// - Selection with on click (then maybe different color)        // selection not needed now
-// - drag'n'drop - a bit more tricky since it needs to           // will be implemented later
-//                 consider constraints
-
 import { useAppDispatch, useAppSelector } from '@/app/hooks';
 import {
   addConstraint,
@@ -60,6 +54,7 @@ const LineObject = ({
 
   // Drag n drop, hover
   const [hovered, setHovered] = useState(false);
+
   useEffect(() => {
     if (selectedToolState === ToolState.CURSOR_TOOL && sketchLastDof !== 0) {
       document.body.style.cursor = hovered ? 'grab' : 'auto';
@@ -67,26 +62,34 @@ const LineObject = ({
       document.body.style.cursor = 'auto';
     }
   }, [hovered, selectedToolState, sketchLastDof]);
+
   const bind = useDrag(({ down, xy: [x, y] }) => {
     if (selectedToolState === ToolState.CURSOR_TOOL && sketchLastDof !== 0) {
       document.body.style.cursor = down ? 'grabbing' : 'grab';
 
       const result = calcIntersectionWithPlaneFromRect(raycaster, camera, XY_PLANE, x, y, size);
       if (result) {
-        //console.log('result', result);
-        //dispatch(updatePoint({ id: id, position: [result.x, result.y, result.z] }));
-        if (lastClickPos.length !== 0) {
-          const diff = [result.x - lastClickPos[0], result.y - lastClickPos[1]];
-          dispatch(
-            updateLinePoints({
-              id: id,
-              newStart: [start[0] + diff[0], start[1] + diff[1], start[2]],
-              newEnd: [end[0] + diff[0], end[1] + diff[0], end[2]],
-            })
-          );
-        }
+        //console.log('down', down, 'result', result, 'start', start, 'end', end);
 
-        setLastClickPos([result.x, result.y]);
+        if (down) {
+          if (lastClickPos.length === 0) {
+            setLastClickPos([result.x, result.y]);
+          }
+        } else {
+          if (lastClickPos.length !== 0) {
+            const diff = [result.x - lastClickPos[0], result.y - lastClickPos[1]];
+            //console.log('diff', diff, 'result', result, 'lastClickPos', lastClickPos);
+            dispatch(
+              updateLinePoints({
+                id: id,
+                newStart: [start[0] + diff[0], start[1] + diff[1], start[2]],
+                newEnd: [end[0] + diff[0], end[1] + diff[0], end[2]],
+              })
+            );
+          }
+
+          setLastClickPos([]);
+        }
       } else {
         setLastClickPos([]);
       }
@@ -126,14 +129,14 @@ const LineObject = ({
       />
       {/* TODO the positioning of constraints needs to be improved - weird behaviour when zooming in and out */}
       {verticalConstraints.length > 0 ? (
-        <Html position={[(start[0] + end[0]) / 2 + 3, (start[1] + end[1]) / 2 + 8, (start[2] + end[2]) / 2]}>
+        <Html position={[(start[0] + end[0]) / 2 - 7, (start[1] + end[1]) / 2 + 8, (start[2] + end[2]) / 2]}>
           <div style={{ color: 'red', fontSize: 20, fontWeight: 'bold' }}>|</div>
         </Html>
       ) : (
         ''
       )}
       {horizontalConstraints.length > 0 ? (
-        <Html position={[(start[0] + end[0]) / 2 + 1, (start[1] + end[1]) / 2 + 15, (start[2] + end[2]) / 2]}>
+        <Html position={[(start[0] + end[0]) / 2 + 1, (start[1] + end[1]) / 2 + 30, (start[2] + end[2]) / 2]}>
           <div style={{ color: 'red', fontSize: 50 }}>-</div>
         </Html>
       ) : (
@@ -146,7 +149,7 @@ const LineObject = ({
           <input
             type="number"
             placeholder=""
-            size={3}
+            size={5}
             autoFocus
             onKeyDown={(e) => {
               if (e.key === 'Enter') {
@@ -176,7 +179,7 @@ const LineObject = ({
 
       {/* Display a length - if available */}
       {length ? (
-        <Html position={[(start[0] + end[0]) / 2, (start[1] + end[1]) / 2, (start[2] + end[2]) / 2]}>
+        <Html position={[(start[0] + end[0]) / 2, (start[1] + end[1]) / 2 + 2, (start[2] + end[2]) / 2]}>
           <div style={{ color: 'red', fontSize: 20 }}>{length}</div>
         </Html>
       ) : (

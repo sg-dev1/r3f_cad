@@ -1,11 +1,4 @@
 //
-// TODOs
-//
-// Improvements:
-//  - edit constraints:
-//      - Current way to edit leaves many ways the user can mess up with the data/ input invalid data
-//      - Proper error handling needed / edit will be different per constraint type (as display)
-//
 // Future TODOs:
 //  - If new constraints are supported the way to (1) display it, (2) edit it needs to be updated
 //  - Per default the whole v (Values) array is shown - parts of it are not relevant for a particular constraint
