@@ -1,5 +1,5 @@
 import { useAppDispatch, useAppSelector } from '@/app/hooks';
-import { selectLines, selectPoints, removeEntity } from '@/app/slices/sketchSlice';
+import { selectLines, selectPoints, removeEntity, selectCircles } from '@/app/slices/sketchSlice';
 import { setSelectedEntityId } from '@/app/slices/sketchToolStateSlice';
 import EntityType, { GeometryType } from '@/app/types/EntityType';
 import { DeleteOutlined } from '@ant-design/icons';
@@ -15,6 +15,7 @@ const EntitiesTable = () => {
   const [tableData, setTableData] = useState<DataType[]>([]);
   const sketchPoints = useAppSelector(selectPoints);
   const sketchLines = useAppSelector(selectLines);
+  const sketchCircles = useAppSelector(selectCircles);
 
   const [selectedRowKey, setSelectedRowKey] = useState<string | null>(null);
   const dispatch = useAppDispatch();
@@ -22,8 +23,13 @@ const EntitiesTable = () => {
   useEffect(() => {
     const points = sketchPoints.map((pt) => ({ key: String(pt.id), id: pt.id, type: GeometryType.POINT }));
     const lines = sketchLines.map((line) => ({ key: String(line.id), id: line.id, type: GeometryType.LINE }));
+    const circles = sketchCircles.map((circle) => ({
+      key: String(circle.id),
+      id: circle.id,
+      type: GeometryType.CIRCLE,
+    }));
     // TODO merge other types when available
-    setTableData([...points, ...lines].sort((a, b) => a.id - b.id));
+    setTableData([...points, ...lines, ...circles].sort((a, b) => a.id - b.id));
   }, [sketchPoints, sketchLines]);
 
   const handleDelete = (record: DataType) => {

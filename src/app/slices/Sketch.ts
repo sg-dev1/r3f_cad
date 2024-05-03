@@ -1,3 +1,4 @@
+import { CircleType } from '../types/CircleType';
 import { ConstraintType, SlvsConstraints } from '../types/Constraints';
 import { GeometryType, geometryTypeToString } from '../types/EntityType';
 import { Line3DType } from '../types/Line3DType';
@@ -11,6 +12,7 @@ export interface SketchType {
   points: Point3DType[];
   pointsMap: Point3DMapType;
   lines: Line3DType[];
+  circles: CircleType[];
 
   // required for drawing of lines (stores the last point), not needed to persist
   lastPoint3D: Point3DType | null;
@@ -26,13 +28,14 @@ export const emptySketch: SketchType = {
   points: [],
   pointsMap: {},
   lines: [],
+  circles: [],
   lastPoint3D: null,
 
   constraintIdCounter: 0,
   constraints: [],
 };
 
-export const sketchAddEntity = (sketch: SketchType, p: Point3DType, type: GeometryType) => {
+export const sketchAddEntity = (sketch: SketchType, p: Point3DType, type: GeometryType, radius?: number) => {
   const newPoint = { ...p, id: sketch.entityIdCounter };
   sketch.entityIdCounter++;
 
@@ -53,6 +56,13 @@ export const sketchAddEntity = (sketch: SketchType, p: Point3DType, type: Geomet
   } else if (GeometryType.POINT === type) {
     sketch.points.push(newPoint);
     sketch.pointsMap[newPoint.id] = newPoint;
+  } else if (GeometryType.CIRCLE === type) {
+    // midpoint
+    sketch.points.push(newPoint);
+    sketch.pointsMap[newPoint.id] = newPoint;
+
+    sketch.circles.push({ id: sketch.entityIdCounter, mid_pt_id: newPoint.id, radius: radius || 1 });
+    sketch.entityIdCounter++;
   } else {
     console.error('The given Geometry type ' + geometryTypeToString(type) + ' is not yet implemented');
   }
@@ -65,10 +75,16 @@ export const sketchRemoveEntity = (sketch: SketchType, id: number, type: Geometr
     // also have to delete constraints referencing this line
     sketch.constraints = sketch.constraints.filter((constraint) => constraint.v[3] !== id && constraint.v[4] !== id);
   } else if (GeometryType.POINT === type) {
-    sketch.points = sketch.points.filter((point) => point.id !== id);
-    delete sketch.pointsMap[id];
-    // also have to delete constraints referencing this point
-    sketch.constraints = sketch.constraints.filter((constraint) => constraint.v[1] !== id && constraint.v[2] !== id);
+    const circles = sketch.circles.filter((circle) => circle.mid_pt_id === id);
+    if (circles.length > 0) {
+      _deleteCircleById(sketch, circles[0].id);
+    }
+    _deletePointById(sketch, id);
+  } else if (GeometryType.CIRCLE === type) {
+    const idx = sketch.circles.findIndex((circle) => circle.id === id);
+    const pt_id = sketch.circles[idx].mid_pt_id;
+    _deletePointById(sketch, pt_id);
+    _deleteCircleById(sketch, id);
   } else {
     console.error('The given Geometry type ' + geometryTypeToString(type) + ' is not yet implemented');
   }
@@ -220,4 +236,15 @@ const _getConstraintForLine = (sketch: SketchType, lineId: number) => {
 
     return null;
   }
+};
+
+const _deletePointById = (sketch: SketchType, id: number) => {
+  sketch.points = sketch.points.filter((point) => point.id !== id);
+  delete sketch.pointsMap[id];
+  // also have to delete constraints referencing this point
+  sketch.constraints = sketch.constraints.filter((constraint) => constraint.v[1] !== id && constraint.v[2] !== id);
+};
+
+const _deleteCircleById = (sketch: SketchType, id: number) => {
+  sketch.circles = sketch.circles.filter((circle) => circle.id !== id);
 };

@@ -116,8 +116,16 @@ export const sketchSlice = createSlice({
       }
       delete state.sketches[id];
     },
-    addEntity: (state: SketchState, action: PayloadAction<{ p: Point3DType; type: GeometryType }, string>) => {
-      sketchAddEntity(state.sketches[state.activeSketchId], action.payload.p, action.payload.type);
+    addEntity: (
+      state: SketchState,
+      action: PayloadAction<{ p: Point3DType; type: GeometryType; radius?: number }, string>
+    ) => {
+      sketchAddEntity(
+        state.sketches[state.activeSketchId],
+        action.payload.p,
+        action.payload.type,
+        action.payload?.radius
+      );
     },
     removeEntity: (state: SketchState, { payload }) => {
       sketchRemoveEntity(state.sketches[state.activeSketchId], payload.id, payload.type);
@@ -200,6 +208,7 @@ export const selectActiveSketchId = (state: RootState) => state.sketchs.activeSk
 export const selectPoints = (state: RootState) => state.sketchs.sketches[state.sketchs.activeSketchId].points;
 export const selectPointsMap = (state: RootState) => state.sketchs.sketches[state.sketchs.activeSketchId].pointsMap;
 export const selectLines = (state: RootState) => state.sketchs.sketches[state.sketchs.activeSketchId].lines;
+export const selectCircles = (state: RootState) => state.sketchs.sketches[state.sketchs.activeSketchId].circles;
 export const selectLastPoint = (state: RootState) => state.sketchs.sketches[state.sketchs.activeSketchId].lastPoint3D;
 export const selectConstraints = (state: RootState) => state.sketchs.sketches[state.sketchs.activeSketchId].constraints;
 

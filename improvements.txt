@@ -21,6 +21,7 @@ List of Improvements
     (click listener on Entity for selection; then event listener on keyboard - could be combined with drag'n'drop of lines)
 
 (006) Add more tools
+   - Radius constraint for circle
    - Currently we simply have a simple line drawing tool that saves its points into the redux state and some basic constraint tools
    - We need tools to draw other primitives (e.g. circles, arcs) and to add additional constraints (parallel, equal, mid point, ...)
 
@@ -40,6 +41,9 @@ List of Improvements
        Select in table --> Highlight on canvas
    - TODO entities: Select on canvas --> Highlight in table
    - Same for constraints
+
+(011) Fix bug when deleting entities:
+   - It is possible to delete an endpoint of a line without deleting the line --> app crashes because one endpoint of line cannot be found
 
 
 Done Improvements

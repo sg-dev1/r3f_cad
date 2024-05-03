@@ -1,6 +1,6 @@
 import React, { useState, forwardRef, useImperativeHandle, useEffect } from 'react';
 import { useThree } from '@react-three/fiber';
-import { Line, Points } from '@react-three/drei';
+import { Circle, Line, Points } from '@react-three/drei';
 import { useAppSelector, useAppDispatch } from '@/app/hooks';
 import {
   addEntity,
@@ -13,6 +13,7 @@ import {
   selectConstraints,
   buildSolverRequestType,
   addConstraint,
+  selectCircles,
 } from '@/app/slices/sketchSlice';
 import { calcIntersectionWithPlane } from '@/utils/threejs_utils';
 import { GeometryType, geometryTypeToString } from '@/app/types/EntityType';
@@ -22,6 +23,8 @@ import { XY_PLANE } from '@/utils/threejs_planes';
 import { ToolState, selectToolState, setLengthConstraintLineId } from '@/app/slices/sketchToolStateSlice';
 import { SlvsConstraints } from '@/app/types/Constraints';
 import ZeroCoordinateCross from './ZeroCoordinateCross';
+import { Vector3Like, Vector3Tuple } from 'three';
+import CircleObject from './CircleObject';
 
 export interface GeometryToolRefType {
   onClick: (event: React.MouseEvent<HTMLDivElement, MouseEvent>) => void;
@@ -36,12 +39,15 @@ const GeometryTool = forwardRef<any, any>(({}: GeometryToolProps, ref) => {
   const [currentMousePos, setCurrentMousePos] = useState<[x: number, y: number, z: number] | null>(null);
   const [pointsToDraw, setPointsToDraw] = useState<[x: number, y: number, z: number][]>([]);
   const [objectsClicked, setObjectsClicked] = useState<{ type: GeometryType; id: number }[]>([]);
+  const [circleMidPoint, setCircleMidPoint] = useState<Vector3Like | null>(null);
+  const [circleRadius, setCircleRadius] = useState<number>(0);
   const { camera, scene, raycaster } = useThree();
 
   const dispatch = useAppDispatch();
   const sketchPoints = useAppSelector(selectPoints);
   const sketchPointsMap = useAppSelector(selectPointsMap);
   const sketchLines = useAppSelector(selectLines);
+  const sketchCircles = useAppSelector(selectCircles);
   const sketchLastPoint = useAppSelector(selectLastPoint);
   const sketchConstraints = useAppSelector(selectConstraints);
 
@@ -100,9 +106,57 @@ const GeometryTool = forwardRef<any, any>(({}: GeometryToolProps, ref) => {
     }
   };
 
+  const circleToolOnClick = (event: React.MouseEvent<HTMLElement>) => {
+    event.stopPropagation();
+
+    const intersect = calcIntersectionWithPlane(
+      raycaster,
+      camera,
+      XY_PLANE,
+      event.clientX,
+      event.clientY,
+      event.target as HTMLElement
+    );
+    if (intersect) {
+      if (circleMidPoint === null) {
+        setCircleMidPoint(intersect);
+      } else {
+        dispatch(addEntity({ p: { ...circleMidPoint, id: 0 }, type: GeometryType.CIRCLE, radius: circleRadius }));
+        console.log('Create the circle!');
+        setCircleMidPoint(null);
+      }
+    }
+  };
+
+  const circleToolOnPointerMove = (event: React.PointerEvent<HTMLDivElement>) => {
+    if (circleMidPoint !== null) {
+      const intersect = calcIntersectionWithPlane(
+        raycaster,
+        camera,
+        XY_PLANE,
+        event.clientX,
+        event.clientY,
+        event.target as HTMLElement
+      );
+      if (intersect) {
+        // update the radius
+        const radius = intersect.sub(circleMidPoint).length();
+        //console.log('radius', radius);
+        setCircleRadius(radius);
+      }
+    }
+  };
+
   const lineToolReset = () => {
     setCurrentMousePos(null);
     dispatch(resetLastPoint());
+  };
+
+  const geometryToolReset = () => {
+    lineToolReset();
+
+    setCircleMidPoint(null);
+    setCircleRadius(0);
   };
 
   const onGeometryClick = (type: GeometryType, id: number) => {
@@ -172,8 +226,7 @@ const GeometryTool = forwardRef<any, any>(({}: GeometryToolProps, ref) => {
         } else if (ToolState.POINT_TOOL === toolState) {
           pointToolOnClick(event);
         } else if (ToolState.CIRCLE_TOOL === toolState) {
-          // TODO
-          console.log('Circle Tool on click');
+          circleToolOnClick(event);
         }
       },
       onPointerMove: (event: React.PointerEvent<HTMLDivElement>) => {
@@ -181,14 +234,14 @@ const GeometryTool = forwardRef<any, any>(({}: GeometryToolProps, ref) => {
         if (ToolState.LINE_TOOL === toolState) {
           lineToolOnPointerMove(event);
         } else if (ToolState.CIRCLE_TOOL === toolState) {
-          // TODO
-          console.log('Circle Tool on pointer move');
-        } else {
+          circleToolOnPointerMove(event);
           lineToolReset();
+        } else {
+          geometryToolReset();
         }
       },
     }),
-    [camera, scene, raycaster, toolState]
+    [camera, scene, raycaster, toolState, circleMidPoint]
   );
 
   useEffect(() => {
@@ -240,6 +293,25 @@ const GeometryTool = forwardRef<any, any>(({}: GeometryToolProps, ref) => {
           );
         })}
       </Points>
+
+      {/* TODO update X and Y in case plane changes (when this is implemented) */}
+      {circleMidPoint !== null && circleRadius > 0 && (
+        <CircleObject centerX={circleMidPoint.x} centerY={circleMidPoint.y} radius={circleRadius} color="grey" />
+      )}
+
+      {sketchCircles.map((circle) => {
+        // TODO update X and Y in case plane changes (when this is implemented)
+        const midPoint = sketchPointsMap[circle.mid_pt_id];
+        return (
+          <CircleObject
+            key={circle.id}
+            centerX={midPoint.x}
+            centerY={midPoint.y}
+            radius={circle.radius}
+            color="white"
+          />
+        );
+      })}
 
       <ZeroCoordinateCross onGeometryClick={onGeometryClick} />
     </>
