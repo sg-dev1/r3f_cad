@@ -1,5 +1,5 @@
 Priority of improvements (my ranking)
-  - 001, 002, 003
+  - 003
   - 006
   - 004
   - 009
@@ -10,17 +10,6 @@ Priority of improvements (my ranking)
 
 
 List of Improvements
-
-(001) Improvements of labels drawn on sketch (mainly includes Constraints)
-    - Symbols for horizontal, vertical constraint
-    - Symbol (number in mm) for length constraint
-    + Issue is that when zooming the relative position changes,
-      - most likely has to do with current implementation in LineObject.tsx using <Html> object
-      - objects are not affected by the zoom operation (have same size and position although size and position of lines change)
-    + Need to find alternative way of implementing it (e.g. use dedicated objects which also react to the zooming)
-
-(002) update of constraints on canvas (e.g. makes sense for length constraint)
-    - implement (001) first to have dedicated objects which can be selected (respond to click events)
 
 (003) delete of constraints on canvas
     - implement (001) first to have dedicated objects which can be selected (respond to click events)
@@ -48,3 +37,18 @@ List of Improvements
 (009) Improve update of constraints in ConstraintsTable.tsx
    - Current way to edit leaves many ways the user can mess up with the data/ input invalid data
    - Proper error handling needed / edit will be different per constraint type (as display)
+
+
+
+Done Improvements
+
+(001) Improvements of labels drawn on sketch (mainly includes Constraints)
+    - Symbols for horizontal, vertical constraint
+    - Symbol (number in mm) for length constraint
+    + Issue is that when zooming the relative position changes,
+      - most likely has to do with current implementation in LineObject.tsx using <Html> object
+      - objects are not affected by the zoom operation (have same size and position although size and position of lines change)
+    + Need to find alternative way of implementing it (e.g. use dedicated objects which also react to the zooming)
+
+(002) update of constraints on canvas (e.g. makes sense for length constraint)
+    - implement (001) first to have dedicated objects which can be selected (respond to click events)

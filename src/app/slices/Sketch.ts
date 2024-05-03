@@ -129,6 +129,36 @@ export const sketchUpdateConstraint = (sketch: SketchType, payload: ConstraintTy
   }
 };
 
+// Update a the length constraint of a line given its lineId and the payload in the format
+// { id: 0, t: SlvsConstraints.SLVS_C_PT_PT_DISTANCE, v: [value, 0, 0, 0, 0] }
+// See LineObject.tsx for usage.
+export const sketchUpdateConstraintForLine = (sketch: SketchType, lineId: number, payload: ConstraintType) => {
+  if (payload.t !== SlvsConstraints.SLVS_C_PT_PT_DISTANCE) {
+    console.error('This function currently only supports SlvsConstraints.SLVS_C_PT_PT_DISTANCE');
+    return;
+  }
+
+  const lineLst = sketch.lines.filter((line) => line.id === lineId);
+  if (lineLst.length > 0) {
+    const line = lineLst[0];
+    const constraintsForLine = sketch.constraints.filter(
+      (c) => (c.v[1] === line.p1_id && c.v[2] === line.p2_id) || (c.v[2] === line.p2_id && c.v[1] === line.p1_id)
+    );
+    const constraintsForLineWithType = constraintsForLine.filter((c) => c.t === payload.t);
+
+    //console.log('constraintsForLine', constraintsForLine);
+    //console.log('constraintsForLineWithType', constraintsForLineWithType);
+
+    if (constraintsForLineWithType.length > 0) {
+      sketchUpdateConstraint(sketch, {
+        ...payload,
+        id: constraintsForLineWithType[0].id,
+        v: [payload.v[0], line.p1_id, line.p2_id, 0, 0],
+      });
+    }
+  }
+};
+
 export const sketchDeleteConstraint = (sketch: SketchType, payload: ConstraintType) => {
   sketch.constraints = sketch.constraints.filter((constraint) => constraint.id !== payload.id);
   if (payload.t === SlvsConstraints.SLVS_C_PT_PT_DISTANCE) {

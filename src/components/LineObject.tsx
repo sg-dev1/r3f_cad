@@ -4,6 +4,7 @@ import {
   selectConstraints,
   selectLastDof,
   selectLastSolverResultCode,
+  updateConstraintForLine,
   updateLinePoints,
 } from '@/app/slices/sketchSlice';
 import {
@@ -21,6 +22,7 @@ import { Html, Line, Text } from '@react-three/drei';
 import { useThree } from '@react-three/fiber';
 import { useDrag } from '@use-gesture/react';
 import { useEffect, useState } from 'react';
+import TextObject from './TextObject';
 
 //   update the data in the redux store as well
 const LineObject = ({
@@ -129,30 +131,20 @@ const LineObject = ({
       />
 
       {verticalConstraints.length > 0 ? (
-        <Text
+        <TextObject
           position={[(start[0] + end[0]) / 2 - 5, (start[1] + end[1]) / 2 + 5, (start[2] + end[2]) / 2]}
-          color="red"
-          anchorX="center"
-          anchorY="middle"
-          fontSize={12}
-          fontWeight={1000}
-        >
-          |
-        </Text>
+          baseFontWeight={1000}
+          label={'|'}
+        />
       ) : (
         ''
       )}
       {horizontalConstraints.length > 0 ? (
-        <Text
+        <TextObject
           position={[(start[0] + end[0]) / 2 + 3, (start[1] + end[1]) / 2 + 15, (start[2] + end[2]) / 2]}
-          color="red"
-          anchorX="center"
-          anchorY="middle"
-          fontSize={14}
-          fontWeight={1000}
-        >
-          _
-        </Text>
+          baseFontWeight={1000}
+          label={'_'}
+        />
       ) : (
         ''
       )}
@@ -175,13 +167,24 @@ const LineObject = ({
                   input.value = '';
                   return;
                 }
-                dispatch(
-                  addConstraint({
-                    id: 0,
-                    t: SlvsConstraints.SLVS_C_PT_PT_DISTANCE,
-                    v: [value, 0, 0, id, 0],
-                  })
-                );
+
+                if (length === undefined) {
+                  dispatch(
+                    addConstraint({
+                      id: 0,
+                      t: SlvsConstraints.SLVS_C_PT_PT_DISTANCE,
+                      v: [value, 0, 0, id, 0],
+                    })
+                  );
+                } else {
+                  dispatch(
+                    updateConstraintForLine({
+                      lineId: id,
+                      payload: { id: 0, t: SlvsConstraints.SLVS_C_PT_PT_DISTANCE, v: [value, 0, 0, 0, 0] },
+                    })
+                  );
+                }
+
                 dispatch(setLengthConstraintLineId(-1));
               }
             }}
@@ -193,16 +196,12 @@ const LineObject = ({
 
       {/* Display a length - if available */}
       {length ? (
-        <Text
+        <TextObject
           position={[(start[0] + end[0]) / 2 + 15, (start[1] + end[1]) / 2 - 12, (start[2] + end[2]) / 2]}
-          color="red"
-          anchorX="center"
-          anchorY="middle"
-          fontSize={12}
-          fontWeight={500}
-        >
-          {length}
-        </Text>
+          baseFontWeight={500}
+          label={String(length)}
+          lineId={id}
+        />
       ) : (
         ''
       )}
