@@ -1,7 +1,6 @@
 import React, { useState, forwardRef, useImperativeHandle, useEffect } from 'react';
 import { useThree } from '@react-three/fiber';
 import { Line, Points } from '@react-three/drei';
-import * as THREE from 'three';
 import { useAppSelector, useAppDispatch } from '@/app/hooks';
 import {
   addEntity,
@@ -13,29 +12,30 @@ import {
   callSketchSolverBackend,
   selectConstraints,
   buildSolverRequestType,
+  addConstraint,
 } from '@/app/slices/sketchSlice';
 import { calcIntersectionWithPlane } from '@/utils/threejs_utils';
-import { GeometryType } from '@/app/types/EntityType';
+import { GeometryType, geometryTypeToString } from '@/app/types/EntityType';
 import LineObject from './LineObject';
 import PointObject from './PointObject';
 import { XY_PLANE } from '@/utils/threejs_planes';
+import { ToolState, selectToolState, setLengthConstraintLineId } from '@/app/slices/sketchToolStateSlice';
+import { SlvsConstraints } from '@/app/types/Constraints';
+import ZeroCoordinateCross from './ZeroCoordinateCross';
 
 export interface GeometryToolRefType {
-  lineToolOnClick: (event: React.MouseEvent<HTMLDivElement, MouseEvent>) => void;
-  lineToolOnPointerMove: (event: React.PointerEvent<HTMLDivElement>) => void;
-  pointToolOnClick: (event: React.MouseEvent<HTMLDivElement, MouseEvent>) => void;
-
-  onPointerOver: (event: React.PointerEvent<HTMLDivElement>) => void;
-  reset: () => void;
+  onClick: (event: React.MouseEvent<HTMLDivElement, MouseEvent>) => void;
+  onPointerMove: (event: React.PointerEvent<HTMLDivElement>) => void;
 }
 
 export interface GeometryToolProps {
-  onGeometryClick: (type: GeometryType, id: number) => void;
+  //onGeometryClick: (type: GeometryType, id: number) => void;
 }
 
-const GeometryTool = forwardRef<any, any>(({ onGeometryClick }: GeometryToolProps, ref) => {
+const GeometryTool = forwardRef<any, any>(({}: GeometryToolProps, ref) => {
   const [currentMousePos, setCurrentMousePos] = useState<[x: number, y: number, z: number] | null>(null);
   const [pointsToDraw, setPointsToDraw] = useState<[x: number, y: number, z: number][]>([]);
+  const [objectsClicked, setObjectsClicked] = useState<{ type: GeometryType; id: number }[]>([]);
   const { camera, scene, raycaster } = useThree();
 
   const dispatch = useAppDispatch();
@@ -44,6 +44,111 @@ const GeometryTool = forwardRef<any, any>(({ onGeometryClick }: GeometryToolProp
   const sketchLines = useAppSelector(selectLines);
   const sketchLastPoint = useAppSelector(selectLastPoint);
   const sketchConstraints = useAppSelector(selectConstraints);
+
+  const toolState = useAppSelector(selectToolState);
+
+  // ---
+
+  const lineToolOnClick = (event: React.MouseEvent<HTMLElement>) => {
+    event.stopPropagation();
+    //console.log(event);
+
+    const intersect = calcIntersectionWithPlane(
+      raycaster,
+      camera,
+      XY_PLANE,
+      event.clientX,
+      event.clientY,
+      event.target as HTMLElement
+    );
+    if (intersect) {
+      dispatch(addEntity({ p: { ...intersect, id: 0 }, type: GeometryType.LINE }));
+    }
+    //console.log(intersect);
+  };
+
+  const lineToolOnPointerMove = (event: React.PointerEvent<HTMLDivElement>) => {
+    event.stopPropagation();
+
+    //console.log('onPointerMove', event);
+    const intersect = calcIntersectionWithPlane(
+      raycaster,
+      camera,
+      XY_PLANE,
+      event.clientX,
+      event.clientY,
+      event.target as HTMLElement
+    );
+    if (intersect) {
+      setCurrentMousePos([intersect.x, intersect.y, intersect.z]);
+    }
+  };
+
+  const pointToolOnClick = (event: React.MouseEvent<HTMLElement>) => {
+    event.stopPropagation();
+
+    const intersect = calcIntersectionWithPlane(
+      raycaster,
+      camera,
+      XY_PLANE,
+      event.clientX,
+      event.clientY,
+      event.target as HTMLElement
+    );
+    if (intersect) {
+      dispatch(addEntity({ p: { ...intersect, id: 0 }, type: GeometryType.POINT }));
+    }
+  };
+
+  const lineToolReset = () => {
+    setCurrentMousePos(null);
+    dispatch(resetLastPoint());
+  };
+
+  const onGeometryClick = (type: GeometryType, id: number) => {
+    console.log(
+      '[SketcherView.onGeometryClick] Geometry with type ' + geometryTypeToString(type) + ' and id ' + id + ' clicked'
+    );
+
+    // Add constraint in case a constraint tool was selected
+    if (ToolState.CONSTRAINT_COINCIDENCE === toolState) {
+      if (type === GeometryType.POINT) {
+        console.log(objectsClicked);
+        if (objectsClicked.length === 1) {
+          dispatch(
+            addConstraint({
+              id: 0,
+              t: SlvsConstraints.SLVS_C_POINTS_COINCIDENT,
+              v: [0, objectsClicked[0].id, id, 0, 0],
+            })
+          );
+          setObjectsClicked([]);
+        } else if (objectsClicked.length === 0) {
+          setObjectsClicked([{ type: type, id: id }]);
+        }
+      }
+      // line not supported - TODO indicate that visually
+    } else if (ToolState.CONSTRAINT_HORIZONTAL === toolState) {
+      if (type === GeometryType.LINE) {
+        dispatch(addConstraint({ id: 0, t: SlvsConstraints.SLVS_C_HORIZONTAL, v: [0, 0, 0, id, 0] }));
+      }
+      // TODO support for two points
+      // TODO indicate for everything else that it is not supported
+    } else if (ToolState.CONSTRAINT_VERTICAL === toolState) {
+      if (type === GeometryType.LINE) {
+        dispatch(addConstraint({ id: 0, t: SlvsConstraints.SLVS_C_VERTICAL, v: [0, 0, 0, id, 0] }));
+      }
+      // TODO support for two points
+      // TODO indicate for everything else that it is not supported
+    } else if (ToolState.CONSTRAINT_LENGTH === toolState) {
+      if (type === GeometryType.LINE) {
+        dispatch(setLengthConstraintLineId(id));
+      }
+      // Point type not supported - TODO indicate that visually
+    }
+  };
+
+  // ---
 
   useEffect(() => {
     dispatch(
@@ -61,65 +166,29 @@ const GeometryTool = forwardRef<any, any>(({ onGeometryClick }: GeometryToolProp
   useImperativeHandle(
     ref,
     () => ({
-      lineToolOnClick: (event: React.MouseEvent<HTMLElement>) => {
-        event.stopPropagation();
-        //console.log(event);
-
-        const intersect = calcIntersectionWithPlane(
-          raycaster,
-          camera,
-          XY_PLANE,
-          event.clientX,
-          event.clientY,
-          event.target as HTMLElement
-        );
-        if (intersect) {
-          dispatch(addEntity({ p: { ...intersect, id: 0 }, type: GeometryType.LINE }));
-        }
-        //console.log(intersect);
-      },
-      onPointerOver: (event: React.PointerEvent<HTMLDivElement>) => {
-        event.stopPropagation();
-
-        //console.log('onPointerOver', event);
-      },
-      lineToolOnPointerMove: (event: React.PointerEvent<HTMLDivElement>) => {
-        event.stopPropagation();
-
-        //console.log('onPointerMove', event);
-        const intersect = calcIntersectionWithPlane(
-          raycaster,
-          camera,
-          XY_PLANE,
-          event.clientX,
-          event.clientY,
-          event.target as HTMLElement
-        );
-        if (intersect) {
-          setCurrentMousePos([intersect.x, intersect.y, intersect.z]);
+      onClick: (event: React.MouseEvent<HTMLElement>) => {
+        if (ToolState.LINE_TOOL === toolState) {
+          lineToolOnClick(event);
+        } else if (ToolState.POINT_TOOL === toolState) {
+          pointToolOnClick(event);
+        } else if (ToolState.CIRCLE_TOOL === toolState) {
+          // TODO
+          console.log('Circle Tool on click');
         }
       },
-      pointToolOnClick: (event: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
-        event.stopPropagation();
-
-        const intersect = calcIntersectionWithPlane(
-          raycaster,
-          camera,
-          XY_PLANE,
-          event.clientX,
-          event.clientY,
-          event.target as HTMLElement
-        );
-        if (intersect) {
-          dispatch(addEntity({ p: { ...intersect, id: 0 }, type: GeometryType.POINT }));
+      onPointerMove: (event: React.PointerEvent<HTMLDivElement>) => {
+        //console.log('onPointerMove', toolState);
+        if (ToolState.LINE_TOOL === toolState) {
+          lineToolOnPointerMove(event);
+        } else if (ToolState.CIRCLE_TOOL === toolState) {
+          // TODO
+          console.log('Circle Tool on pointer move');
+        } else {
+          lineToolReset();
         }
-      },
-      reset: () => {
-        setCurrentMousePos(null);
-        dispatch(resetLastPoint());
       },
     }),
-    [camera, scene, raycaster]
+    [camera, scene, raycaster, toolState]
   );
 
   useEffect(() => {
@@ -132,28 +201,6 @@ const GeometryTool = forwardRef<any, any>(({ onGeometryClick }: GeometryToolProp
 
   return (
     <>
-      {/* Old solution using Segements, does not support event handlers like onClick or onPointerOver */}
-      {/* <Segments lineWidth={0.5}>
-        {pointsToDraw.length === 2 && <Segment key={-1} start={pointsToDraw[0]} end={pointsToDraw[1]} color="gray" />}
-        {sketchLines.map((line) => {
-          const p1 = sketchPointsMap[line.p1_id];
-          const p2 = sketchPointsMap[line.p2_id];
-          //console.log('id', line.id, 'line', line);
-          return (
-            <Segment
-              key={line.id}
-              start={[p1.x, p1.y, p1.z]}
-              end={[p2.x, p2.y, p2.z]}
-              color="white"
-              onClick={() => console.log('Line Segment OnClick')}
-              onPointerOver={() => console.log('onPointerOver line segment')}
-            />
-            //<SegmentWithEvents key={line.id} start={[p1.x, p1.y, p1.z]} end={[p2.x, p2.y, p2.z]} color="white" />
-          );
-          //return <LineObject key={line.id} start={[p1.x, p1.y, p1.z]} end={[p2.x, p2.y, p2.z]} color="white" />;
-        })}
-      </Segments> */}
-
       {pointsToDraw.length === 2 && (
         <Line
           points={[pointsToDraw[0], pointsToDraw[1]]} // array of points
@@ -193,6 +240,8 @@ const GeometryTool = forwardRef<any, any>(({ onGeometryClick }: GeometryToolProp
           );
         })}
       </Points>
+
+      <ZeroCoordinateCross onGeometryClick={onGeometryClick} />
     </>
   );
 });

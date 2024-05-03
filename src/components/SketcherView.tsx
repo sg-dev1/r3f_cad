@@ -5,10 +5,8 @@ import { Canvas } from '@react-three/fiber';
 import { OrbitControls } from '@react-three/drei';
 import GeometryTool, { GeometryToolRefType } from './GeometryTool';
 import { Button, Layout } from 'antd';
-import { GeometryType, geometryTypeToString } from '@/app/types/EntityType';
 import { useAppDispatch, useAppSelector } from '@/app/hooks';
 import {
-  addConstraint,
   deleteConstraintById,
   deleteLengthConstraintForLine,
   selectConstraints,
@@ -25,8 +23,6 @@ import {
   setSelectedConstraintId,
   setToolState,
 } from '@/app/slices/sketchToolStateSlice';
-import { SlvsConstraints } from '@/app/types/Constraints';
-import ZeroCoordinateCross from './ZeroCoordinateCross';
 import ConstraintTable from './ConstraintTable';
 import EntitiesTable from './EntitiesTable';
 import useKeyboard from '@/utils/useKeyboard';
@@ -51,7 +47,7 @@ const SketcherView = () => {
   // keyboard events
   const keyMap = useKeyboard();
   useEffect(() => {
-    console.log(keyMap);
+    //console.log(keyMap);
     if (keyMap['Delete'] === true) {
       if (sketchLengthConstraintLineId !== -1) {
         //console.log('Deleting sketchLengthConstraintLineId', sketchLengthConstraintLineId);
@@ -65,9 +61,6 @@ const SketcherView = () => {
       }
     }
   }, [keyMap]);
-
-  // Needed for (constraint) tools
-  const [objectsClicked, setObjectsClicked] = useState<{ type: GeometryType; id: number }[]>([]);
 
   // Just for debugging
   useEffect(() => {
@@ -92,6 +85,9 @@ const SketcherView = () => {
         break;
       case ToolState.POINT_TOOL:
         setStateIndicator('Point Tool');
+        break;
+      case ToolState.CIRCLE_TOOL:
+        setStateIndicator('Circle Tool');
         break;
       case ToolState.CONSTRAINT_COINCIDENCE:
         setStateIndicator('Coincidence Tool');
@@ -118,49 +114,6 @@ const SketcherView = () => {
     }
   }, [toolState]);
 
-  const onGeometryClick = (type: GeometryType, id: number) => {
-    console.log(
-      '[SketcherView.onGeometryClick] Geometry with type ' + geometryTypeToString(type) + ' and id ' + id + ' clicked'
-    );
-
-    // Add constraint in case a constraint tool was selected
-    if (ToolState.CONSTRAINT_COINCIDENCE === toolState) {
-      if (type === GeometryType.POINT) {
-        console.log(objectsClicked);
-        if (objectsClicked.length === 1) {
-          dispatch(
-            addConstraint({
-              id: 0,
-              t: SlvsConstraints.SLVS_C_POINTS_COINCIDENT,
-              v: [0, objectsClicked[0].id, id, 0, 0],
-            })
-          );
-          setObjectsClicked([]);
-        } else if (objectsClicked.length === 0) {
-          setObjectsClicked([{ type: type, id: id }]);
-        }
-      }
-      // line not supported - TODO indicate that visually
-    } else if (ToolState.CONSTRAINT_HORIZONTAL === toolState) {
-      if (type === GeometryType.LINE) {
-        dispatch(addConstraint({ id: 0, t: SlvsConstraints.SLVS_C_HORIZONTAL, v: [0, 0, 0, id, 0] }));
-      }
-      // TODO support for two points
-      // TODO indicate for everything else that it is not supported
-    } else if (ToolState.CONSTRAINT_VERTICAL === toolState) {
-      if (type === GeometryType.LINE) {
-        dispatch(addConstraint({ id: 0, t: SlvsConstraints.SLVS_C_VERTICAL, v: [0, 0, 0, id, 0] }));
-      }
-      // TODO support for two points
-      // TODO indicate for everything else that it is not supported
-    } else if (ToolState.CONSTRAINT_LENGTH === toolState) {
-      if (type === GeometryType.LINE) {
-        dispatch(setLengthConstraintLineId(id));
-      }
-      // Point type not supported - TODO indicate that visually
-    }
-  };
-
   return (
     <>
       <Layout>
@@ -174,6 +127,13 @@ const SketcherView = () => {
             onClick={() => dispatch(setToolState(ToolState.POINT_TOOL))}
           >
             Point
+          </Button>
+          <Button
+            type="primary"
+            className="primary-button"
+            onClick={() => dispatch(setToolState(ToolState.CIRCLE_TOOL))}
+          >
+            Circle
           </Button>
           <Button
             type="primary"
@@ -237,20 +197,8 @@ const SketcherView = () => {
               //camera={{ zoom: 1, position: [0, 0, 200], top: 200, bottom: -200, left: 200, right: -200, near: 1, far: 2000 }}
               camera={{ zoom: 2 }}
               className="sketcherview"
-              onClick={(e) => {
-                if (ToolState.LINE_TOOL === toolState) {
-                  geometryToolRef.current?.lineToolOnClick(e);
-                } else if (ToolState.POINT_TOOL === toolState) {
-                  geometryToolRef.current?.pointToolOnClick(e);
-                }
-              }}
-              onPointerMove={(e) => {
-                if (ToolState.LINE_TOOL === toolState) {
-                  geometryToolRef.current?.lineToolOnPointerMove(e);
-                } else {
-                  geometryToolRef.current?.reset();
-                }
-              }}
+              onClick={(e) => geometryToolRef.current?.onClick(e)}
+              onPointerMove={(e) => geometryToolRef.current?.onPointerMove(e)}
             >
               {/* <CameraControls minDistance={1.2} maxDistance={4} /> */}
               <OrbitControls minDistance={1} maxDistance={4} enableRotate={false} />
@@ -258,9 +206,7 @@ const SketcherView = () => {
               <ambientLight intensity={0.25} />
               <pointLight intensity={0.75} position={[500, 500, 1000]} />
 
-              <GeometryTool onGeometryClick={onGeometryClick} ref={geometryToolRef} />
-
-              <ZeroCoordinateCross onGeometryClick={onGeometryClick} />
+              <GeometryTool ref={geometryToolRef} />
 
               {/* If the camera is used like that it behaves a bit strange - scene gets rerendered when it is resized.
                   This lead to the issue where lines on the screen are not shown in correct aspect ratio. */}
