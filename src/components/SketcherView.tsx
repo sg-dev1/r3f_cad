@@ -9,6 +9,8 @@ import { GeometryType, geometryTypeToString } from '@/app/types/EntityType';
 import { useAppDispatch, useAppSelector } from '@/app/hooks';
 import {
   addConstraint,
+  deleteConstraintById,
+  deleteLengthConstraintForLine,
   selectConstraints,
   selectLastDof,
   selectLastSolverFailedConstraints,
@@ -17,14 +19,17 @@ import {
 import {
   ToolState,
   selectLengthConstraintLineId,
+  selectSelectedConstraintId,
   selectToolState,
   setLengthConstraintLineId,
+  setSelectedConstraintId,
   setToolState,
 } from '@/app/slices/sketchToolStateSlice';
 import { SlvsConstraints } from '@/app/types/Constraints';
 import ZeroCoordinateCross from './ZeroCoordinateCross';
 import ConstraintTable from './ConstraintTable';
 import EntitiesTable from './EntitiesTable';
+import useKeyboard from '@/utils/useKeyboard';
 
 const { Header, Content, Sider } = Layout;
 
@@ -40,7 +45,26 @@ const SketcherView = () => {
   const sketchLastSolverFailedConstraints = useAppSelector(selectLastSolverFailedConstraints);
 
   const sketchLengthConstraintLineId = useAppSelector(selectLengthConstraintLineId);
+  const sketchSelectedConstraintId = useAppSelector(selectSelectedConstraintId);
   const toolState = useAppSelector(selectToolState);
+
+  // keyboard events
+  const keyMap = useKeyboard();
+  useEffect(() => {
+    console.log(keyMap);
+    if (keyMap['Delete'] === true) {
+      if (sketchLengthConstraintLineId !== -1) {
+        //console.log('Deleting sketchLengthConstraintLineId', sketchLengthConstraintLineId);
+        dispatch(deleteLengthConstraintForLine(sketchLengthConstraintLineId));
+        dispatch(setLengthConstraintLineId(-1));
+      }
+      if (sketchSelectedConstraintId !== -1) {
+        //console.log('Deleting sketchSelectedConstraintId', sketchSelectedConstraintId);
+        dispatch(deleteConstraintById(sketchSelectedConstraintId));
+        dispatch(setSelectedConstraintId(-1));
+      }
+    }
+  }, [keyMap]);
 
   // Needed for (constraint) tools
   const [objectsClicked, setObjectsClicked] = useState<{ type: GeometryType; id: number }[]>([]);

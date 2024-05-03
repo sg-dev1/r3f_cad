@@ -1,7 +1,7 @@
 Priority of improvements (my ranking)
-  - 003
   - 006
   - 004
+  - 010
   - 009
   - 008
   - 005
@@ -10,9 +10,6 @@ Priority of improvements (my ranking)
 
 
 List of Improvements
-
-(003) delete of constraints on canvas
-    - implement (001) first to have dedicated objects which can be selected (respond to click events)
 
 (004) integration of redux persist
     - Examine possiblilities how to save redux state (e.g. to local storage etc.)
@@ -38,6 +35,11 @@ List of Improvements
    - Current way to edit leaves many ways the user can mess up with the data/ input invalid data
    - Proper error handling needed / edit will be different per constraint type (as display)
 
+(010) Highlight of selected items (constraints, entities) - in table as well as on canvas
+   - For entities it is already implemented one way
+       Select in table --> Highlight on canvas
+   - TODO entities: Select on canvas --> Highlight in table
+   - Same for constraints
 
 
 Done Improvements
@@ -51,4 +53,7 @@ Done Improvements
     + Need to find alternative way of implementing it (e.g. use dedicated objects which also react to the zooming)
 
 (002) update of constraints on canvas (e.g. makes sense for length constraint)
+    - implement (001) first to have dedicated objects which can be selected (respond to click events)
+
+(003) delete of constraints on canvas
     - implement (001) first to have dedicated objects which can be selected (respond to click events)

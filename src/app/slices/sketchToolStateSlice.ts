@@ -17,6 +17,7 @@ export enum ToolState {
 export interface SketchToolState {
   lengthConstraintLineId: number;
   selectedEntityId: number;
+  selectedConstraintId: number;
 
   toolState: ToolState;
 }
@@ -24,6 +25,7 @@ export interface SketchToolState {
 const initialState: SketchToolState = {
   lengthConstraintLineId: -1,
   selectedEntityId: -1,
+  selectedConstraintId: -1,
 
   toolState: ToolState.LINE_TOOL,
 };
@@ -40,16 +42,21 @@ export const sketchToolSlice = createSlice({
       //console.log('Set selected entity id to ', payload);
       state.selectedEntityId = payload;
     },
+    setSelectedConstraintId: (state, { payload }) => {
+      state.selectedConstraintId = payload;
+    },
     setToolState: (state, { payload }) => {
       state.toolState = payload;
     },
   },
 });
 
-export const { setLengthConstraintLineId, setSelectedEntityId, setToolState } = sketchToolSlice.actions;
+export const { setLengthConstraintLineId, setSelectedEntityId, setSelectedConstraintId, setToolState } =
+  sketchToolSlice.actions;
 
 export const selectLengthConstraintLineId = (state: RootState) => state.sketchTool.lengthConstraintLineId;
 export const selectSelectedEntityId = (state: RootState) => state.sketchTool.selectedEntityId;
+export const selectSelectedConstraintId = (state: RootState) => state.sketchTool.selectedConstraintId;
 export const selectToolState = (state: RootState) => state.sketchTool.toolState;
 
 export default sketchToolSlice.reducer;

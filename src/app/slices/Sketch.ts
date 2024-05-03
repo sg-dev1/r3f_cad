@@ -129,38 +129,28 @@ export const sketchUpdateConstraint = (sketch: SketchType, payload: ConstraintTy
   }
 };
 
-// Update a the length constraint of a line given its lineId and the payload in the format
-// { id: 0, t: SlvsConstraints.SLVS_C_PT_PT_DISTANCE, v: [value, 0, 0, 0, 0] }
+// Update a the length constraint of a line
+//   given its lineId and the payload in the format
+//   { id: 0, t: SlvsConstraints.SLVS_C_PT_PT_DISTANCE, v: [value, 0, 0, 0, 0] }
 // See LineObject.tsx for usage.
-export const sketchUpdateConstraintForLine = (sketch: SketchType, lineId: number, payload: ConstraintType) => {
+export const sketchUpdateLengthConstraintForLine = (sketch: SketchType, lineId: number, payload: ConstraintType) => {
   if (payload.t !== SlvsConstraints.SLVS_C_PT_PT_DISTANCE) {
     console.error('This function currently only supports SlvsConstraints.SLVS_C_PT_PT_DISTANCE');
     return;
   }
 
-  const lineLst = sketch.lines.filter((line) => line.id === lineId);
-  if (lineLst.length > 0) {
-    const line = lineLst[0];
-    const constraintsForLine = sketch.constraints.filter(
-      (c) => (c.v[1] === line.p1_id && c.v[2] === line.p2_id) || (c.v[2] === line.p2_id && c.v[1] === line.p1_id)
-    );
-    const constraintsForLineWithType = constraintsForLine.filter((c) => c.t === payload.t);
-
-    //console.log('constraintsForLine', constraintsForLine);
-    //console.log('constraintsForLineWithType', constraintsForLineWithType);
-
-    if (constraintsForLineWithType.length > 0) {
-      sketchUpdateConstraint(sketch, {
-        ...payload,
-        id: constraintsForLineWithType[0].id,
-        v: [payload.v[0], line.p1_id, line.p2_id, 0, 0],
-      });
-    }
+  const constraint = _getConstraintForLine(sketch, lineId);
+  if (constraint) {
+    sketchUpdateConstraint(sketch, {
+      ...payload,
+      id: constraint.constraint.id,
+      v: [payload.v[0], constraint.p1_id, constraint.p2_id, 0, 0],
+    });
   }
 };
 
 export const sketchDeleteConstraint = (sketch: SketchType, payload: ConstraintType) => {
-  sketch.constraints = sketch.constraints.filter((constraint) => constraint.id !== payload.id);
+  sketchDeleteConstraintById(sketch, payload.id);
   if (payload.t === SlvsConstraints.SLVS_C_PT_PT_DISTANCE) {
     const pt1 = sketch.pointsMap[payload.v[1] as number];
     const pt2 = sketch.pointsMap[payload.v[2] as number];
@@ -168,6 +158,22 @@ export const sketchDeleteConstraint = (sketch: SketchType, payload: ConstraintTy
     if (line.length >= 1) {
       line[0].length = undefined; // update the length
     }
+  }
+};
+
+export const sketchDeleteConstraintById = (sketch: SketchType, id: number) => {
+  sketch.constraints = sketch.constraints.filter((constraint) => constraint.id !== id);
+};
+
+// Delete the length constraint for a line with given lineId
+export const sketchDeleteLengthConstraintForLine = (sketch: SketchType, lineId: number) => {
+  const constraint = _getConstraintForLine(sketch, lineId);
+  if (constraint) {
+    sketchDeleteConstraint(sketch, {
+      id: constraint.constraint.id,
+      t: SlvsConstraints.SLVS_C_PT_PT_DISTANCE,
+      v: [0, constraint.p1_id, constraint.p2_id, 0, 0],
+    });
   }
 };
 
@@ -192,5 +198,26 @@ const _updatePoint = (sketch: SketchType, newPoint: Point3DType) => {
     sketch.points.splice(pointIndex, 1, newPoint);
   } else {
     console.error('Point index was -1. Inconsistent state between state.pointsMap and state.points of this sketch');
+  }
+};
+
+// Get the constraint object for a line with given lineId
+const _getConstraintForLine = (sketch: SketchType, lineId: number) => {
+  const lineLst = sketch.lines.filter((line) => line.id === lineId);
+  if (lineLst.length > 0) {
+    const line = lineLst[0];
+    const constraintsForLine = sketch.constraints.filter(
+      (c) => (c.v[1] === line.p1_id && c.v[2] === line.p2_id) || (c.v[2] === line.p2_id && c.v[1] === line.p1_id)
+    );
+    const constraintsForLineWithType = constraintsForLine.filter((c) => c.t === SlvsConstraints.SLVS_C_PT_PT_DISTANCE);
+
+    //console.log('constraintsForLine', constraintsForLine);
+    //console.log('constraintsForLineWithType', constraintsForLineWithType);
+
+    if (constraintsForLineWithType.length > 0) {
+      return { constraint: constraintsForLineWithType[0], p1_id: line.p1_id, p2_id: line.p2_id };
+    }
+
+    return null;
   }
 };

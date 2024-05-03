@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Text } from '@react-three/drei';
 import { Vector3Tuple } from 'three';
-import { setLengthConstraintLineId } from '@/app/slices/sketchToolStateSlice';
+import { setLengthConstraintLineId, setSelectedConstraintId } from '@/app/slices/sketchToolStateSlice';
 import { useAppDispatch } from '@/app/hooks';
 
 const TextObject = ({
@@ -9,11 +9,13 @@ const TextObject = ({
   label,
   baseFontWeight,
   lineId,
+  constraintId,
 }: {
   position: Vector3Tuple;
   label: string;
   baseFontWeight: number;
   lineId?: number;
+  constraintId?: number;
 }) => {
   const [hovered, setHovered] = useState(false);
   const dispatch = useAppDispatch();
@@ -21,6 +23,9 @@ const TextObject = ({
   const handleClickEvent = () => {
     if (lineId !== undefined) {
       dispatch(setLengthConstraintLineId(lineId));
+    }
+    if (constraintId !== undefined) {
+      dispatch(setSelectedConstraintId(constraintId));
     }
   };
 

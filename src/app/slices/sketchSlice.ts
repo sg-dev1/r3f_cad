@@ -11,11 +11,13 @@ import {
   sketchAddConstraint,
   sketchAddEntity,
   sketchDeleteConstraint,
+  sketchDeleteConstraintById,
+  sketchDeleteLengthConstraintForLine,
   sketchRemoveEntity,
   sketchResetLastPoint,
   SketchType,
   sketchUpdateConstraint,
-  sketchUpdateConstraintForLine,
+  sketchUpdateLengthConstraintForLine,
   sketchUpdateEntities,
   sketchUpdateLinePoints,
   sketchUpdatePoint,
@@ -135,11 +137,17 @@ export const sketchSlice = createSlice({
     updateConstraint: (state: SketchState, { payload }) => {
       sketchUpdateConstraint(state.sketches[state.activeSketchId], payload);
     },
-    updateConstraintForLine: (state: SketchState, { payload }) => {
-      sketchUpdateConstraintForLine(state.sketches[state.activeSketchId], payload.lineId, payload.payload);
+    updateLengthConstraintForLine: (state: SketchState, { payload }) => {
+      sketchUpdateLengthConstraintForLine(state.sketches[state.activeSketchId], payload.lineId, payload.payload);
     },
     deleteConstraint: (state: SketchState, { payload }) => {
       sketchDeleteConstraint(state.sketches[state.activeSketchId], payload);
+    },
+    deleteConstraintById: (state: SketchState, { payload }) => {
+      sketchDeleteConstraintById(state.sketches[state.activeSketchId], payload);
+    },
+    deleteLengthConstraintForLine: (state: SketchState, { payload }) => {
+      sketchDeleteLengthConstraintForLine(state.sketches[state.activeSketchId], payload);
     },
   },
   extraReducers: (builder) => {
@@ -181,8 +189,10 @@ export const {
   resetLastPoint,
   addConstraint,
   updateConstraint,
-  updateConstraintForLine,
+  updateLengthConstraintForLine,
   deleteConstraint,
+  deleteConstraintById,
+  deleteLengthConstraintForLine,
 } = sketchSlice.actions;
 
 export const selectActiveSketchId = (state: RootState) => state.sketchs.activeSketchId;

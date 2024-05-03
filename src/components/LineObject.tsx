@@ -4,7 +4,7 @@ import {
   selectConstraints,
   selectLastDof,
   selectLastSolverResultCode,
-  updateConstraintForLine,
+  updateLengthConstraintForLine,
   updateLinePoints,
 } from '@/app/slices/sketchSlice';
 import {
@@ -18,7 +18,7 @@ import { SlvsConstraints } from '@/app/types/Constraints';
 import { GeometryType } from '@/app/types/EntityType';
 import { XY_PLANE } from '@/utils/threejs_planes';
 import { calcIntersectionWithPlaneFromRect } from '@/utils/threejs_utils';
-import { Html, Line, Text } from '@react-three/drei';
+import { Html, Line } from '@react-three/drei';
 import { useThree } from '@react-three/fiber';
 import { useDrag } from '@use-gesture/react';
 import { useEffect, useState } from 'react';
@@ -135,6 +135,7 @@ const LineObject = ({
           position={[(start[0] + end[0]) / 2 - 5, (start[1] + end[1]) / 2 + 5, (start[2] + end[2]) / 2]}
           baseFontWeight={1000}
           label={'|'}
+          constraintId={verticalConstraints[0].id}
         />
       ) : (
         ''
@@ -144,6 +145,7 @@ const LineObject = ({
           position={[(start[0] + end[0]) / 2 + 3, (start[1] + end[1]) / 2 + 15, (start[2] + end[2]) / 2]}
           baseFontWeight={1000}
           label={'_'}
+          constraintId={horizontalConstraints[0].id}
         />
       ) : (
         ''
@@ -178,7 +180,7 @@ const LineObject = ({
                   );
                 } else {
                   dispatch(
-                    updateConstraintForLine({
+                    updateLengthConstraintForLine({
                       lineId: id,
                       payload: { id: 0, t: SlvsConstraints.SLVS_C_PT_PT_DISTANCE, v: [value, 0, 0, 0, 0] },
                     })
