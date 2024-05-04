@@ -18,6 +18,7 @@ import React, { useContext, useEffect, useRef, useState } from 'react';
 
 import '../app/globals.css';
 import { DeleteOutlined } from '@ant-design/icons';
+import { selectSelectedConstraintId, setSelectedConstraintId } from '@/app/slices/sketchToolStateSlice';
 
 // ---
 // Base on Editable Cells example
@@ -150,9 +151,15 @@ const ConstraintTable = () => {
   const constraints = useAppSelector(selectConstraints);
   const [tableData, setTableData] = useState<DataType[]>([]);
   const sketchLastSolverFailedConstraints = useAppSelector(selectLastSolverFailedConstraints);
+  const sketchSelectedConstraintId = useAppSelector(selectSelectedConstraintId);
 
+  const [selectedRowKey, setSelectedRowKey] = useState<string | null>(null);
   const [sortedInfo, setSortedInfo] = useState<SorterResult<DataType>>({});
   const dispatch = useAppDispatch();
+
+  useEffect(() => {
+    setSelectedRowKey(String(sketchSelectedConstraintId));
+  }, [sketchSelectedConstraintId]);
 
   useEffect(() => {
     setTableData(
@@ -361,6 +368,11 @@ const ConstraintTable = () => {
     };
   });
 
+  const handleRowClick = (record: DataType) => {
+    setSelectedRowKey(record.key);
+    dispatch(setSelectedConstraintId(record.id));
+  };
+
   return (
     <>
       <Table
@@ -373,13 +385,22 @@ const ConstraintTable = () => {
             cell: EditableCell,
           },
         }}
-        rowClassName={(record, index) => (record.isError ? 'red-text' : '')}
+        rowClassName={(record, index) =>
+          record.isError ? 'red-text' : record.key === selectedRowKey ? 'selected-row' : ''
+        }
         pagination={false}
         scroll={{ y: '35vh' }}
         columns={columns as ColumnTypes}
         dataSource={tableData}
         title={() => <b>Constraints</b>}
         //loading={dataLoading}
+        onRow={(record, rowIndex) => {
+          return {
+            onClick: (event) => {
+              handleRowClick(record as DataType);
+            },
+          };
+        }}
       />
     </>
   );

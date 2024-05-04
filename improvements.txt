@@ -1,7 +1,10 @@
 Priority of improvements (my ranking)
+  - 014
+  - 012
+  - 013
+  - 011
   - 006
   - 004
-  - 010
   - 009
   - 008
   - 005
@@ -22,8 +25,8 @@ List of Improvements
 
 (006) Add more tools
    - Radius constraint for circle
-   - Currently we simply have a simple line drawing tool that saves its points into the redux state and some basic constraint tools
-   - We need tools to draw other primitives (e.g. circles, arcs) and to add additional constraints (parallel, equal, mid point, ...)
+   - Other constraints: parallel, equal, mid point, ...
+   - Arc drawing tool
 
 (007) drag'n'drop of lines and points improvements
    - consider constraints
@@ -36,14 +39,14 @@ List of Improvements
    - Current way to edit leaves many ways the user can mess up with the data/ input invalid data
    - Proper error handling needed / edit will be different per constraint type (as display)
 
-(010) Highlight of selected items (constraints, entities) - in table as well as on canvas
-   - For entities it is already implemented one way
-       Select in table --> Highlight on canvas
-   - TODO entities: Select on canvas --> Highlight in table
-   - Same for constraints
-
 (011) Fix bug when deleting entities:
    - It is possible to delete an endpoint of a line without deleting the line --> app crashes because one endpoint of line cannot be found
+
+(012) Add support for circle in solver backend - seems to be not supported yet (fully constrained although no radius constraint)
+
+(013) Selection of entities constraint: deselection is not yet supported
+
+(014) Selection of point to point constraints (length constraints) for lines is not yet supported --> the implementation should be reworked
 
 
 Done Improvements
@@ -61,3 +64,9 @@ Done Improvements
 
 (003) delete of constraints on canvas
     - implement (001) first to have dedicated objects which can be selected (respond to click events)
+
+(010) Highlight of selected items (constraints, entities) - in table as well as on canvas
+   - For entities it is already implemented one way
+       Select in table --> Highlight on canvas
+   - TODO entities: Select on canvas --> Highlight in table
+   - Same for constraints

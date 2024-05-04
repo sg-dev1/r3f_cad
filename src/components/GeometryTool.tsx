@@ -1,6 +1,6 @@
 import React, { useState, forwardRef, useImperativeHandle, useEffect } from 'react';
 import { useThree } from '@react-three/fiber';
-import { Circle, Line, Points } from '@react-three/drei';
+import { Line, Points } from '@react-three/drei';
 import { useAppSelector, useAppDispatch } from '@/app/hooks';
 import {
   addEntity,
@@ -20,10 +20,15 @@ import { GeometryType, geometryTypeToString } from '@/app/types/EntityType';
 import LineObject from './LineObject';
 import PointObject from './PointObject';
 import { XY_PLANE } from '@/utils/threejs_planes';
-import { ToolState, selectToolState, setLengthConstraintLineId } from '@/app/slices/sketchToolStateSlice';
+import {
+  ToolState,
+  selectToolState,
+  setLengthConstraintLineId,
+  setSelectedEntityId,
+} from '@/app/slices/sketchToolStateSlice';
 import { SlvsConstraints } from '@/app/types/Constraints';
 import ZeroCoordinateCross from './ZeroCoordinateCross';
-import { Vector3Like, Vector3Tuple } from 'three';
+import { Vector3Like } from 'three';
 import CircleObject from './CircleObject';
 
 export interface GeometryToolRefType {
@@ -34,6 +39,10 @@ export interface GeometryToolRefType {
 export interface GeometryToolProps {
   //onGeometryClick: (type: GeometryType, id: number) => void;
 }
+
+// Workaround for creating the circle, since circleRadius always has the old value in circleToolOnClick().
+// But circleRadius is needed as useState() for rendering.
+let g_circleRadius: number = 0;
 
 const GeometryTool = forwardRef<any, any>(({}: GeometryToolProps, ref) => {
   const [currentMousePos, setCurrentMousePos] = useState<[x: number, y: number, z: number] | null>(null);
@@ -121,8 +130,9 @@ const GeometryTool = forwardRef<any, any>(({}: GeometryToolProps, ref) => {
       if (circleMidPoint === null) {
         setCircleMidPoint(intersect);
       } else {
-        dispatch(addEntity({ p: { ...circleMidPoint, id: 0 }, type: GeometryType.CIRCLE, radius: circleRadius }));
-        console.log('Create the circle!');
+        //console.log('Create the circle!', circleRadius, g_circleRadius);
+        dispatch(addEntity({ p: { ...circleMidPoint, id: 0 }, type: GeometryType.CIRCLE, radius: g_circleRadius }));
+
         setCircleMidPoint(null);
       }
     }
@@ -141,8 +151,9 @@ const GeometryTool = forwardRef<any, any>(({}: GeometryToolProps, ref) => {
       if (intersect) {
         // update the radius
         const radius = intersect.sub(circleMidPoint).length();
-        //console.log('radius', radius);
+        //console.log('circle radius', radius);
         setCircleRadius(radius);
+        g_circleRadius = radius;
       }
     }
   };
@@ -199,6 +210,9 @@ const GeometryTool = forwardRef<any, any>(({}: GeometryToolProps, ref) => {
         dispatch(setLengthConstraintLineId(id));
       }
       // Point type not supported - TODO indicate that visually
+    } else if (ToolState.CURSOR_TOOL === toolState) {
+      // Selection functionality
+      dispatch(setSelectedEntityId(id));
     }
   };
 
@@ -296,7 +310,14 @@ const GeometryTool = forwardRef<any, any>(({}: GeometryToolProps, ref) => {
 
       {/* TODO update X and Y in case plane changes (when this is implemented) */}
       {circleMidPoint !== null && circleRadius > 0 && (
-        <CircleObject centerX={circleMidPoint.x} centerY={circleMidPoint.y} radius={circleRadius} color="grey" />
+        <CircleObject
+          id={-1}
+          centerX={circleMidPoint.x}
+          centerY={circleMidPoint.y}
+          radius={circleRadius}
+          color="grey"
+          enableHover={false}
+        />
       )}
 
       {sketchCircles.map((circle) => {
@@ -305,10 +326,13 @@ const GeometryTool = forwardRef<any, any>(({}: GeometryToolProps, ref) => {
         return (
           <CircleObject
             key={circle.id}
+            id={circle.id}
             centerX={midPoint.x}
             centerY={midPoint.y}
             radius={circle.radius}
             color="white"
+            enableHover={true}
+            onGeometryClick={onGeometryClick}
           />
         );
       })}

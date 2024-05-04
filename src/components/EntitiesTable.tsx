@@ -1,6 +1,6 @@
 import { useAppDispatch, useAppSelector } from '@/app/hooks';
 import { selectLines, selectPoints, removeEntity, selectCircles } from '@/app/slices/sketchSlice';
-import { setSelectedEntityId } from '@/app/slices/sketchToolStateSlice';
+import { selectSelectedEntityId, setSelectedEntityId } from '@/app/slices/sketchToolStateSlice';
 import EntityType, { GeometryType } from '@/app/types/EntityType';
 import { DeleteOutlined } from '@ant-design/icons';
 import { Popconfirm, Table } from 'antd';
@@ -16,6 +16,7 @@ const EntitiesTable = () => {
   const sketchPoints = useAppSelector(selectPoints);
   const sketchLines = useAppSelector(selectLines);
   const sketchCircles = useAppSelector(selectCircles);
+  const sketchSelectedEntityId = useAppSelector(selectSelectedEntityId);
 
   const [selectedRowKey, setSelectedRowKey] = useState<string | null>(null);
   const dispatch = useAppDispatch();
@@ -31,6 +32,10 @@ const EntitiesTable = () => {
     // TODO merge other types when available
     setTableData([...points, ...lines, ...circles].sort((a, b) => a.id - b.id));
   }, [sketchPoints, sketchLines]);
+
+  useEffect(() => {
+    setSelectedRowKey(String(sketchSelectedEntityId));
+  }, [sketchSelectedEntityId]);
 
   const handleDelete = (record: DataType) => {
     console.log('delete', record);

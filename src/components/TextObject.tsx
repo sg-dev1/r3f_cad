@@ -1,8 +1,12 @@
 import React, { useState } from 'react';
 import { Text } from '@react-three/drei';
 import { Vector3Tuple } from 'three';
-import { setLengthConstraintLineId, setSelectedConstraintId } from '@/app/slices/sketchToolStateSlice';
-import { useAppDispatch } from '@/app/hooks';
+import {
+  selectSelectedConstraintId,
+  setLengthConstraintLineId,
+  setSelectedConstraintId,
+} from '@/app/slices/sketchToolStateSlice';
+import { useAppDispatch, useAppSelector } from '@/app/hooks';
 
 const TextObject = ({
   position,
@@ -18,6 +22,7 @@ const TextObject = ({
   constraintId?: number;
 }) => {
   const [hovered, setHovered] = useState(false);
+  const sketchSelectedConstraintId = useAppSelector(selectSelectedConstraintId);
   const dispatch = useAppDispatch();
 
   const handleClickEvent = () => {
@@ -29,10 +34,19 @@ const TextObject = ({
     }
   };
 
+  // TODO colors should be configurable via redux store
+  const getColor = () => {
+    if (constraintId === sketchSelectedConstraintId) {
+      return 'yellow';
+    } else {
+      return hovered ? 'darkred' : 'red';
+    }
+  };
+
   return (
     <Text
       position={position}
-      color={hovered ? 'darkred' : 'red'}
+      color={getColor()}
       anchorX="center"
       anchorY="middle"
       fontSize={12}
