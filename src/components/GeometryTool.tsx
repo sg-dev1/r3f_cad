@@ -225,6 +225,7 @@ const GeometryTool = forwardRef<any, any>(({}: GeometryToolProps, ref) => {
           workplane: 'xy',
           points: sketchPoints,
           lines: sketchLines,
+          circles: sketchCircles,
           constraints: sketchConstraints,
         })
       )

@@ -22,6 +22,7 @@ import {
   sketchUpdateLinePoints,
   sketchUpdatePoint,
 } from './Sketch';
+import { CircleType } from '../types/CircleType';
 
 // Define a type for the slice state
 export interface SketchState {
@@ -53,6 +54,7 @@ export const buildSolverRequestType = (input: {
   workplane: string;
   points: Point3DType[];
   lines: Line3DType[];
+  circles: CircleType[];
   constraints: ConstraintType[];
 }): SolverRequestType => {
   return {
@@ -63,7 +65,8 @@ export const buildSolverRequestType = (input: {
         t: 'point',
         v: [p.x, p.y, p.z],
       }))
-      .concat(input.lines.map((line) => ({ id: line.id, t: 'line', v: [line.p1_id, line.p2_id] }))),
+      .concat(input.lines.map((line) => ({ id: line.id, t: 'line', v: [line.p1_id, line.p2_id] })))
+      .concat(input.circles.map((circle) => ({ id: circle.id, t: 'circle', v: [circle.mid_pt_id, circle.radius] }))),
     constraints: input.constraints,
   };
 };
