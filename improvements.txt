@@ -1,5 +1,4 @@
 Priority of improvements (my ranking)
-  - 013
   - 011
   - 015
   - 016
@@ -42,8 +41,6 @@ List of Improvements
 (011) Fix bug when deleting entities:
    - It is possible to delete an endpoint of a line without deleting the line --> app crashes because one endpoint of line cannot be found
 
-(013) Selection of entities constraint: deselection is not yet supported
-
 (015) Drag'n'drop of circles --> moving the circle
 
 (016) Bug when adding coincident constraints: e.g. two circle mid points and zero point 
@@ -75,3 +72,5 @@ Done Improvements
 (012) Add support for circle in solver backend - seems to be not supported yet (fully constrained although no radius constraint)
 
 (014) Selection of point to point constraints (length constraints) for lines is not yet supported --> the implementation should be reworked
+
+(013) Selection of entities constraint: deselection is not yet supported

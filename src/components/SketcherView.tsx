@@ -21,6 +21,7 @@ import {
   selectToolState,
   setLengthConstraintLineId,
   setSelectedConstraintId,
+  setSelectedEntityId,
   setToolState,
 } from '@/app/slices/sketchToolStateSlice';
 import ConstraintTable from './ConstraintTable';
@@ -59,6 +60,10 @@ const SketcherView = () => {
         dispatch(deleteConstraintById(sketchSelectedConstraintId));
         dispatch(setSelectedConstraintId(-1));
       }
+    } else if (keyMap['Escape'] === true) {
+      dispatch(setSelectedEntityId(-1));
+      dispatch(setSelectedConstraintId(-1));
+      dispatch(setLengthConstraintLineId(-1));
     }
   }, [keyMap]);
 
