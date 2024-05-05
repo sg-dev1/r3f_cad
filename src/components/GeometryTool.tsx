@@ -44,6 +44,9 @@ export interface GeometryToolProps {
 // Workaround for creating the circle, since circleRadius always has the old value in circleToolOnClick().
 // But circleRadius is needed as useState() for rendering.
 let g_circleRadius: number = 0;
+// Needed to fix the issue that multiple coincidence constraints are created when multiple points are lying over each other
+// Reason is that all of them receive the onClick() event
+let g_coincidence_created: boolean = false;
 
 const GeometryTool = forwardRef<any, any>(({}: GeometryToolProps, ref) => {
   const [currentMousePos, setCurrentMousePos] = useState<[x: number, y: number, z: number] | null>(null);
@@ -182,16 +185,20 @@ const GeometryTool = forwardRef<any, any>(({}: GeometryToolProps, ref) => {
       if (type === GeometryType.POINT) {
         console.log(objectsClicked);
         if (objectsClicked.length === 1) {
-          dispatch(
-            addConstraint({
-              id: 0,
-              t: SlvsConstraints.SLVS_C_POINTS_COINCIDENT,
-              v: [0, objectsClicked[0].id, id, 0, 0],
-            })
-          );
-          setObjectsClicked([]);
+          if (!g_coincidence_created) {
+            dispatch(
+              addConstraint({
+                id: 0,
+                t: SlvsConstraints.SLVS_C_POINTS_COINCIDENT,
+                v: [0, objectsClicked[0].id, id, 0, 0],
+              })
+            );
+            setObjectsClicked([]);
+            g_coincidence_created = true;
+          }
         } else if (objectsClicked.length === 0) {
           setObjectsClicked([{ type: type, id: id }]);
+          g_coincidence_created = false;
         }
       }
       // line not supported - TODO indicate that visually

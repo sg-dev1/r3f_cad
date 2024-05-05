@@ -56,11 +56,9 @@ const CircleObject = ({
       const result = calcIntersectionWithPlaneFromRect(raycaster, camera, sketchCurrentPlane, x, y, size);
       if (result) {
         //console.log('down', down, 'result', result, 'midPoint', midPoint);
-        if (!down) {
-          const radius = result.sub(midPoint).length();
-          //console.log('new circle radius', radius);
-          dispatch(updateCircleRadius({ id: id, radius: radius }));
-        }
+        const radius = result.sub(midPoint).length();
+        //console.log('new circle radius', radius);
+        dispatch(updateCircleRadius({ id: id, radius: radius }));
       }
     }
   });
