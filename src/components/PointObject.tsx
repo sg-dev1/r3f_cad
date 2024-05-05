@@ -1,8 +1,12 @@
 import { useAppDispatch, useAppSelector } from '@/app/hooks';
 import { selectLastDof, updatePoint } from '@/app/slices/sketchSlice';
-import { ToolState, selectSelectedEntityId, selectToolState } from '@/app/slices/sketchToolStateSlice';
+import {
+  ToolState,
+  selectCurrentPlane,
+  selectSelectedEntityId,
+  selectToolState,
+} from '@/app/slices/sketchToolStateSlice';
 import { GeometryType } from '@/app/types/EntityType';
-import { XY_PLANE } from '@/utils/threejs_planes';
 import { calcIntersectionWithPlaneFromRect } from '@/utils/threejs_utils';
 import { Point } from '@react-three/drei';
 import { useThree } from '@react-three/fiber';
@@ -22,6 +26,7 @@ const PointObject = ({
   const sketchLastDof = useAppSelector(selectLastDof);
   const sketchSelectedEntityId = useAppSelector(selectSelectedEntityId);
   const selectedToolState = useAppSelector(selectToolState);
+  const sketchCurrentPlane = useAppSelector(selectCurrentPlane);
 
   const dispatch = useAppDispatch();
   const { size, camera, raycaster } = useThree();
@@ -37,7 +42,7 @@ const PointObject = ({
     if (selectedToolState === ToolState.CURSOR_TOOL && sketchLastDof !== 0) {
       document.body.style.cursor = down ? 'grabbing' : 'grab';
 
-      const result = calcIntersectionWithPlaneFromRect(raycaster, camera, XY_PLANE, x, y, size);
+      const result = calcIntersectionWithPlaneFromRect(raycaster, camera, sketchCurrentPlane, x, y, size);
       if (result) {
         //console.log('result', result);
         dispatch(updatePoint({ id: id, position: [result.x, result.y, result.z] }));

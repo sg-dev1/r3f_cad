@@ -16,6 +16,7 @@ import {
   sketchRemoveEntity,
   sketchResetLastPoint,
   SketchType,
+  sketchUpdateCircleRadius,
   sketchUpdateConstraint,
   sketchUpdateEntities,
   sketchUpdateLinePoints,
@@ -138,6 +139,9 @@ export const sketchSlice = createSlice({
     updateLinePoints: (state: SketchState, { payload }) => {
       sketchUpdateLinePoints(state.sketches[state.activeSketchId], payload.id, payload.newStart, payload.newEnd);
     },
+    updateCircleRadius: (state: SketchState, { payload }) => {
+      sketchUpdateCircleRadius(state.sketches[state.activeSketchId], payload.id, payload.radius);
+    },
     resetLastPoint: (state: SketchState) => {
       sketchResetLastPoint(state.sketches[state.activeSketchId]);
     },
@@ -193,6 +197,7 @@ export const {
   removeEntity,
   updatePoint,
   updateLinePoints,
+  updateCircleRadius,
   resetLastPoint,
   addConstraint,
   updateConstraint,

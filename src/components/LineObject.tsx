@@ -9,6 +9,7 @@ import {
 } from '@/app/slices/sketchSlice';
 import {
   ToolState,
+  selectCurrentPlane,
   selectLengthConstraintLineId,
   selectSelectedEntityId,
   selectToolState,
@@ -16,7 +17,6 @@ import {
 } from '@/app/slices/sketchToolStateSlice';
 import { SlvsConstraints } from '@/app/types/Constraints';
 import { GeometryType } from '@/app/types/EntityType';
-import { XY_PLANE } from '@/utils/threejs_planes';
 import { calcIntersectionWithPlaneFromRect } from '@/utils/threejs_utils';
 import { Html, Line } from '@react-three/drei';
 import { useThree } from '@react-three/fiber';
@@ -57,6 +57,7 @@ const LineObject = ({
   const sketchLengthConstraintLineId = useAppSelector(selectLengthConstraintLineId);
   const sketchSelectedEntityId = useAppSelector(selectSelectedEntityId);
   const selectedToolState = useAppSelector(selectToolState);
+  const sketchCurrentPlane = useAppSelector(selectCurrentPlane);
 
   const dispatch = useAppDispatch();
   const { size, camera, raycaster } = useThree();
@@ -76,7 +77,7 @@ const LineObject = ({
     if (selectedToolState === ToolState.CURSOR_TOOL && sketchLastDof !== 0) {
       document.body.style.cursor = down ? 'grabbing' : 'grab';
 
-      const result = calcIntersectionWithPlaneFromRect(raycaster, camera, XY_PLANE, x, y, size);
+      const result = calcIntersectionWithPlaneFromRect(raycaster, camera, sketchCurrentPlane, x, y, size);
       if (result) {
         //console.log('down', down, 'result', result, 'start', start, 'end', end);
 

@@ -19,9 +19,9 @@ import { calcIntersectionWithPlane } from '@/utils/threejs_utils';
 import { GeometryType, geometryTypeToString } from '@/app/types/EntityType';
 import LineObject from './LineObject';
 import PointObject from './PointObject';
-import { XY_PLANE } from '@/utils/threejs_planes';
 import {
   ToolState,
+  selectCurrentPlane,
   selectToolState,
   setLengthConstraintLineId,
   setSelectedEntityId,
@@ -30,6 +30,7 @@ import { SlvsConstraints } from '@/app/types/Constraints';
 import ZeroCoordinateCross from './ZeroCoordinateCross';
 import { Vector3Like } from 'three';
 import CircleObject from './CircleObject';
+import { getPointU, getPointV } from '@/utils/threejs_planes';
 
 export interface GeometryToolRefType {
   onClick: (event: React.MouseEvent<HTMLDivElement, MouseEvent>) => void;
@@ -61,6 +62,7 @@ const GeometryTool = forwardRef<any, any>(({}: GeometryToolProps, ref) => {
   const sketchConstraints = useAppSelector(selectConstraints);
 
   const toolState = useAppSelector(selectToolState);
+  const sketchCurrentPlane = useAppSelector(selectCurrentPlane);
 
   // ---
 
@@ -71,7 +73,7 @@ const GeometryTool = forwardRef<any, any>(({}: GeometryToolProps, ref) => {
     const intersect = calcIntersectionWithPlane(
       raycaster,
       camera,
-      XY_PLANE,
+      sketchCurrentPlane,
       event.clientX,
       event.clientY,
       event.target as HTMLElement
@@ -89,7 +91,7 @@ const GeometryTool = forwardRef<any, any>(({}: GeometryToolProps, ref) => {
     const intersect = calcIntersectionWithPlane(
       raycaster,
       camera,
-      XY_PLANE,
+      sketchCurrentPlane,
       event.clientX,
       event.clientY,
       event.target as HTMLElement
@@ -105,7 +107,7 @@ const GeometryTool = forwardRef<any, any>(({}: GeometryToolProps, ref) => {
     const intersect = calcIntersectionWithPlane(
       raycaster,
       camera,
-      XY_PLANE,
+      sketchCurrentPlane,
       event.clientX,
       event.clientY,
       event.target as HTMLElement
@@ -121,7 +123,7 @@ const GeometryTool = forwardRef<any, any>(({}: GeometryToolProps, ref) => {
     const intersect = calcIntersectionWithPlane(
       raycaster,
       camera,
-      XY_PLANE,
+      sketchCurrentPlane,
       event.clientX,
       event.clientY,
       event.target as HTMLElement
@@ -143,7 +145,7 @@ const GeometryTool = forwardRef<any, any>(({}: GeometryToolProps, ref) => {
       const intersect = calcIntersectionWithPlane(
         raycaster,
         camera,
-        XY_PLANE,
+        sketchCurrentPlane,
         event.clientX,
         event.clientY,
         event.target as HTMLElement
@@ -310,27 +312,17 @@ const GeometryTool = forwardRef<any, any>(({}: GeometryToolProps, ref) => {
         })}
       </Points>
 
-      {/* TODO update X and Y in case plane changes (when this is implemented) */}
       {circleMidPoint !== null && circleRadius > 0 && (
-        <CircleObject
-          id={-1}
-          centerX={circleMidPoint.x}
-          centerY={circleMidPoint.y}
-          radius={circleRadius}
-          color="grey"
-          enableHover={false}
-        />
+        <CircleObject id={-1} midPoint={circleMidPoint} radius={circleRadius} color="grey" enableHover={false} />
       )}
 
       {sketchCircles.map((circle) => {
-        // TODO update X and Y in case plane changes (when this is implemented)
         const midPoint = sketchPointsMap[circle.mid_pt_id];
         return (
           <CircleObject
             key={circle.id}
             id={circle.id}
-            centerX={midPoint.x}
-            centerY={midPoint.y}
+            midPoint={midPoint}
             radius={circle.radius}
             color="white"
             enableHover={true}

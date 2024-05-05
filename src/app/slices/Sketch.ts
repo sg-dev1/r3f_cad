@@ -106,6 +106,15 @@ export const sketchUpdateLinePoints = (sketch: SketchType, id: number, newStart:
   }
 };
 
+export const sketchUpdateCircleRadius = (sketch: SketchType, circleId: number, newRadius: number) => {
+  const circle = sketch.circles.filter((circle) => circle.id === circleId);
+  if (circle.length > 0) {
+    circle[0].radius = newRadius;
+  } else {
+    console.error('Circle with id ' + circleId + ' could not be found');
+  }
+};
+
 export const sketchResetLastPoint = (sketch: SketchType) => {
   sketch.lastPoint3D = null;
 };

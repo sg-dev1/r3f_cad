@@ -1,5 +1,4 @@
 Priority of improvements (my ranking)
-  - 015
   - 016
   - 006
   - 004
@@ -7,6 +6,7 @@ Priority of improvements (my ranking)
   - 008
   - 005
   - 017
+  - 018
   - 007  // most important work done, considering constraints hard to do,
          // therefore least prio
 
@@ -38,12 +38,15 @@ List of Improvements
    - Current way to edit leaves many ways the user can mess up with the data/ input invalid data
    - Proper error handling needed / edit will be different per constraint type (as display)
 
-(015) Drag'n'drop of circles --> moving the circle
-
 (016) Bug when adding coincident constraints: e.g. two circle mid points and zero point 
       --> multiple constraints are added (which are redundant)
 
 (017) Create a tool to generate a rectangle (with proper constraints)
+
+(018) Fix bug when adding coincident constraint to multiple overlapping points (e.g. a normal point and the zero point)
+      it is added for each point resulting in duplicated constraints --> constraint error
+      - for now to fix it the duplicated constraints need to be deleted keeping only one
+      - there is a similar bug in FreeCad
 
 
 Done Improvements
@@ -76,3 +79,5 @@ Done Improvements
 
 (011) Fix bug when deleting entities:
    - It is possible to delete an endpoint of a line without deleting the line --> app crashes because one endpoint of line cannot be found
+
+(015) Drag'n'drop of circles --> update of circle radius

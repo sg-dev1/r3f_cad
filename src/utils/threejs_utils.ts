@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { SKETCH_PLANE_MAP } from './threejs_planes';
 
 /**
  * Calculates the intersection of a ray casted from the camera to a specific plane.
@@ -14,13 +15,13 @@ import * as THREE from 'three';
 export const calcIntersectionWithPlane = (
   raycaster: THREE.Raycaster,
   camera: THREE.Camera,
-  plane: THREE.Plane,
+  planeStr: string,
   xCoord: number,
   yCoord: number,
   target: HTMLElement
 ) => {
   const rect = target.getBoundingClientRect();
-  return calcIntersectionWithPlaneFromRect(raycaster, camera, plane, xCoord, yCoord, rect);
+  return calcIntersectionWithPlaneFromRect(raycaster, camera, planeStr, xCoord, yCoord, rect);
 };
 
 export interface RectType {
@@ -45,7 +46,7 @@ export interface RectType {
 export const calcIntersectionWithPlaneFromRect = (
   raycaster: THREE.Raycaster,
   camera: THREE.Camera,
-  plane: THREE.Plane,
+  planeStr: string,
   xCoord: number,
   yCoord: number,
   rect: RectType
@@ -63,6 +64,7 @@ export const calcIntersectionWithPlaneFromRect = (
   // UPDATE: Do not intersect with object on screen but with a plane!
 
   let planeIntersection: THREE.Vector3 = new THREE.Vector3(0, 0, 0);
+  const plane = SKETCH_PLANE_MAP[planeStr];
   const result = raycaster.ray.intersectPlane(plane, planeIntersection);
   //console.log('Plane intersection:', out);
 
