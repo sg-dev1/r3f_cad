@@ -39,7 +39,6 @@ export const sketchAddEntity = (sketch: SketchType, p: Point3DType, type: Geomet
   const newPoint = { ...p, id: sketch.entityIdCounter };
   sketch.entityIdCounter++;
 
-  // TODO properly handle other types when they are supported
   if (GeometryType.LINE === type) {
     if (sketch.lastPoint3D) {
       if (!(sketch.lastPoint3D.id in sketch.pointsMap)) {
@@ -63,13 +62,15 @@ export const sketchAddEntity = (sketch: SketchType, p: Point3DType, type: Geomet
 
     sketch.circles.push({ id: sketch.entityIdCounter, mid_pt_id: newPoint.id, radius: radius || 1 });
     sketch.entityIdCounter++;
+  } else if (GeometryType.ARC === type) {
+    console.warn('Geometry type arc is not yet supported.');
+    // TODO add implementation
   } else {
     console.error('The given Geometry type ' + geometryTypeToString(type) + ' is not yet implemented');
   }
 };
 
 export const sketchRemoveEntity = (sketch: SketchType, id: number, type: GeometryType) => {
-  // TODO properly handle other types when they are supported
   if (GeometryType.LINE === type) {
     sketch.lines = sketch.lines.filter((line) => line.id !== id);
     // also have to delete constraints referencing this line
@@ -85,6 +86,9 @@ export const sketchRemoveEntity = (sketch: SketchType, id: number, type: Geometr
     const pt_id = sketch.circles[idx].mid_pt_id;
     _deletePointById(sketch, pt_id);
     _deleteCircleById(sketch, id);
+  } else if (GeometryType.ARC === type) {
+    console.warn('Geometry type arc is not yet supported.');
+    // TODO add implementation
   } else {
     console.error('The given Geometry type ' + geometryTypeToString(type) + ' is not yet implemented');
   }
@@ -107,74 +111,20 @@ export const sketchResetLastPoint = (sketch: SketchType) => {
 };
 
 export const sketchAddConstraint = (sketch: SketchType, payload: ConstraintType) => {
-  if (payload.t === SlvsConstraints.SLVS_C_PT_PT_DISTANCE) {
-    // We get the line, but for the backend we need the points
-    const line = sketch.lines.filter((line) => line.id === payload.v[3]);
-    if (line.length >= 1) {
-      const pt1 = sketch.pointsMap[line[0].p1_id];
-      const pt2 = sketch.pointsMap[line[0].p2_id];
-      line[0].length = payload.v[0] as number; // update the length
-      sketch.constraints.push({
-        id: sketch.constraintIdCounter,
-        t: SlvsConstraints.SLVS_C_PT_PT_DISTANCE,
-        v: [payload.v[0], pt1.id, pt2.id, 0, 0],
-      });
-      sketch.constraintIdCounter++;
-    } else {
-      console.warn('Line with id ', payload.v[3], ' could not be found. Cannot add constraint ', payload);
-    }
-  } else {
-    sketch.constraints.push({ ...payload, id: sketch.constraintIdCounter });
-    sketch.constraintIdCounter++;
-  }
+  sketch.constraints.push({ ...payload, id: sketch.constraintIdCounter });
+  sketch.constraintIdCounter++;
 };
 
 export const sketchUpdateConstraint = (sketch: SketchType, payload: ConstraintType) => {
   const index = sketch.constraints.findIndex((constraint) => constraint.id === payload.id);
   if (index !== -1) {
     const constraint = sketch.constraints[index];
-    if (constraint.t === SlvsConstraints.SLVS_C_PT_PT_DISTANCE) {
-      const pt1 = sketch.pointsMap[payload.v[1] as number];
-      const pt2 = sketch.pointsMap[payload.v[2] as number];
-      const line = sketch.lines.filter((line) => line.p1_id === pt1.id && line.p2_id === pt2.id);
-      if (line.length >= 1) {
-        line[0].length = payload.v[0] as number; // update the length
-      }
-    }
     sketch.constraints.splice(index, 1, { ...constraint, ...payload });
-  }
-};
-
-// Update a the length constraint of a line
-//   given its lineId and the payload in the format
-//   { id: 0, t: SlvsConstraints.SLVS_C_PT_PT_DISTANCE, v: [value, 0, 0, 0, 0] }
-// See LineObject.tsx for usage.
-export const sketchUpdateLengthConstraintForLine = (sketch: SketchType, lineId: number, payload: ConstraintType) => {
-  if (payload.t !== SlvsConstraints.SLVS_C_PT_PT_DISTANCE) {
-    console.error('This function currently only supports SlvsConstraints.SLVS_C_PT_PT_DISTANCE');
-    return;
-  }
-
-  const constraint = _getConstraintForLine(sketch, lineId);
-  if (constraint) {
-    sketchUpdateConstraint(sketch, {
-      ...payload,
-      id: constraint.constraint.id,
-      v: [payload.v[0], constraint.p1_id, constraint.p2_id, 0, 0],
-    });
   }
 };
 
 export const sketchDeleteConstraint = (sketch: SketchType, payload: ConstraintType) => {
   sketchDeleteConstraintById(sketch, payload.id);
-  if (payload.t === SlvsConstraints.SLVS_C_PT_PT_DISTANCE) {
-    const pt1 = sketch.pointsMap[payload.v[1] as number];
-    const pt2 = sketch.pointsMap[payload.v[2] as number];
-    const line = sketch.lines.filter((line) => line.p1_id === pt1.id && line.p2_id === pt2.id);
-    if (line.length >= 1) {
-      line[0].length = undefined; // update the length
-    }
-  }
 };
 
 export const sketchDeleteConstraintById = (sketch: SketchType, id: number) => {

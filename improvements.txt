@@ -1,5 +1,4 @@
 Priority of improvements (my ranking)
-  - 014
   - 013
   - 011
   - 015
@@ -45,8 +44,6 @@ List of Improvements
 
 (013) Selection of entities constraint: deselection is not yet supported
 
-(014) Selection of point to point constraints (length constraints) for lines is not yet supported --> the implementation should be reworked
-
 (015) Drag'n'drop of circles --> moving the circle
 
 (016) Bug when adding coincident constraints: e.g. two circle mid points and zero point 
@@ -76,3 +73,5 @@ Done Improvements
    - Same for constraints
 
 (012) Add support for circle in solver backend - seems to be not supported yet (fully constrained although no radius constraint)
+
+(014) Selection of point to point constraints (length constraints) for lines is not yet supported --> the implementation should be reworked

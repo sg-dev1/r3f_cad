@@ -286,10 +286,11 @@ const GeometryTool = forwardRef<any, any>(({}: GeometryToolProps, ref) => {
           <LineObject
             key={line.id}
             id={line.id}
+            pt1_id={line.p1_id}
+            pt2_id={line.p2_id}
             start={[p1.x, p1.y, p1.z]}
             end={[p2.x, p2.y, p2.z]}
             onGeometryClick={onGeometryClick}
-            length={line.length}
           />
         );
       })}

@@ -4,7 +4,7 @@ import {
   selectConstraints,
   selectLastDof,
   selectLastSolverResultCode,
-  updateLengthConstraintForLine,
+  updateConstraint,
   updateLinePoints,
 } from '@/app/slices/sketchSlice';
 import {
@@ -27,16 +27,18 @@ import TextObject from './TextObject';
 //   update the data in the redux store as well
 const LineObject = ({
   id,
+  pt1_id,
+  pt2_id,
   start,
   end,
   onGeometryClick,
-  length,
 }: {
   id: number;
+  pt1_id: number;
+  pt2_id: number;
   start: [x: number, y: number, z: number];
   end: [x: number, y: number, z: number];
   onGeometryClick: (type: GeometryType, id: number) => void;
-  length?: number;
 }) => {
   const [lastClickPos, setLastClickPos] = useState<number[]>([]);
 
@@ -44,6 +46,11 @@ const LineObject = ({
   const constraintsAffectingLine = sketchConstraints.filter((c) => c.v[3] === id || c.v[4] === id);
   const horizontalConstraints = constraintsAffectingLine.filter((c) => c.t === SlvsConstraints.SLVS_C_HORIZONTAL);
   const verticalConstraints = constraintsAffectingLine.filter((c) => c.t === SlvsConstraints.SLVS_C_VERTICAL);
+  const lengthConstraints = sketchConstraints.filter(
+    (c) =>
+      (c.t === SlvsConstraints.SLVS_C_PT_PT_DISTANCE && c.v[1] === pt1_id && c.v[2] == pt2_id) ||
+      (c.v[2] === pt1_id && c.v[1] == pt2_id)
+  );
   const sketchLastSolverResultCode = useAppSelector(selectLastSolverResultCode);
   const sketchLastDof = useAppSelector(selectLastDof);
 
@@ -170,19 +177,20 @@ const LineObject = ({
                   return;
                 }
 
-                if (length === undefined) {
+                if (lengthConstraints.length === 0) {
                   dispatch(
                     addConstraint({
                       id: 0,
                       t: SlvsConstraints.SLVS_C_PT_PT_DISTANCE,
-                      v: [value, 0, 0, id, 0],
+                      v: [value, pt1_id, pt2_id, 0, 0],
                     })
                   );
                 } else {
                   dispatch(
-                    updateLengthConstraintForLine({
-                      lineId: id,
-                      payload: { id: 0, t: SlvsConstraints.SLVS_C_PT_PT_DISTANCE, v: [value, 0, 0, 0, 0] },
+                    updateConstraint({
+                      id: lengthConstraints[0].id,
+                      t: SlvsConstraints.SLVS_C_PT_PT_DISTANCE,
+                      v: [value, pt1_id, pt2_id, 0, 0],
                     })
                   );
                 }
@@ -196,16 +204,15 @@ const LineObject = ({
         ''
       )}
 
-      {/* Display a length - if available */}
-      {length ? (
+      {/* Display a length constraint */}
+      {lengthConstraints.length > 0 && (
         <TextObject
           position={[(start[0] + end[0]) / 2 + 15, (start[1] + end[1]) / 2 - 12, (start[2] + end[2]) / 2]}
           baseFontWeight={500}
-          label={String(length)}
+          label={String(lengthConstraints[0].v[0])}
+          constraintId={lengthConstraints[0].id}
           lineId={id}
         />
-      ) : (
-        ''
       )}
     </>
   );
