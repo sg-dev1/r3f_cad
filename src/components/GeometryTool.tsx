@@ -23,6 +23,7 @@ import {
   ToolState,
   selectCurrentPlane,
   selectToolState,
+  setDiamConstraintCircleId,
   setLengthConstraintLineId,
   setSelectedEntityId,
 } from '@/app/slices/sketchToolStateSlice';
@@ -219,6 +220,16 @@ const GeometryTool = forwardRef<any, any>(({}: GeometryToolProps, ref) => {
         dispatch(setLengthConstraintLineId(id));
       }
       // Point type not supported - TODO indicate that visually
+    } else if (ToolState.CONSTRAINT_DIAMETER === toolState) {
+      if (type === GeometryType.CIRCLE) {
+        // TODO --> open number input next to circle (as for line length constraint)
+        //   upon enter press submits it
+        //   upon escape press removes the input
+        dispatch(setDiamConstraintCircleId(id));
+      } else if (type === GeometryType.ARC) {
+        // TODO add support
+      }
+      // Other types not supported - TODO indicate that visually
     } else if (ToolState.CURSOR_TOOL === toolState) {
       // Selection functionality
       dispatch(setSelectedEntityId(id));
@@ -231,7 +242,7 @@ const GeometryTool = forwardRef<any, any>(({}: GeometryToolProps, ref) => {
     dispatch(
       callSketchSolverBackend(
         buildSolverRequestType({
-          workplane: 'xy',
+          workplane: sketchCurrentPlane,
           points: sketchPoints,
           lines: sketchLines,
           circles: sketchCircles,
@@ -320,7 +331,7 @@ const GeometryTool = forwardRef<any, any>(({}: GeometryToolProps, ref) => {
       </Points>
 
       {circleMidPoint !== null && circleRadius > 0 && (
-        <CircleObject id={-1} midPoint={circleMidPoint} radius={circleRadius} color="grey" enableHover={false} />
+        <CircleObject id={-1000} midPoint={circleMidPoint} radius={circleRadius} color="grey" enableHover={false} />
       )}
 
       {sketchCircles.map((circle) => {

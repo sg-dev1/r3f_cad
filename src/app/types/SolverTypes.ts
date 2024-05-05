@@ -13,6 +13,7 @@ export interface SolverRequestType {
 }
 
 export interface SolverResponseType {
+  workplane: string;
   code: number;
   failed: number[];
   entities: SolverEntityType[];

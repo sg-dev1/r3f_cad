@@ -155,15 +155,26 @@ export const sketchDeleteLengthConstraintForLine = (sketch: SketchType, lineId: 
   }
 };
 
-export const sketchUpdateEntities = (sketch: SketchType, entities: SolverEntityType[]) => {
+export const sketchUpdateEntities = (sketch: SketchType, workplane: string, entities: SolverEntityType[]) => {
   entities.forEach((element: SolverEntityType) => {
     // Update points and pointsMap of sketch
     if (element.t === 'point') {
       //console.log('element.v', element.v);
-      // TODO this needs to be adapted when we support more planes other than xy  (element.v currently only has to elements)
-      _updatePoint(sketch, { ...sketch.pointsMap[element.id], x: element.v[0], y: element.v[1] });
+      if ('xy' === workplane) {
+        _updatePoint(sketch, { ...sketch.pointsMap[element.id], x: element.v[0], y: element.v[1] });
+      } else if ('xz' === workplane) {
+        _updatePoint(sketch, { ...sketch.pointsMap[element.id], x: element.v[0], z: element.v[1] });
+      } else if ('yz' === workplane) {
+        _updatePoint(sketch, { ...sketch.pointsMap[element.id], y: element.v[0], z: element.v[1] });
+      } else {
+        console.error('Invalid workplane ' + workplane + ' received.');
+      }
+    } else if (element.t === 'circle') {
+      sketchUpdateCircleRadius(sketch, element.id, element.v[1]);
+    } else if (element.t === 'arc') {
+      // TODO
+      console.warn('[sketchUpdateEntities] Arc is not yet supported');
     }
-    // TODO support other types, e.g. circles and arcs
   });
 };
 

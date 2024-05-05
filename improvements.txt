@@ -21,7 +21,7 @@ List of Improvements
     (click listener on Entity for selection; then event listener on keyboard - could be combined with drag'n'drop of lines)
 
 (006) Add more tools
-   - Radius constraint for circle
+   - Radius constraint for circle                           [done]
    - Other constraints: parallel, equal, mid point, ...
    - Arc drawing tool
 

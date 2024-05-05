@@ -11,12 +11,14 @@ export enum ToolState {
   CONSTRAINT_HORIZONTAL,
   CONSTRAINT_VERTICAL,
   CONSTRAINT_LENGTH,
+  CONSTRAINT_DIAMETER,
 
   CURSOR_TOOL,
 }
 
 export interface SketchToolState {
   lengthConstraintLineId: number;
+  diamConstraintCircleId: number;
   selectedEntityId: number;
   selectedConstraintId: number;
   currentPlane: string;
@@ -26,6 +28,7 @@ export interface SketchToolState {
 
 const initialState: SketchToolState = {
   lengthConstraintLineId: -1,
+  diamConstraintCircleId: -1,
   selectedEntityId: -1,
   selectedConstraintId: -1,
   currentPlane: 'xy',
@@ -40,6 +43,9 @@ export const sketchToolSlice = createSlice({
   reducers: {
     setLengthConstraintLineId: (state, { payload }) => {
       state.lengthConstraintLineId = payload;
+    },
+    setDiamConstraintCircleId: (state, { payload }) => {
+      state.diamConstraintCircleId = payload;
     },
     setSelectedEntityId: (state, { payload }) => {
       //console.log('Set selected entity id to ', payload);
@@ -59,6 +65,7 @@ export const sketchToolSlice = createSlice({
 
 export const {
   setLengthConstraintLineId,
+  setDiamConstraintCircleId,
   setSelectedEntityId,
   setSelectedConstraintId,
   setToolState,
@@ -66,6 +73,7 @@ export const {
 } = sketchToolSlice.actions;
 
 export const selectLengthConstraintLineId = (state: RootState) => state.sketchTool.lengthConstraintLineId;
+export const selectDiamConstraintCircleId = (state: RootState) => state.sketchTool.diamConstraintCircleId;
 export const selectSelectedEntityId = (state: RootState) => state.sketchTool.selectedEntityId;
 export const selectSelectedConstraintId = (state: RootState) => state.sketchTool.selectedConstraintId;
 export const selectToolState = (state: RootState) => state.sketchTool.toolState;

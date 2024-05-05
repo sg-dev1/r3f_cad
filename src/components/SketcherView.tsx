@@ -19,6 +19,7 @@ import {
   selectLengthConstraintLineId,
   selectSelectedConstraintId,
   selectToolState,
+  setDiamConstraintCircleId,
   setLengthConstraintLineId,
   setSelectedConstraintId,
   setSelectedEntityId,
@@ -64,6 +65,7 @@ const SketcherView = () => {
       dispatch(setSelectedEntityId(-1));
       dispatch(setSelectedConstraintId(-1));
       dispatch(setLengthConstraintLineId(-1));
+      dispatch(setDiamConstraintCircleId(-1));
     }
   }, [keyMap]);
 
@@ -105,6 +107,9 @@ const SketcherView = () => {
         break;
       case ToolState.CONSTRAINT_LENGTH:
         setStateIndicator('Length Constraint Tool');
+        break;
+      case ToolState.CONSTRAINT_DIAMETER:
+        setStateIndicator('Diameter Constraint Tool');
         break;
       case ToolState.CURSOR_TOOL:
         setStateIndicator('Cursor Tool');
@@ -167,6 +172,13 @@ const SketcherView = () => {
             onClick={() => dispatch(setToolState(ToolState.CONSTRAINT_LENGTH))}
           >
             Length
+          </Button>
+          <Button
+            type="primary"
+            className="primary-button"
+            onClick={() => dispatch(setToolState(ToolState.CONSTRAINT_DIAMETER))}
+          >
+            Diameter
           </Button>
           <Button
             type="primary"

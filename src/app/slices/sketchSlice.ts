@@ -176,7 +176,7 @@ export const sketchSlice = createSlice({
         state.lastSolverDof = action.payload.dof;
         if (0 === action.payload.code) {
           //console.log('received entities ', action.payload.entities);
-          sketchUpdateEntities(state.sketches[state.activeSketchId], action.payload.entities);
+          sketchUpdateEntities(state.sketches[state.activeSketchId], action.payload.workplane, action.payload.entities);
         } else {
           // Save the action.payload.failed
           state.lastSolverFailedConstraints = action.payload.failed;

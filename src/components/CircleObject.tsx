@@ -1,19 +1,30 @@
 import { useAppDispatch, useAppSelector } from '@/app/hooks';
-import { selectLastDof, selectLastSolverResultCode, updateCircleRadius } from '@/app/slices/sketchSlice';
+import {
+  addConstraint,
+  selectConstraints,
+  selectLastDof,
+  selectLastSolverResultCode,
+  updateCircleRadius,
+  updateConstraint,
+} from '@/app/slices/sketchSlice';
 import {
   ToolState,
   selectCurrentPlane,
+  selectDiamConstraintCircleId,
   selectSelectedEntityId,
   selectToolState,
+  setDiamConstraintCircleId,
 } from '@/app/slices/sketchToolStateSlice';
+import { SlvsConstraints } from '@/app/types/Constraints';
 import { GeometryType } from '@/app/types/EntityType';
 import { getPointU, getPointV } from '@/utils/threejs_planes';
 import { calcIntersectionWithPlaneFromRect } from '@/utils/threejs_utils';
-import { Line } from '@react-three/drei';
+import { Html, Line } from '@react-three/drei';
 import { useThree } from '@react-three/fiber';
 import { useDrag } from '@use-gesture/react';
 import React, { useEffect, useMemo, useState } from 'react';
 import * as THREE from 'three';
+import TextObject from './TextObject';
 
 const CircleObject = ({
   id,
@@ -32,6 +43,11 @@ const CircleObject = ({
 }) => {
   const [hovered, setHovered] = useState(false);
 
+  const sketchConstraints = useAppSelector(selectConstraints);
+  const constraintsAffectingCircle = sketchConstraints.filter((c) => c.v[3] === id || c.v[4] === id);
+  const diamConstraints = constraintsAffectingCircle.filter((c) => c.t === SlvsConstraints.SLVS_C_DIAMETER);
+
+  const sketchDiamConstraintCircleId = useAppSelector(selectDiamConstraintCircleId);
   const sketchSelectedEntityId = useAppSelector(selectSelectedEntityId);
   const sketchLastSolverResultCode = useAppSelector(selectLastSolverResultCode);
   const sketchLastDof = useAppSelector(selectLastDof);
@@ -103,16 +119,66 @@ const CircleObject = ({
   };
 
   return (
-    <Line
-      {...(bind() as any)}
-      userData={{ id: id }}
-      points={points}
-      color={getColor()}
-      lineWidth={hovered ? 4 : 1.5}
-      onClick={(e) => onGeometryClick && onGeometryClick(GeometryType.CIRCLE, e.eventObject.userData.id)}
-      onPointerOver={() => setHovered(enableHover)}
-      onPointerOut={() => setHovered(false)}
-    />
+    <>
+      <Line
+        {...(bind() as any)}
+        userData={{ id: id }}
+        points={points}
+        color={getColor()}
+        lineWidth={hovered ? 4 : 1.5}
+        onClick={(e) => onGeometryClick && onGeometryClick(GeometryType.CIRCLE, e.eventObject.userData.id)}
+        onPointerOver={() => setHovered(enableHover)}
+        onPointerOut={() => setHovered(false)}
+      />
+
+      {sketchDiamConstraintCircleId === id && (
+        <Html position={points[0]}>
+          <input
+            type="number"
+            placeholder=""
+            size={5}
+            autoFocus
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                const input = e.target as HTMLInputElement;
+                //console.log('onKeyDown', e, input.value);
+                const value = parseFloat(input.value);
+                if (isNaN(value)) {
+                  console.error('Value was Nan. Cannot add constraint');
+                  input.value = '';
+                  return;
+                }
+
+                if (diamConstraints.length === 0) {
+                  dispatch(addConstraint({ id: 0, t: SlvsConstraints.SLVS_C_DIAMETER, v: [value, 0, 0, id, 0] }));
+                } else {
+                  dispatch(
+                    updateConstraint({
+                      id: diamConstraints[0].id,
+                      t: SlvsConstraints.SLVS_C_DIAMETER,
+                      v: [value, 0, 0, id, 0],
+                    })
+                  );
+                }
+
+                dispatch(setDiamConstraintCircleId(-1));
+              }
+            }}
+          />
+        </Html>
+      )}
+
+      {/* Display a diameter constraint */}
+      {diamConstraints.length > 0 && (
+        <TextObject
+          position={[points[0].x, points[0].y, points[0].z]}
+          baseFontWeight={500}
+          label={String(diamConstraints[0].v[0])}
+          constraintId={diamConstraints[0].id}
+          lineId={id}
+        />
+      )}
+    </>
   );
 };
 
