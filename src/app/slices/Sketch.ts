@@ -133,13 +133,16 @@ export const sketchDeleteConstraintById = (sketch: SketchType, id: number) => {
 
 // Delete the length constraint for a line with given lineId
 export const sketchDeleteLengthConstraintForLine = (sketch: SketchType, lineId: number) => {
-  const constraint = _getConstraintForLine(sketch, lineId);
+  const constraint = _getConstraintForLineWithPtToPtDistanceType(sketch, lineId);
   if (constraint) {
+    sketchDeleteConstraintById(sketch, constraint.constraint.id);
+    /*
     sketchDeleteConstraint(sketch, {
       id: constraint.constraint.id,
       t: SlvsConstraints.SLVS_C_PT_PT_DISTANCE,
       v: [0, constraint.p1_id, constraint.p2_id, 0, 0],
     });
+    */
   }
 };
 
@@ -168,7 +171,7 @@ const _updatePoint = (sketch: SketchType, newPoint: Point3DType) => {
 };
 
 // Get the constraint object for a line with given lineId
-const _getConstraintForLine = (sketch: SketchType, lineId: number) => {
+const _getConstraintForLineWithPtToPtDistanceType = (sketch: SketchType, lineId: number) => {
   const lineLst = sketch.lines.filter((line) => line.id === lineId);
   if (lineLst.length > 0) {
     const line = lineLst[0];
@@ -188,11 +191,23 @@ const _getConstraintForLine = (sketch: SketchType, lineId: number) => {
   }
 };
 
+const _deleteConstraintsForLines = (sketch: SketchType, lines: Line3DType[]) => {
+  const lineIds = lines.map((line) => line.id);
+  // delete all constraints that reference the lineid
+  sketch.constraints = sketch.constraints.filter(
+    (c) => lineIds.indexOf(c.v[3] as number) === -1 && lineIds.indexOf(c.v[4] as number) === -1
+  );
+};
+
 const _deletePointById = (sketch: SketchType, id: number) => {
   sketch.points = sketch.points.filter((point) => point.id !== id);
   delete sketch.pointsMap[id];
   // also have to delete constraints referencing this point
   sketch.constraints = sketch.constraints.filter((constraint) => constraint.v[1] !== id && constraint.v[2] !== id);
+  // also delete a line referencing this point
+  const linesToDelete = sketch.lines.filter((line) => line.p1_id === id || line.p2_id === id);
+  sketch.lines = sketch.lines.filter((line) => line.p1_id !== id && line.p2_id !== id);
+  _deleteConstraintsForLines(sketch, linesToDelete);
 };
 
 const _deleteCircleById = (sketch: SketchType, id: number) => {
