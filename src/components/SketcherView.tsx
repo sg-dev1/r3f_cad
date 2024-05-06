@@ -120,6 +120,12 @@ const SketcherView = () => {
       case ToolState.CONSTRAINT_MID_POINT:
         setStateIndicator('Midpoint Constraint Tool');
         break;
+      case ToolState.CONSTRAINT_PERPENDICULAR:
+        setStateIndicator('Perpendicular Constraint Tool');
+        break;
+      case ToolState.CONSTRAINT_POINT_ON_OBJECT:
+        setStateIndicator('Point on Line/ Circle Constraint Tool');
+        break;
       case ToolState.CURSOR_TOOL:
         setStateIndicator('Cursor Tool');
         break;
@@ -209,6 +215,20 @@ const SketcherView = () => {
             onClick={() => dispatch(setToolState(ToolState.CONSTRAINT_MID_POINT))}
           >
             Mid Point
+          </Button>
+          <Button
+            type="primary"
+            className="primary-button"
+            onClick={() => dispatch(setToolState(ToolState.CONSTRAINT_PERPENDICULAR))}
+          >
+            Perpendicular
+          </Button>
+          <Button
+            type="primary"
+            className="primary-button"
+            onClick={() => dispatch(setToolState(ToolState.CONSTRAINT_POINT_ON_OBJECT))}
+          >
+            Point on Object
           </Button>
           <Button
             type="primary"

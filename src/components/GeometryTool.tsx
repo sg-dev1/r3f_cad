@@ -246,6 +246,29 @@ const GeometryTool = forwardRef<any, any>(({}: GeometryToolProps, ref) => {
           }
         }
         break;
+      case ToolState.CONSTRAINT_PERPENDICULAR:
+        if (type !== GeometryType.LINE) {
+          document.body.style.cursor = 'not-allowed';
+        }
+        break;
+      case ToolState.CONSTRAINT_POINT_ON_OBJECT:
+        if (type !== GeometryType.POINT && type !== GeometryType.LINE && type !== GeometryType.CIRCLE) {
+          document.body.style.cursor = 'not-allowed';
+        } else {
+          if (objectsClicked.length === 1) {
+            if (objectsClicked[0].type === GeometryType.POINT) {
+              if (type !== GeometryType.LINE && type !== GeometryType.CIRCLE) {
+                document.body.style.cursor = 'not-allowed';
+              }
+            } else {
+              // objectsClicked[0].type is circle or line
+              if (type !== GeometryType.POINT) {
+                document.body.style.cursor = 'not-allowed';
+              }
+            }
+          }
+        }
+        break;
       case ToolState.CURSOR_TOOL:
         break;
       default:
@@ -370,6 +393,73 @@ const GeometryTool = forwardRef<any, any>(({}: GeometryToolProps, ref) => {
                 v: [0, id, 0, objectsClicked[0].id, 0],
               })
             );
+            setObjectsClicked([]);
+          }
+        } else if (objectsClicked.length === 0) {
+          setObjectsClicked([{ type: type, id: id }]);
+        }
+      }
+    } else if (ToolState.CONSTRAINT_PERPENDICULAR === toolState) {
+      if (type === GeometryType.LINE) {
+        if (objectsClicked.length === 1) {
+          dispatch(
+            addConstraint({
+              id: 0,
+              t: SlvsConstraints.SLVS_C_PERPENDICULAR,
+              v: [0, 0, 0, objectsClicked[0].id, id],
+            })
+          );
+          setObjectsClicked([]);
+        } else if (objectsClicked.length === 0) {
+          setObjectsClicked([{ type: type, id: id }]);
+        }
+      }
+    } else if (ToolState.CONSTRAINT_POINT_ON_OBJECT === toolState) {
+      if (type === GeometryType.POINT) {
+        if (objectsClicked.length === 1) {
+          if (objectsClicked[0].type === GeometryType.LINE || objectsClicked[0].type === GeometryType.CIRCLE) {
+            if (objectsClicked[0].type === GeometryType.LINE) {
+              dispatch(
+                addConstraint({
+                  id: 0,
+                  t: SlvsConstraints.SLVS_C_PT_ON_LINE,
+                  v: [0, id, 0, objectsClicked[0].id, 0],
+                })
+              );
+            } else {
+              dispatch(
+                addConstraint({
+                  id: 0,
+                  t: SlvsConstraints.SLVS_C_PT_ON_CIRCLE,
+                  v: [0, id, 0, objectsClicked[0].id, 0],
+                })
+              );
+            }
+            setObjectsClicked([]);
+          }
+        } else if (objectsClicked.length === 0) {
+          setObjectsClicked([{ type: type, id: id }]);
+        }
+      } else if (type === GeometryType.LINE || type === GeometryType.CIRCLE) {
+        if (objectsClicked.length === 1) {
+          if (objectsClicked[0].type === GeometryType.POINT) {
+            if (type === GeometryType.LINE) {
+              dispatch(
+                addConstraint({
+                  id: 0,
+                  t: SlvsConstraints.SLVS_C_PT_ON_LINE,
+                  v: [0, objectsClicked[0].id, 0, id, 0],
+                })
+              );
+            } else {
+              dispatch(
+                addConstraint({
+                  id: 0,
+                  t: SlvsConstraints.SLVS_C_PT_ON_CIRCLE,
+                  v: [0, objectsClicked[0].id, 0, id, 0],
+                })
+              );
+            }
             setObjectsClicked([]);
           }
         } else if (objectsClicked.length === 0) {

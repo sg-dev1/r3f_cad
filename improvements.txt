@@ -1,5 +1,6 @@
 Priority of improvements (my ranking)
   - 006
+  - 019
   - 018
   - 004
   - 009
@@ -41,6 +42,14 @@ List of Improvements
 
 (018) Improve placement of constraint labels in CircleObject.tsx --> make them "plane aware"
     - Add symbol for midpoint constraint
+    - Add symbol for perpendicular constraint
+    - Add symbol for point on object constraint
+
+(019) Point on line constraint creates infinite loop in solver 
+    - since some geometry is also changing slightly solver gets called again and again
+    - a meachanism needs to be built to detect and prevent that
+    - Could be caused by rounding errors, e.g. comparing floats for equal is not that good
+       - To be handled in backend: use proper floating point comparising instead of just unequal sign (!=)
 
 
 Done Improvements
