@@ -17,10 +17,14 @@ const PointObject = ({
   id,
   position,
   onGeometryClick,
+  onGeometryPointerOver,
+  onGeometryPointerOut,
 }: {
   id: number;
   position: [x: number, y: number, z: number];
   onGeometryClick: (type: GeometryType, id: number) => void;
+  onGeometryPointerOver: (type: GeometryType, id: number) => void;
+  onGeometryPointerOut: (type: GeometryType, id: number) => void;
 }) => {
   const [hovered, setHovered] = useState(false);
   const sketchLastDof = useAppSelector(selectLastDof);
@@ -34,7 +38,7 @@ const PointObject = ({
   useEffect(() => {
     if (selectedToolState === ToolState.CURSOR_TOOL && sketchLastDof !== 0) {
       document.body.style.cursor = hovered ? 'grab' : 'auto';
-    } else {
+    } else if (selectedToolState === ToolState.CURSOR_TOOL && sketchLastDof === 0) {
       document.body.style.cursor = 'auto';
     }
   }, [hovered, selectedToolState, sketchLastDof]);
@@ -63,8 +67,12 @@ const PointObject = ({
       onPointerOver={(e) => {
         //console.log('onPointerOver point', e);
         setHovered(true);
+        onGeometryPointerOver(GeometryType.POINT, e.eventObject.userData.id);
       }}
-      onPointerOut={() => setHovered(false)}
+      onPointerOut={(e) => {
+        setHovered(false);
+        onGeometryPointerOut(GeometryType.POINT, e.eventObject.userData.id);
+      }}
       //size={hovered ? 8 : 4}  // changing size seems to not work, most likely due to using Points component
     />
   );

@@ -2,7 +2,15 @@ import { GeometryType } from '@/app/types/EntityType';
 import { Line, Point, Points } from '@react-three/drei';
 import React, { useState } from 'react';
 
-const ZeroCoordinateCross = ({ onGeometryClick }: { onGeometryClick: (type: GeometryType, id: number) => void }) => {
+const ZeroCoordinateCross = ({
+  onGeometryClick,
+  onGeometryPointerOver,
+  onGeometryPointerOut,
+}: {
+  onGeometryClick: (type: GeometryType, id: number) => void;
+  onGeometryPointerOver: (type: GeometryType, id: number) => void;
+  onGeometryPointerOut: (type: GeometryType, id: number) => void;
+}) => {
   const [originHovered, setOriginHovered] = useState(false);
   const [xAxisHovered, setXAxisHovered] = useState(false);
   const [yAxisHovered, setYAxisHovered] = useState(false);
@@ -45,8 +53,12 @@ const ZeroCoordinateCross = ({ onGeometryClick }: { onGeometryClick: (type: Geom
           onPointerOver={(e) => {
             //console.log('onPointerOver point', e);
             setOriginHovered(true);
+            onGeometryPointerOver(GeometryType.POINT, e.eventObject.userData.id);
           }}
-          onPointerOut={() => setOriginHovered(false)}
+          onPointerOut={(e) => {
+            setOriginHovered(false);
+            onGeometryPointerOut(GeometryType.POINT, e.eventObject.userData.id);
+          }}
         />
       </Points>
     </>

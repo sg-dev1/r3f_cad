@@ -32,6 +32,8 @@ const LineObject = ({
   start,
   end,
   onGeometryClick,
+  onGeometryPointerOver,
+  onGeometryPointerOut,
 }: {
   id: number;
   pt1_id: number;
@@ -39,6 +41,8 @@ const LineObject = ({
   start: [x: number, y: number, z: number];
   end: [x: number, y: number, z: number];
   onGeometryClick: (type: GeometryType, id: number) => void;
+  onGeometryPointerOver: (type: GeometryType, id: number) => void;
+  onGeometryPointerOut: (type: GeometryType, id: number) => void;
 }) => {
   const [lastClickPos, setLastClickPos] = useState<number[]>([]);
 
@@ -68,7 +72,7 @@ const LineObject = ({
   useEffect(() => {
     if (selectedToolState === ToolState.CURSOR_TOOL && sketchLastDof !== 0) {
       document.body.style.cursor = hovered ? 'grab' : 'auto';
-    } else {
+    } else if (selectedToolState === ToolState.CURSOR_TOOL && sketchLastDof === 0) {
       document.body.style.cursor = 'auto';
     }
   }, [hovered, selectedToolState, sketchLastDof]);
@@ -128,11 +132,15 @@ const LineObject = ({
             : 'white'
         } // TODO color should be configured via redux store
         onClick={(e) => onGeometryClick(GeometryType.LINE, e.eventObject.userData.id)}
-        onPointerOver={() => {
+        onPointerOver={(e) => {
           //console.log('onPointerOver');
           setHovered(true);
+          onGeometryPointerOver(GeometryType.LINE, e.eventObject.userData.id);
         }}
-        onPointerOut={() => setHovered(false)}
+        onPointerOut={(e) => {
+          setHovered(false);
+          onGeometryPointerOut(GeometryType.LINE, e.eventObject.userData.id);
+        }}
         lineWidth={hovered ? 4 : 1.5} // default is 1
         segments
         dashed={false} // default

@@ -33,6 +33,8 @@ const CircleObject = ({
   color,
   enableHover,
   onGeometryClick,
+  onGeometryPointerOver,
+  onGeometryPointerOut,
 }: {
   id: number;
   midPoint: THREE.Vector3Like;
@@ -40,6 +42,8 @@ const CircleObject = ({
   color: string;
   enableHover: boolean;
   onGeometryClick?: (type: GeometryType, id: number) => void;
+  onGeometryPointerOver?: (type: GeometryType, id: number) => void;
+  onGeometryPointerOut?: (type: GeometryType, id: number) => void;
 }) => {
   const [hovered, setHovered] = useState(false);
 
@@ -60,7 +64,7 @@ const CircleObject = ({
   useEffect(() => {
     if (selectedToolState === ToolState.CURSOR_TOOL && sketchLastDof !== 0) {
       document.body.style.cursor = hovered ? 'grab' : 'auto';
-    } else {
+    } else if (selectedToolState === ToolState.CURSOR_TOOL && sketchLastDof === 0) {
       document.body.style.cursor = 'auto';
     }
   }, [hovered, selectedToolState, sketchLastDof]);
@@ -127,8 +131,14 @@ const CircleObject = ({
         color={getColor()}
         lineWidth={hovered ? 4 : 1.5}
         onClick={(e) => onGeometryClick && onGeometryClick(GeometryType.CIRCLE, e.eventObject.userData.id)}
-        onPointerOver={() => setHovered(enableHover)}
-        onPointerOut={() => setHovered(false)}
+        onPointerOver={(e) => {
+          setHovered(enableHover);
+          onGeometryPointerOver && onGeometryPointerOver(GeometryType.CIRCLE, e.eventObject.userData.id);
+        }}
+        onPointerOut={(e) => {
+          setHovered(false);
+          onGeometryPointerOut && onGeometryPointerOut(GeometryType.CIRCLE, e.eventObject.userData.id);
+        }}
       />
 
       {sketchDiamConstraintCircleId === id && (

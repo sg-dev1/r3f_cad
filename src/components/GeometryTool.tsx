@@ -176,6 +176,52 @@ const GeometryTool = forwardRef<any, any>(({}: GeometryToolProps, ref) => {
     setCircleRadius(0);
   };
 
+  // ---
+
+  const onGeometryPointerOver = (type: GeometryType, id: number) => {
+    switch (toolState) {
+      case ToolState.CONSTRAINT_COINCIDENCE:
+        // everything else than POINT not supported
+        if (
+          type !== GeometryType.POINT ||
+          (objectsClicked.length === 1 && objectsClicked[0].type !== GeometryType.POINT)
+        ) {
+          //console.log('Setting pointer to not allowed');
+          document.body.style.cursor = 'not-allowed';
+        }
+        break;
+      case ToolState.CONSTRAINT_HORIZONTAL:
+        if (type !== GeometryType.LINE) {
+          document.body.style.cursor = 'not-allowed';
+        }
+        break;
+      case ToolState.CONSTRAINT_VERTICAL:
+        if (type !== GeometryType.LINE) {
+          document.body.style.cursor = 'not-allowed';
+        }
+        break;
+      case ToolState.CONSTRAINT_LENGTH:
+        if (type !== GeometryType.LINE) {
+          document.body.style.cursor = 'not-allowed';
+        }
+        break;
+      case ToolState.CONSTRAINT_DIAMETER:
+        if (type !== GeometryType.CIRCLE && type !== GeometryType.ARC) {
+          document.body.style.cursor = 'not-allowed';
+        }
+        break;
+      case ToolState.CURSOR_TOOL:
+        break;
+      default:
+        console.error('Unknown tool state: ' + toolState);
+    }
+  };
+
+  const onGeometryPointerOut = (type: GeometryType, id: number) => {
+    //console.log('Resetting pointer ...');
+    document.body.style.cursor = 'auto';
+  };
+
   const onGeometryClick = (type: GeometryType, id: number) => {
     console.log(
       '[SketcherView.onGeometryClick] Geometry with type ' + geometryTypeToString(type) + ' and id ' + id + ' clicked'
@@ -202,19 +248,14 @@ const GeometryTool = forwardRef<any, any>(({}: GeometryToolProps, ref) => {
           g_coincidence_created = false;
         }
       }
-      // line not supported - TODO indicate that visually
     } else if (ToolState.CONSTRAINT_HORIZONTAL === toolState) {
       if (type === GeometryType.LINE) {
         dispatch(addConstraint({ id: 0, t: SlvsConstraints.SLVS_C_HORIZONTAL, v: [0, 0, 0, id, 0] }));
       }
-      // TODO support for two points
-      // TODO indicate for everything else that it is not supported
     } else if (ToolState.CONSTRAINT_VERTICAL === toolState) {
       if (type === GeometryType.LINE) {
         dispatch(addConstraint({ id: 0, t: SlvsConstraints.SLVS_C_VERTICAL, v: [0, 0, 0, id, 0] }));
       }
-      // TODO support for two points
-      // TODO indicate for everything else that it is not supported
     } else if (ToolState.CONSTRAINT_LENGTH === toolState) {
       if (type === GeometryType.LINE) {
         dispatch(setLengthConstraintLineId(id));
@@ -222,14 +263,10 @@ const GeometryTool = forwardRef<any, any>(({}: GeometryToolProps, ref) => {
       // Point type not supported - TODO indicate that visually
     } else if (ToolState.CONSTRAINT_DIAMETER === toolState) {
       if (type === GeometryType.CIRCLE) {
-        // TODO --> open number input next to circle (as for line length constraint)
-        //   upon enter press submits it
-        //   upon escape press removes the input
         dispatch(setDiamConstraintCircleId(id));
       } else if (type === GeometryType.ARC) {
         // TODO add support
       }
-      // Other types not supported - TODO indicate that visually
     } else if (ToolState.CURSOR_TOOL === toolState) {
       // Selection functionality
       dispatch(setSelectedEntityId(id));
@@ -289,6 +326,12 @@ const GeometryTool = forwardRef<any, any>(({}: GeometryToolProps, ref) => {
 
   return (
     <>
+      <ZeroCoordinateCross
+        onGeometryClick={onGeometryClick}
+        onGeometryPointerOver={onGeometryPointerOver}
+        onGeometryPointerOut={onGeometryPointerOut}
+      />
+
       {pointsToDraw.length === 2 && (
         <Line
           points={[pointsToDraw[0], pointsToDraw[1]]} // array of points
@@ -311,6 +354,8 @@ const GeometryTool = forwardRef<any, any>(({}: GeometryToolProps, ref) => {
             start={[p1.x, p1.y, p1.z]}
             end={[p2.x, p2.y, p2.z]}
             onGeometryClick={onGeometryClick}
+            onGeometryPointerOver={onGeometryPointerOver}
+            onGeometryPointerOut={onGeometryPointerOut}
           />
         );
       })}
@@ -325,6 +370,8 @@ const GeometryTool = forwardRef<any, any>(({}: GeometryToolProps, ref) => {
               id={point.id}
               position={[point.x, point.y, point.z]}
               onGeometryClick={onGeometryClick}
+              onGeometryPointerOver={onGeometryPointerOver}
+              onGeometryPointerOut={onGeometryPointerOut}
             />
           );
         })}
@@ -345,11 +392,11 @@ const GeometryTool = forwardRef<any, any>(({}: GeometryToolProps, ref) => {
             color="white"
             enableHover={true}
             onGeometryClick={onGeometryClick}
+            onGeometryPointerOver={onGeometryPointerOver}
+            onGeometryPointerOut={onGeometryPointerOut}
           />
         );
       })}
-
-      <ZeroCoordinateCross onGeometryClick={onGeometryClick} />
     </>
   );
 });
