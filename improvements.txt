@@ -40,6 +40,7 @@ List of Improvements
 (017) Create a tool to generate a rectangle (with proper constraints)
 
 (018) Improve placement of constraint labels in CircleObject.tsx --> make them "plane aware"
+    - Add symbol for midpoint constraint
 
 
 Done Improvements

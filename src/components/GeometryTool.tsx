@@ -235,6 +235,17 @@ const GeometryTool = forwardRef<any, any>(({}: GeometryToolProps, ref) => {
           }
         }
         break;
+      case ToolState.CONSTRAINT_MID_POINT:
+        if (type !== GeometryType.POINT && type !== GeometryType.LINE) {
+          document.body.style.cursor = 'not-allowed';
+        } else if (objectsClicked.length === 1) {
+          if (type === GeometryType.POINT && objectsClicked[0].type !== GeometryType.LINE) {
+            document.body.style.cursor = 'not-allowed';
+          } else if (type === GeometryType.LINE && objectsClicked[0].type !== GeometryType.POINT) {
+            document.body.style.cursor = 'not-allowed';
+          }
+        }
+        break;
       case ToolState.CURSOR_TOOL:
         break;
       default:
@@ -331,6 +342,32 @@ const GeometryTool = forwardRef<any, any>(({}: GeometryToolProps, ref) => {
                 id: 0,
                 t: SlvsConstraints.SLVS_C_EQUAL_RADIUS,
                 v: [0, 0, 0, objectsClicked[0].id, id],
+              })
+            );
+            setObjectsClicked([]);
+          }
+        } else if (objectsClicked.length === 0) {
+          setObjectsClicked([{ type: type, id: id }]);
+        }
+      }
+    } else if (ToolState.CONSTRAINT_MID_POINT === toolState) {
+      if (type === GeometryType.LINE || type === GeometryType.POINT) {
+        if (objectsClicked.length === 1) {
+          if (type === GeometryType.LINE && objectsClicked[0].type === GeometryType.POINT) {
+            dispatch(
+              addConstraint({
+                id: 0,
+                t: SlvsConstraints.SLVS_C_AT_MIDPOINT,
+                v: [0, objectsClicked[0].id, 0, id, 0],
+              })
+            );
+            setObjectsClicked([]);
+          } else if (type === GeometryType.POINT && objectsClicked[0].type === GeometryType.LINE) {
+            dispatch(
+              addConstraint({
+                id: 0,
+                t: SlvsConstraints.SLVS_C_AT_MIDPOINT,
+                v: [0, id, 0, objectsClicked[0].id, 0],
               })
             );
             setObjectsClicked([]);

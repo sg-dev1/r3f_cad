@@ -117,6 +117,9 @@ const SketcherView = () => {
       case ToolState.CONSTRAINT_EQUAL:
         setStateIndicator('Equal Constraint Tool');
         break;
+      case ToolState.CONSTRAINT_MID_POINT:
+        setStateIndicator('Midpoint Constraint Tool');
+        break;
       case ToolState.CURSOR_TOOL:
         setStateIndicator('Cursor Tool');
         break;
@@ -199,6 +202,13 @@ const SketcherView = () => {
             onClick={() => dispatch(setToolState(ToolState.CONSTRAINT_EQUAL))}
           >
             Equal
+          </Button>
+          <Button
+            type="primary"
+            className="primary-button"
+            onClick={() => dispatch(setToolState(ToolState.CONSTRAINT_MID_POINT))}
+          >
+            Mid Point
           </Button>
           <Button
             type="primary"
