@@ -1,5 +1,6 @@
 Priority of improvements (my ranking)
   - 006
+  - 018
   - 004
   - 009
   - 008
@@ -22,7 +23,7 @@ List of Improvements
 
 (006) Add more tools
    - Radius constraint for circle                           [done]
-   - Other constraints: parallel, equal, mid point, ...
+   - Other constraints: parallel, equal, mid point, perpendicular, angle, point on circle/ point on line, symmetry ...
    - Arc drawing tool
 
 (007) drag'n'drop of lines and points improvements
@@ -36,9 +37,9 @@ List of Improvements
    - Current way to edit leaves many ways the user can mess up with the data/ input invalid data
    - Proper error handling needed / edit will be different per constraint type (as display)
 
-
-
 (017) Create a tool to generate a rectangle (with proper constraints)
+
+(018) Improve placement of constraint labels in CircleObject.tsx --> make them "plane aware"
 
 
 Done Improvements

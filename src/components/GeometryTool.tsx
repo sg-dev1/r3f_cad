@@ -217,6 +217,24 @@ const GeometryTool = forwardRef<any, any>(({}: GeometryToolProps, ref) => {
         if (type !== GeometryType.LINE) {
           document.body.style.cursor = 'not-allowed';
         }
+      case ToolState.CONSTRAINT_EQUAL:
+        // Equal constraint allowed for lines, circles and arcs
+        if (type !== GeometryType.LINE && type !== GeometryType.CIRCLE && type !== GeometryType.ARC) {
+          document.body.style.cursor = 'not-allowed';
+        } else {
+          if (objectsClicked.length === 1) {
+            if (type === GeometryType.LINE && objectsClicked[0].type !== GeometryType.LINE) {
+              document.body.style.cursor = 'not-allowed';
+            } else if (
+              type === GeometryType.CIRCLE &&
+              objectsClicked[0].type !== GeometryType.CIRCLE &&
+              objectsClicked[0].type !== GeometryType.ARC
+            ) {
+              document.body.style.cursor = 'not-allowed';
+            }
+          }
+        }
+        break;
       case ToolState.CURSOR_TOOL:
         break;
       default:
@@ -289,6 +307,38 @@ const GeometryTool = forwardRef<any, any>(({}: GeometryToolProps, ref) => {
           setObjectsClicked([{ type: type, id: id }]);
         }
       }
+    } else if (ToolState.CONSTRAINT_EQUAL === toolState) {
+      if (type === GeometryType.LINE) {
+        if (objectsClicked.length === 1) {
+          if (objectsClicked[0].type === GeometryType.LINE) {
+            dispatch(
+              addConstraint({
+                id: 0,
+                t: SlvsConstraints.SLVS_C_EQUAL_LENGTH_LINES,
+                v: [0, 0, 0, objectsClicked[0].id, id],
+              })
+            );
+            setObjectsClicked([]);
+          }
+        } else if (objectsClicked.length === 0) {
+          setObjectsClicked([{ type: type, id: id }]);
+        }
+      } else if (type === GeometryType.CIRCLE || type === GeometryType.ARC) {
+        if (objectsClicked.length === 1) {
+          if (objectsClicked[0].type === GeometryType.CIRCLE || objectsClicked[0].type === GeometryType.ARC) {
+            dispatch(
+              addConstraint({
+                id: 0,
+                t: SlvsConstraints.SLVS_C_EQUAL_RADIUS,
+                v: [0, 0, 0, objectsClicked[0].id, id],
+              })
+            );
+            setObjectsClicked([]);
+          }
+        } else if (objectsClicked.length === 0) {
+          setObjectsClicked([{ type: type, id: id }]);
+        }
+      }
     } else if (ToolState.CURSOR_TOOL === toolState) {
       // Selection functionality
       dispatch(setSelectedEntityId(id));
@@ -345,6 +395,11 @@ const GeometryTool = forwardRef<any, any>(({}: GeometryToolProps, ref) => {
       setPointsToDraw([]);
     }
   }, [currentMousePos]);
+
+  useEffect(() => {
+    // reset the tool state when changing tool
+    setObjectsClicked([]);
+  }, [toolState]);
 
   return (
     <>

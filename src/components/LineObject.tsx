@@ -56,6 +56,7 @@ const LineObject = ({
       (c.v[2] === pt1_id && c.v[1] == pt2_id)
   );
   const parallelConstraints = constraintsAffectingLine.filter((c) => c.t === SlvsConstraints.SLVS_C_PARALLEL);
+  const equalConstraints = constraintsAffectingLine.filter((c) => c.t === SlvsConstraints.SLVS_C_EQUAL_LENGTH_LINES);
   const sketchLastSolverResultCode = useAppSelector(selectLastSolverResultCode);
   const sketchLastDof = useAppSelector(selectLastDof);
 
@@ -174,6 +175,15 @@ const LineObject = ({
           baseFontWeight={500}
           label={'||'}
           constraintId={parallelConstraints[0].id}
+        />
+      )}
+
+      {equalConstraints.length > 0 && (
+        <TextObject
+          position={[(start[0] + end[0]) / 2 - 3, (start[1] + end[1]) / 2 - 10, (start[2] + end[2]) / 2]}
+          baseFontWeight={1000}
+          label={'='}
+          constraintId={equalConstraints[0].id}
         />
       )}
 

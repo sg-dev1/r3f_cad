@@ -50,6 +50,7 @@ const CircleObject = ({
   const sketchConstraints = useAppSelector(selectConstraints);
   const constraintsAffectingCircle = sketchConstraints.filter((c) => c.v[3] === id || c.v[4] === id);
   const diamConstraints = constraintsAffectingCircle.filter((c) => c.t === SlvsConstraints.SLVS_C_DIAMETER);
+  const equalConstraints = constraintsAffectingCircle.filter((c) => c.t === SlvsConstraints.SLVS_C_EQUAL_RADIUS);
 
   const sketchDiamConstraintCircleId = useAppSelector(selectDiamConstraintCircleId);
   const sketchSelectedEntityId = useAppSelector(selectSelectedEntityId);
@@ -122,6 +123,10 @@ const CircleObject = ({
     }
   };
 
+  if (points.length === 0) {
+    return <></>;
+  }
+
   return (
     <>
       <Line
@@ -179,12 +184,23 @@ const CircleObject = ({
       )}
 
       {/* Display a diameter constraint */}
+      {/* TODO - placement of lables should be improved - will not work for arbitrary plane */}
       {diamConstraints.length > 0 && (
         <TextObject
-          position={[points[0].x, points[0].y, points[0].z]}
+          position={[points[0].x + 10, points[0].y, points[0].z]}
           baseFontWeight={500}
           label={String(diamConstraints[0].v[0])}
           constraintId={diamConstraints[0].id}
+          lineId={id}
+        />
+      )}
+
+      {equalConstraints.length > 0 && (
+        <TextObject
+          position={[points[0].x - 5, points[0].y, points[0].z]}
+          baseFontWeight={500}
+          label={'='}
+          constraintId={equalConstraints[0].id}
           lineId={id}
         />
       )}

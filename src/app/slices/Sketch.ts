@@ -232,4 +232,5 @@ const _deletePointById = (sketch: SketchType, id: number) => {
 
 const _deleteCircleById = (sketch: SketchType, id: number) => {
   sketch.circles = sketch.circles.filter((circle) => circle.id !== id);
+  sketch.constraints = sketch.constraints.filter((constraint) => constraint.v[3] !== id && constraint.v[4] !== id);
 };
