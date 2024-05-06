@@ -31,7 +31,6 @@ import { SlvsConstraints } from '@/app/types/Constraints';
 import ZeroCoordinateCross from './ZeroCoordinateCross';
 import { Vector3Like } from 'three';
 import CircleObject from './CircleObject';
-import { getPointU, getPointV } from '@/utils/threejs_planes';
 
 export interface GeometryToolRefType {
   onClick: (event: React.MouseEvent<HTMLDivElement, MouseEvent>) => void;
@@ -180,6 +179,10 @@ const GeometryTool = forwardRef<any, any>(({}: GeometryToolProps, ref) => {
 
   const onGeometryPointerOver = (type: GeometryType, id: number) => {
     switch (toolState) {
+      case ToolState.POINT_TOOL:
+      case ToolState.LINE_TOOL:
+      case ToolState.CIRCLE_TOOL:
+        break;
       case ToolState.CONSTRAINT_COINCIDENCE:
         // everything else than POINT not supported
         if (
@@ -210,6 +213,10 @@ const GeometryTool = forwardRef<any, any>(({}: GeometryToolProps, ref) => {
           document.body.style.cursor = 'not-allowed';
         }
         break;
+      case ToolState.CONSTRAINT_PARALLEL:
+        if (type !== GeometryType.LINE) {
+          document.body.style.cursor = 'not-allowed';
+        }
       case ToolState.CURSOR_TOOL:
         break;
       default:
@@ -230,7 +237,7 @@ const GeometryTool = forwardRef<any, any>(({}: GeometryToolProps, ref) => {
     // Add constraint in case a constraint tool was selected
     if (ToolState.CONSTRAINT_COINCIDENCE === toolState) {
       if (type === GeometryType.POINT) {
-        console.log(objectsClicked);
+        //console.log(objectsClicked);
         if (objectsClicked.length === 1) {
           if (!g_coincidence_created) {
             dispatch(
@@ -266,6 +273,21 @@ const GeometryTool = forwardRef<any, any>(({}: GeometryToolProps, ref) => {
         dispatch(setDiamConstraintCircleId(id));
       } else if (type === GeometryType.ARC) {
         // TODO add support
+      }
+    } else if (ToolState.CONSTRAINT_PARALLEL === toolState) {
+      if (type === GeometryType.LINE) {
+        if (objectsClicked.length === 1) {
+          dispatch(
+            addConstraint({
+              id: 0,
+              t: SlvsConstraints.SLVS_C_PARALLEL,
+              v: [0, 0, 0, objectsClicked[0].id, id],
+            })
+          );
+          setObjectsClicked([]);
+        } else if (objectsClicked.length === 0) {
+          setObjectsClicked([{ type: type, id: id }]);
+        }
       }
     } else if (ToolState.CURSOR_TOOL === toolState) {
       // Selection functionality

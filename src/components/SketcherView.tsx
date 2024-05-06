@@ -111,6 +111,9 @@ const SketcherView = () => {
       case ToolState.CONSTRAINT_DIAMETER:
         setStateIndicator('Diameter Constraint Tool');
         break;
+      case ToolState.CONSTRAINT_PARALLEL:
+        setStateIndicator('Parallel Constraint Tool');
+        break;
       case ToolState.CURSOR_TOOL:
         setStateIndicator('Cursor Tool');
         break;
@@ -179,6 +182,13 @@ const SketcherView = () => {
             onClick={() => dispatch(setToolState(ToolState.CONSTRAINT_DIAMETER))}
           >
             Diameter
+          </Button>
+          <Button
+            type="primary"
+            className="primary-button"
+            onClick={() => dispatch(setToolState(ToolState.CONSTRAINT_PARALLEL))}
+          >
+            Parallel
           </Button>
           <Button
             type="primary"
