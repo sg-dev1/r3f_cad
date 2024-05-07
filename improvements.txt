@@ -2,6 +2,8 @@ Priority of improvements (my ranking)
   - 006
   - 019
   - 018
+  - 020
+  - 021
   - 004
   - 009
   - 008
@@ -44,12 +46,26 @@ List of Improvements
     - Add symbol for midpoint constraint
     - Add symbol for perpendicular constraint
     - Add symbol for point on object constraint
+    - Improve the drawing of angle constraints on the canvas
+       - Line should be replaced by an arc
+       - Start/end positions of line/arc should be improved
+       - Line/arc should be highlighted when constraint is selected --> create its own react component
 
 (019) Point on line constraint creates infinite loop in solver 
     - since some geometry is also changing slightly solver gets called again and again
     - a meachanism needs to be built to detect and prevent that
     - Could be caused by rounding errors, e.g. comparing floats for equal is not that good
        - To be handled in backend: use proper floating point comparising instead of just unequal sign (!=)
+
+(020) Improve the top button bar
+    - E.g. visually separate what are constraint tools and what are geometry tools
+    - Currently the status indicator is not always visible (too few space)
+
+(021) Improvement of angle constraint tool
+    - Currently the angle constraint only works properly when two lines are drawn separately (having their own points and e.g. using a coincidence connecting them)
+    - If two lines are drawn with the normal line tool sharing a point, the actual angle is <value> + 180 degrees
+    - Could also be a limitation of the solver
+    - Could also be mitigated by drawing indivdual points for reach line with the line tool and connecting them with a coincidence constraint
 
 
 Done Improvements

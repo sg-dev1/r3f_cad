@@ -16,6 +16,7 @@ export enum ToolState {
   CONSTRAINT_EQUAL,
   CONSTRAINT_MID_POINT,
   CONSTRAINT_PERPENDICULAR,
+  CONSTRAINT_ANGLE,
   CONSTRAINT_POINT_ON_OBJECT,
 
   CURSOR_TOOL,
@@ -24,6 +25,7 @@ export enum ToolState {
 export interface SketchToolState {
   lengthConstraintLineId: number;
   diamConstraintCircleId: number;
+  angleConstraintLineIds: [number, number];
   selectedEntityId: number;
   selectedConstraintId: number;
   currentPlane: string;
@@ -34,6 +36,7 @@ export interface SketchToolState {
 const initialState: SketchToolState = {
   lengthConstraintLineId: -1,
   diamConstraintCircleId: -1,
+  angleConstraintLineIds: [-1, -1],
   selectedEntityId: -1,
   selectedConstraintId: -1,
   currentPlane: 'xy',
@@ -51,6 +54,9 @@ export const sketchToolSlice = createSlice({
     },
     setDiamConstraintCircleId: (state, { payload }) => {
       state.diamConstraintCircleId = payload;
+    },
+    setAngleConstraintLineIds: (state, { payload }) => {
+      state.angleConstraintLineIds = payload;
     },
     setSelectedEntityId: (state, { payload }) => {
       //console.log('Set selected entity id to ', payload);
@@ -71,6 +77,7 @@ export const sketchToolSlice = createSlice({
 export const {
   setLengthConstraintLineId,
   setDiamConstraintCircleId,
+  setAngleConstraintLineIds,
   setSelectedEntityId,
   setSelectedConstraintId,
   setToolState,
@@ -79,6 +86,7 @@ export const {
 
 export const selectLengthConstraintLineId = (state: RootState) => state.sketchTool.lengthConstraintLineId;
 export const selectDiamConstraintCircleId = (state: RootState) => state.sketchTool.diamConstraintCircleId;
+export const selectAngleConstraintLineIds = (state: RootState) => state.sketchTool.angleConstraintLineIds;
 export const selectSelectedEntityId = (state: RootState) => state.sketchTool.selectedEntityId;
 export const selectSelectedConstraintId = (state: RootState) => state.sketchTool.selectedConstraintId;
 export const selectToolState = (state: RootState) => state.sketchTool.toolState;

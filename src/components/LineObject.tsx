@@ -4,15 +4,19 @@ import {
   selectConstraints,
   selectLastDof,
   selectLastSolverResultCode,
+  selectLines,
+  selectPointsMap,
   updateConstraint,
   updateLinePoints,
 } from '@/app/slices/sketchSlice';
 import {
   ToolState,
+  selectAngleConstraintLineIds,
   selectCurrentPlane,
   selectLengthConstraintLineId,
   selectSelectedEntityId,
   selectToolState,
+  setAngleConstraintLineIds,
   setLengthConstraintLineId,
 } from '@/app/slices/sketchToolStateSlice';
 import { SlvsConstraints } from '@/app/types/Constraints';
@@ -46,6 +50,8 @@ const LineObject = ({
 }) => {
   const [lastClickPos, setLastClickPos] = useState<number[]>([]);
 
+  const sketchLines = useAppSelector(selectLines);
+  const sketchPointsMap = useAppSelector(selectPointsMap);
   const sketchConstraints = useAppSelector(selectConstraints);
   const constraintsAffectingLine = sketchConstraints.filter((c) => c.v[3] === id || c.v[4] === id);
   const horizontalConstraints = constraintsAffectingLine.filter((c) => c.t === SlvsConstraints.SLVS_C_HORIZONTAL);
@@ -57,10 +63,15 @@ const LineObject = ({
   );
   const parallelConstraints = constraintsAffectingLine.filter((c) => c.t === SlvsConstraints.SLVS_C_PARALLEL);
   const equalConstraints = constraintsAffectingLine.filter((c) => c.t === SlvsConstraints.SLVS_C_EQUAL_LENGTH_LINES);
+  // only select the constraint for the second line at c.v[4] in constraintsAffectingLine
+  const angleConstraints = constraintsAffectingLine.filter(
+    (c) => c.t === SlvsConstraints.SLVS_C_ANGLE && c.v[4] === id
+  );
   const sketchLastSolverResultCode = useAppSelector(selectLastSolverResultCode);
   const sketchLastDof = useAppSelector(selectLastDof);
 
   const sketchLengthConstraintLineId = useAppSelector(selectLengthConstraintLineId);
+  const sketchAngleConstraintLineIds = useAppSelector(selectAngleConstraintLineIds);
   const sketchSelectedEntityId = useAppSelector(selectSelectedEntityId);
   const selectedToolState = useAppSelector(selectToolState);
   const sketchCurrentPlane = useAppSelector(selectCurrentPlane);
@@ -243,6 +254,98 @@ const LineObject = ({
           lineId={id}
         />
       )}
+
+      {sketchAngleConstraintLineIds[1] === id && (
+        <Html position={[(start[0] + end[0]) / 2 - 3, (start[1] + end[1]) / 2 - 2, (start[2] + end[2]) / 2]}>
+          <input
+            type="number"
+            placeholder=""
+            size={5}
+            autoFocus
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                const input = e.target as HTMLInputElement;
+                //console.log('onKeyDown', e, input.value);
+                const value = parseFloat(input.value);
+                if (isNaN(value)) {
+                  console.error('Value was Nan. Cannot add constraint');
+                  input.value = '';
+                  return;
+                }
+
+                if (
+                  angleConstraints.length === 0 ||
+                  (angleConstraints[0].v[3] !== sketchAngleConstraintLineIds[0] &&
+                    angleConstraints[0].v[4] !== sketchAngleConstraintLineIds[1]) ||
+                  (angleConstraints[0].v[3] !== sketchAngleConstraintLineIds[1] &&
+                    angleConstraints[0].v[4] !== sketchAngleConstraintLineIds[0])
+                ) {
+                  dispatch(
+                    addConstraint({
+                      id: 0,
+                      t: SlvsConstraints.SLVS_C_ANGLE,
+                      v: [value, 0, 0, sketchAngleConstraintLineIds[0], sketchAngleConstraintLineIds[1]],
+                    })
+                  );
+                } else {
+                  dispatch(
+                    updateConstraint({
+                      id: angleConstraints[0].id,
+                      t: SlvsConstraints.SLVS_C_ANGLE,
+                      v: [value, 0, 0, angleConstraints[0].v[3], angleConstraints[0].v[4]],
+                    })
+                  );
+                }
+
+                dispatch(setAngleConstraintLineIds([-1, -1]));
+              }
+            }}
+          />
+        </Html>
+      )}
+
+      {angleConstraints.map((angleConstraint) => {
+        const otherLine = sketchLines.filter((line) => line.id === angleConstraint.v[3]);
+        const this_mid: [number, number, number] = [
+          (start[0] + end[0]) / 2,
+          (start[1] + end[1]) / 2,
+          (start[2] + end[2]) / 2,
+        ];
+        let mid: [number, number, number] | null = null;
+        let textPosition: [number, number, number];
+        if (otherLine.length > 0) {
+          const pt1 = sketchPointsMap[otherLine[0].p1_id];
+          const pt2 = sketchPointsMap[otherLine[0].p2_id];
+          mid = [(pt1.x + pt2.x) / 2, (pt1.y + pt2.y) / 2, (pt1.z + pt2.z) / 2];
+        }
+        if (mid) {
+          textPosition = [(mid[0] + this_mid[0]) / 2, (mid[1] + this_mid[1]) / 2, (mid[2] + this_mid[2]) / 2];
+        } else {
+          textPosition = this_mid;
+        }
+        //console.log('mid', mid, 'this_mid', this_mid, 'textPosition', textPosition);
+        return (
+          <>
+            {mid && (
+              <Line
+                points={[mid, this_mid]} // array of points
+                color={'red'}
+                lineWidth={1.5} // default is 1
+                segments
+                dashed={false} // default
+              />
+            )}
+            <TextObject
+              key={angleConstraint.id}
+              position={textPosition}
+              baseFontWeight={500}
+              label={String(angleConstraint.v[0]) + '°'}
+              constraintId={angleConstraint.id}
+              lineId={id}
+            />
+          </>
+        );
+      })}
     </>
   );
 };

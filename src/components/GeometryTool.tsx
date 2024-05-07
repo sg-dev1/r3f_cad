@@ -23,6 +23,7 @@ import {
   ToolState,
   selectCurrentPlane,
   selectToolState,
+  setAngleConstraintLineIds,
   setDiamConstraintCircleId,
   setLengthConstraintLineId,
   setSelectedEntityId,
@@ -251,6 +252,11 @@ const GeometryTool = forwardRef<any, any>(({}: GeometryToolProps, ref) => {
           document.body.style.cursor = 'not-allowed';
         }
         break;
+      case ToolState.CONSTRAINT_ANGLE:
+        if (type !== GeometryType.LINE) {
+          document.body.style.cursor = 'not-allowed';
+        }
+        break;
       case ToolState.CONSTRAINT_POINT_ON_OBJECT:
         if (type !== GeometryType.POINT && type !== GeometryType.LINE && type !== GeometryType.CIRCLE) {
           document.body.style.cursor = 'not-allowed';
@@ -462,6 +468,15 @@ const GeometryTool = forwardRef<any, any>(({}: GeometryToolProps, ref) => {
             }
             setObjectsClicked([]);
           }
+        } else if (objectsClicked.length === 0) {
+          setObjectsClicked([{ type: type, id: id }]);
+        }
+      }
+    } else if (ToolState.CONSTRAINT_ANGLE === toolState) {
+      if (type === GeometryType.LINE) {
+        if (objectsClicked.length === 1) {
+          dispatch(setAngleConstraintLineIds([objectsClicked[0].id, id]));
+          setObjectsClicked([]);
         } else if (objectsClicked.length === 0) {
           setObjectsClicked([{ type: type, id: id }]);
         }

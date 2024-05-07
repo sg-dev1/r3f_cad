@@ -19,6 +19,7 @@ import {
   selectLengthConstraintLineId,
   selectSelectedConstraintId,
   selectToolState,
+  setAngleConstraintLineIds,
   setDiamConstraintCircleId,
   setLengthConstraintLineId,
   setSelectedConstraintId,
@@ -66,6 +67,7 @@ const SketcherView = () => {
       dispatch(setSelectedConstraintId(-1));
       dispatch(setLengthConstraintLineId(-1));
       dispatch(setDiamConstraintCircleId(-1));
+      dispatch(setAngleConstraintLineIds([-1, -1]));
     }
   }, [keyMap]);
 
@@ -122,6 +124,9 @@ const SketcherView = () => {
         break;
       case ToolState.CONSTRAINT_PERPENDICULAR:
         setStateIndicator('Perpendicular Constraint Tool');
+        break;
+      case ToolState.CONSTRAINT_ANGLE:
+        setStateIndicator('Angle Constraint Tool');
         break;
       case ToolState.CONSTRAINT_POINT_ON_OBJECT:
         setStateIndicator('Point on Line/ Circle Constraint Tool');
@@ -229,6 +234,13 @@ const SketcherView = () => {
             onClick={() => dispatch(setToolState(ToolState.CONSTRAINT_POINT_ON_OBJECT))}
           >
             Point on Object
+          </Button>
+          <Button
+            type="primary"
+            className="primary-button"
+            onClick={() => dispatch(setToolState(ToolState.CONSTRAINT_ANGLE))}
+          >
+            Angle
           </Button>
           <Button
             type="primary"
