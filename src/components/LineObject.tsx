@@ -62,6 +62,9 @@ const LineObject = ({
       (c.v[2] === pt1_id && c.v[1] == pt2_id)
   );
   const parallelConstraints = constraintsAffectingLine.filter((c) => c.t === SlvsConstraints.SLVS_C_PARALLEL);
+  const perpendicularConstraints = constraintsAffectingLine.filter(
+    (c) => c.t === SlvsConstraints.SLVS_C_PERPENDICULAR && c.v[3] === id
+  );
   const equalConstraints = constraintsAffectingLine.filter((c) => c.t === SlvsConstraints.SLVS_C_EQUAL_LENGTH_LINES);
   // only select the constraint for the second line at c.v[4] in constraintsAffectingLine
   const angleConstraints = constraintsAffectingLine.filter(
@@ -186,6 +189,16 @@ const LineObject = ({
           baseFontWeight={500}
           label={'||'}
           constraintId={parallelConstraints[0].id}
+        />
+      )}
+
+      {/* TODO should use point nearest to the other line */}
+      {perpendicularConstraints.length > 0 && (
+        <TextObject
+          position={[(start[0] + end[0]) / 2 + 3, (start[1] + end[1]) / 2 + 15, (start[2] + end[2]) / 2]}
+          baseFontWeight={500}
+          label={'_|_'}
+          constraintId={perpendicularConstraints[0].id}
         />
       )}
 
