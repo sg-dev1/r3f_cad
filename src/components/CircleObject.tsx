@@ -17,7 +17,7 @@ import {
 } from '@/app/slices/sketchToolStateSlice';
 import { SlvsConstraints } from '@/app/types/Constraints';
 import { GeometryType } from '@/app/types/EntityType';
-import { getPointU, getPointV } from '@/utils/threejs_planes';
+import { getPlaneAwareSketchPosition, getPointU, getPointV } from '@/utils/threejs_planes';
 import { calcIntersectionWithPlaneFromRect } from '@/utils/threejs_utils';
 import { Html, Line } from '@react-three/drei';
 import { useThree } from '@react-three/fiber';
@@ -184,10 +184,9 @@ const CircleObject = ({
       )}
 
       {/* Display a diameter constraint */}
-      {/* TODO - placement of lables should be improved - will not work for arbitrary plane */}
       {diamConstraints.length > 0 && (
         <TextObject
-          position={[points[0].x + 10, points[0].y, points[0].z]}
+          position={getPlaneAwareSketchPosition(sketchCurrentPlane, [points[0].x, points[0].y, points[0].z], 11, 0)}
           baseFontWeight={500}
           label={String(diamConstraints[0].v[0])}
           constraintId={diamConstraints[0].id}
@@ -197,7 +196,7 @@ const CircleObject = ({
 
       {equalConstraints.length > 0 && (
         <TextObject
-          position={[points[0].x - 5, points[0].y, points[0].z]}
+          position={getPlaneAwareSketchPosition(sketchCurrentPlane, [points[0].x, points[0].y, points[0].z], -6, 0)}
           baseFontWeight={500}
           label={'='}
           constraintId={equalConstraints[0].id}

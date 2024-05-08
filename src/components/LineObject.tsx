@@ -27,6 +27,9 @@ import { useThree } from '@react-three/fiber';
 import { useDrag } from '@use-gesture/react';
 import { useEffect, useState } from 'react';
 import TextObject from './TextObject';
+import { getPlaneAwareSketchPosition } from '@/utils/threejs_planes';
+import React from 'react';
+import AngleConstraintObject from './AngleConstraintObject';
 
 //   update the data in the redux store as well
 const LineObject = ({
@@ -164,7 +167,12 @@ const LineObject = ({
 
       {verticalConstraints.length > 0 ? (
         <TextObject
-          position={[(start[0] + end[0]) / 2 - 5, (start[1] + end[1]) / 2 + 5, (start[2] + end[2]) / 2]}
+          position={getPlaneAwareSketchPosition(
+            sketchCurrentPlane,
+            [(start[0] + end[0]) / 2, (start[1] + end[1]) / 2, (start[2] + end[2]) / 2],
+            -5,
+            5
+          )}
           baseFontWeight={1000}
           label={'|'}
           constraintId={verticalConstraints[0].id}
@@ -174,7 +182,12 @@ const LineObject = ({
       )}
       {horizontalConstraints.length > 0 ? (
         <TextObject
-          position={[(start[0] + end[0]) / 2 + 3, (start[1] + end[1]) / 2 + 15, (start[2] + end[2]) / 2]}
+          position={getPlaneAwareSketchPosition(
+            sketchCurrentPlane,
+            [(start[0] + end[0]) / 2, (start[1] + end[1]) / 2, (start[2] + end[2]) / 2],
+            3,
+            15
+          )}
           baseFontWeight={1000}
           label={'_'}
           constraintId={horizontalConstraints[0].id}
@@ -185,7 +198,12 @@ const LineObject = ({
 
       {parallelConstraints.length > 0 && (
         <TextObject
-          position={[(start[0] + end[0]) / 2 + 3, (start[1] + end[1]) / 2 + 15, (start[2] + end[2]) / 2]}
+          position={getPlaneAwareSketchPosition(
+            sketchCurrentPlane,
+            [(start[0] + end[0]) / 2, (start[1] + end[1]) / 2, (start[2] + end[2]) / 2],
+            13,
+            15
+          )}
           baseFontWeight={500}
           label={'||'}
           constraintId={parallelConstraints[0].id}
@@ -195,7 +213,12 @@ const LineObject = ({
       {/* TODO should use point nearest to the other line */}
       {perpendicularConstraints.length > 0 && (
         <TextObject
-          position={[(start[0] + end[0]) / 2 + 3, (start[1] + end[1]) / 2 + 15, (start[2] + end[2]) / 2]}
+          position={getPlaneAwareSketchPosition(
+            sketchCurrentPlane,
+            [(start[0] + end[0]) / 2, (start[1] + end[1]) / 2, (start[2] + end[2]) / 2],
+            10,
+            15
+          )}
           baseFontWeight={500}
           label={'_|_'}
           constraintId={perpendicularConstraints[0].id}
@@ -204,7 +227,12 @@ const LineObject = ({
 
       {equalConstraints.length > 0 && (
         <TextObject
-          position={[(start[0] + end[0]) / 2 - 3, (start[1] + end[1]) / 2 - 10, (start[2] + end[2]) / 2]}
+          position={getPlaneAwareSketchPosition(
+            sketchCurrentPlane,
+            [(start[0] + end[0]) / 2, (start[1] + end[1]) / 2, (start[2] + end[2]) / 2],
+            -5,
+            -10
+          )}
           baseFontWeight={1000}
           label={'='}
           constraintId={equalConstraints[0].id}
@@ -213,7 +241,14 @@ const LineObject = ({
 
       {/* Number input for length constraint */}
       {sketchLengthConstraintLineId === id ? (
-        <Html position={[(start[0] + end[0]) / 2 - 3, (start[1] + end[1]) / 2 - 2, (start[2] + end[2]) / 2]}>
+        <Html
+          position={getPlaneAwareSketchPosition(
+            sketchCurrentPlane,
+            [(start[0] + end[0]) / 2, (start[1] + end[1]) / 2, (start[2] + end[2]) / 2],
+            -3,
+            -2
+          )}
+        >
           <input
             type="number"
             placeholder=""
@@ -260,7 +295,12 @@ const LineObject = ({
       {/* Display a length constraint */}
       {lengthConstraints.length > 0 && (
         <TextObject
-          position={[(start[0] + end[0]) / 2 + 15, (start[1] + end[1]) / 2 - 12, (start[2] + end[2]) / 2]}
+          position={getPlaneAwareSketchPosition(
+            sketchCurrentPlane,
+            [(start[0] + end[0]) / 2, (start[1] + end[1]) / 2, (start[2] + end[2]) / 2],
+            15,
+            -12
+          )}
           baseFontWeight={500}
           label={String(lengthConstraints[0].v[0])}
           constraintId={lengthConstraints[0].id}
@@ -269,7 +309,14 @@ const LineObject = ({
       )}
 
       {sketchAngleConstraintLineIds[1] === id && (
-        <Html position={[(start[0] + end[0]) / 2 - 3, (start[1] + end[1]) / 2 - 2, (start[2] + end[2]) / 2]}>
+        <Html
+          position={getPlaneAwareSketchPosition(
+            sketchCurrentPlane,
+            [(start[0] + end[0]) / 2, (start[1] + end[1]) / 2, (start[2] + end[2]) / 2],
+            -3,
+            -2
+          )}
+        >
           <input
             type="number"
             placeholder=""
@@ -318,46 +365,7 @@ const LineObject = ({
       )}
 
       {angleConstraints.map((angleConstraint) => {
-        const otherLine = sketchLines.filter((line) => line.id === angleConstraint.v[3]);
-        const this_mid: [number, number, number] = [
-          (start[0] + end[0]) / 2,
-          (start[1] + end[1]) / 2,
-          (start[2] + end[2]) / 2,
-        ];
-        let mid: [number, number, number] | null = null;
-        let textPosition: [number, number, number];
-        if (otherLine.length > 0) {
-          const pt1 = sketchPointsMap[otherLine[0].p1_id];
-          const pt2 = sketchPointsMap[otherLine[0].p2_id];
-          mid = [(pt1.x + pt2.x) / 2, (pt1.y + pt2.y) / 2, (pt1.z + pt2.z) / 2];
-        }
-        if (mid) {
-          textPosition = [(mid[0] + this_mid[0]) / 2, (mid[1] + this_mid[1]) / 2, (mid[2] + this_mid[2]) / 2];
-        } else {
-          textPosition = this_mid;
-        }
-        //console.log('mid', mid, 'this_mid', this_mid, 'textPosition', textPosition);
-        return (
-          <>
-            {mid && (
-              <Line
-                points={[mid, this_mid]} // array of points
-                color={'red'}
-                lineWidth={1.5} // default is 1
-                segments
-                dashed={false} // default
-              />
-            )}
-            <TextObject
-              key={angleConstraint.id}
-              position={textPosition}
-              baseFontWeight={500}
-              label={String(angleConstraint.v[0]) + '°'}
-              constraintId={angleConstraint.id}
-              lineId={id}
-            />
-          </>
-        );
+        return <AngleConstraintObject key={angleConstraint.id} angleConstraint={angleConstraint} />;
       })}
     </>
   );

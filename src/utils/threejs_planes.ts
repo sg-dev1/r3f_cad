@@ -31,3 +31,25 @@ export const getPointV = (plane: string, point: THREE.Vector3Like) => {
     return 0;
   }
 };
+
+export const getPlaneAwareSketchPosition = (
+  plane: string,
+  basePosition: [number, number, number],
+  xOffset: number,
+  yOffset: number
+) => {
+  let result: [number, number, number];
+
+  if ('xy' === plane) {
+    result = [basePosition[0] + xOffset, basePosition[1] + yOffset, basePosition[2]];
+  } else if ('xz' === plane) {
+    result = [basePosition[0] + xOffset, basePosition[1], basePosition[2] + yOffset];
+  } else if ('yz' === plane) {
+    result = [basePosition[0], basePosition[1] + xOffset, basePosition[2] + yOffset];
+  } else {
+    console.error('[getPlaneAwarePosition] Invalid plane given: ' + plane);
+    result = [0, 0, 0];
+  }
+
+  return result;
+};

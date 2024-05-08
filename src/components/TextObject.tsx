@@ -8,6 +8,7 @@ import {
 } from '@/app/slices/sketchToolStateSlice';
 import { useAppDispatch, useAppSelector } from '@/app/hooks';
 
+// lineId ... only needed for edit function of length constraint (of line)
 const TextObject = ({
   position,
   label,

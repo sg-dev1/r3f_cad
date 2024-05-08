@@ -1,6 +1,5 @@
 Priority of improvements (my ranking)
   - 019
-  - 018
   - 020
   - 021
   - 004
@@ -38,16 +37,6 @@ List of Improvements
 
 (017) Create a tool to generate a rectangle (with proper constraints)
 
-(018) Improve placement of constraint labels in CircleObject.tsx --> make them "plane aware"
-    - Improve positioning in general, make it plane aware
-    - Add symbol for midpoint constraint          [done]
-    - Add symbol for perpendicular constraint     [done, placement not that good]
-    - Add symbol for point on object constraint   [done]
-    - Improve the drawing of angle constraints on the canvas
-       - Line should be replaced by an arc
-       - Start/end positions of line/arc should be improved
-       - Line/arc should be highlighted when constraint is selected --> create its own react component
-
 (019) Point on line constraint creates infinite loop in solver 
     - since some geometry is also changing slightly solver gets called again and again
     - a meachanism needs to be built to detect and prevent that
@@ -68,6 +57,12 @@ List of Improvements
       Add tangent constraint (SLVS_C_ARC_LINE_TANGENT, SLVS_C_CURVE_CURVE_TANGENT --> do these also support circles?)
 
 (023) Add Arc drawing tool
+
+(024) Improve Angle constraint
+      - Behaviour is sometimes a bit strange, e.g. when dragging a line constraint error is produced --> need to be investigated in backend
+      - Drawing of constraint on canvas
+        - Line should be replaced by an arc
+        - Start/end positions of line/arc should be improved (not just use middle of two lines but be nearer to the edge of the angle)
 
 
 Done Improvements
@@ -110,3 +105,11 @@ Done Improvements
 (006) Add more tools
    - Radius constraint for circle
    - Other constraints: parallel, equal, mid point, perpendicular, angle, point on circle/ point on line
+
+(018) Improve placement of constraint labels --> make them "plane aware"
+    - Improve positioning in general, make it plane aware
+    - Add symbol for midpoint constraint          [done]
+    - Add symbol for perpendicular constraint     [done, placement not that good]
+    - Add symbol for point on object constraint   [done]
+    - Improve the drawing of angle constraints on the canvas
+       - Line should be highlighted when constraint is selected --> create its own react component
