@@ -1,12 +1,12 @@
 Priority of improvements (my ranking)
-  - 019
+  - 025
   - 020
-  - 021
   - 004
   - 009
   - 008
   - 022
   - 023
+  - 024
   - 005
   - 017
   - 007  // most important work done, considering constraints hard to do,
@@ -37,21 +37,10 @@ List of Improvements
 
 (017) Create a tool to generate a rectangle (with proper constraints)
 
-(019) Point on line constraint creates infinite loop in solver 
-    - since some geometry is also changing slightly solver gets called again and again
-    - a meachanism needs to be built to detect and prevent that
-    - Could be caused by rounding errors, e.g. comparing floats for equal is not that good
-       - To be handled in backend: use proper floating point comparising instead of just unequal sign (!=)
-
 (020) Improve the top button bar
     - E.g. visually separate what are constraint tools and what are geometry tools
     - Currently the status indicator is not always visible (too few space)
-
-(021) Improvement of angle constraint tool
-    - Currently the angle constraint only works properly when two lines are drawn separately (having their own points and e.g. using a coincidence connecting them)
-    - If two lines are drawn with the normal line tool sharing a point, the actual angle is <value> + 180 degrees
-    - Could also be a limitation of the solver
-    - Could also be mitigated by drawing indivdual points for reach line with the line tool and connecting them with a coincidence constraint
+    --> will need a redesign of layout, <Header> seems to not support multiple lines ....
 
 (022) Add symmetry (to line, horizontal, vertical) constraint
       Add tangent constraint (SLVS_C_ARC_LINE_TANGENT, SLVS_C_CURVE_CURVE_TANGENT --> do these also support circles?)
@@ -63,6 +52,17 @@ List of Improvements
       - Drawing of constraint on canvas
         - Line should be replaced by an arc
         - Start/end positions of line/arc should be improved (not just use middle of two lines but be nearer to the edge of the angle)
+
+(025) Infinite loop in solver - Need to detect swapped points
+    - Each solver result swaps two points each time causing a new solver call
+    - Need to detect that
+    - Test Case: Rectangle with two 45 degree constraints and a length constraint on the hypothenuse of the 90 degree angle
+                 + coincidence with zero point
+                 + horizontal/ vertical constraint on one side
+    - Possible mitigation:
+      - Keep changes from previous run
+      - Compare it with this run
+      --> if swapped points detected - discard the change
 
 
 Done Improvements
@@ -113,3 +113,23 @@ Done Improvements
     - Add symbol for point on object constraint   [done]
     - Improve the drawing of angle constraints on the canvas
        - Line should be highlighted when constraint is selected --> create its own react component
+
+(019) Point on line constraint creates infinite loop in solver 
+    - since some geometry is also changing slightly solver gets called again and again
+    - a meachanism needs to be built to detect and prevent that
+    - Could be caused by rounding errors, e.g. comparing floats for equal is not that good
+       - To be handled in backend: use proper floating point comparising instead of just unequal sign (!=)
+
+(021) Improvement of angle constraint tool
+    - Currently the angle constraint only works properly when two lines are drawn separately having there ends pointing into the same direction                            (case 1)
+    - If two lines are drawn with the normal line tool sharing a point, the actual angle is <value> + 180 degrees (because the ends point into different directions)       (case 2)
+    - The opposite behaviour is achieved by running in the solver:
+        c = slvs.makeConstraint(idHint + self._constraintIdBase, self.solveGroup, constraintType, planeId, valA, ptA, ptB, entityA, entityB)
+        c.other = True
+        self.sys.addConstraint(
+            c
+            )
+    ---> need a logic to detecting the direction of the lines (e.g. by interpreting them as vectors)
+       - if case 1 leave it as it is
+       - if case 2 set the c.other property in the backend to True
+    ---> logic could reside in backend so no change of protocol is needed

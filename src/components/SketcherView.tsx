@@ -150,6 +150,7 @@ const SketcherView = () => {
         <Header style={{ display: 'flex', alignItems: 'center' }}>
           <Button type="primary" className="primary-button" onClick={() => dispatch(setToolState(ToolState.LINE_TOOL))}>
             Line
+            {/* <LineOutlined /> */}
           </Button>
           <Button
             type="primary"
@@ -178,6 +179,7 @@ const SketcherView = () => {
             onClick={() => dispatch(setToolState(ToolState.CONSTRAINT_HORIZONTAL))}
           >
             Horizontal
+            {/* <LineOutlined style={{ color: 'red' }} /> */}
           </Button>
           <Button
             type="primary"
