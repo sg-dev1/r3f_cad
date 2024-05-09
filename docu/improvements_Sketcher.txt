@@ -1,14 +1,17 @@
 Priority of improvements (my ranking)
-  - 025
-  - 020
-  - 004
-  - 009
-  - 008
-  - 022
-  - 023
-  - 024
-  - 005
-  - 017
+// MVP
+  - 025 [backend, anoying bug]
+  - 004 [data persistence]
+
+// Later
+  - 020 [UI improvement]
+  - 009 [UI improvement]
+  - 008 [settings]
+  - 022 [functionality - constraints]
+  - 023 [functionality - tools]
+  - 024 [improvement]
+  - 005 [improvement]
+  - 017 [functionality - tools]
   - 007  // most important work done, considering constraints hard to do,
          // therefore least prio
 
