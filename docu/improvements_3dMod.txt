@@ -1,24 +1,35 @@
 Priority of improvements (my ranking)
-
-  - 002
-  - 004
-  - 005
-  - 003
-  - 001  // updates as needed
+  - B006
+  - B002
+  - B004
+  - B005
+  - B003
+  - B001  // updates as needed
 
 
 List of Improvements
 
-(001) Basic main view with camera control --> MainView.tsx
+(B001) Basic main view with camera control --> MainView.tsx
 
-(002) Integration of Sketcher tool 
+(B002) Integration of Sketcher tool 
     - create new sketch 
     - update existing one -> set active one to the selected sketch and open Sketcher tool
 
-(003) List with sketches and geometries
+(B003) List with sketches and geometries
 
-(004) Datamodel update sketchSlice.ts --> Document with sketches and geometry
+(B004) Datamodel update sketchSlice.ts --> Document with sketches and geometry
 
-(005) Mapping of sketches to 3D View
+(B005) Mapping of sketches to 3D View
     - All closed lines should be interpreted as faces
     - On each face (or multiple) an Extrude is possible to create a 3D object
+
+(B006) Integration of opencascade.js
+    - Currently there are massive performance issues with initOpenCascade() function (to be tested on different machines)
+    - Also when switching to the Sketcher View immediately performance is still impacted
+       - in this case need to find a way to stop initOpenCascade() function
+    - Docu says that "You can then host this asset using infinite caching duration headers"
+       https://ocjs.org/docs/getting-started/configure-bundler
+       - How to do that?
+    - Check out if one of these should be used instead: 
+       https://www.npmjs.com/package/@bitbybit-dev/occt-worker
+       https://www.npmjs.com/package/@bitbybit-dev/occt

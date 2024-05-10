@@ -1,0 +1,21 @@
+//
+// Output when loading on old Windows PC
+//
+[13:29:20.478] Before import model-viewer OcTest.tsx:38:6
+[13:29:20.489] After import model-viewer OcTest.tsx:38:6
+[13:29:20.489] Before initOpenCascade() call OcTest.tsx:38:6
+[13:29:20.514] Model URL = undefined OcTest.tsx:38:6
+[13:29:20.533] Before import model-viewer OcTest.tsx:38:6
+[13:29:20.533] After import model-viewer OcTest.tsx:38:6
+[13:29:20.533] Before initOpenCascade() call OcTest.tsx:38:6
+[13:29:20.540] Model URL = undefined OcTest.tsx:38:6
+Lit is in dev mode. Not recommended for production! See https://lit.dev/msg/dev-mode for more information. reactive-element.js:45
+// ~ 2min later the initOpenCascade() finished
+[13:31:13.953] Starting Processing after initOpenCascade() call OcTest.tsx:38:6
+[13:31:15.005] Model Url set OcTest.tsx:38:6
+Element model-viewer scheduled an update (generally because a property was set) after an update completed, causing a new update to be scheduled. This is inefficient and should be avoided unless the next update can only be scheduled as a side effect of the previous update. See https://lit.dev/msg/change-in-update for more information. reactive-element.js:45
+// Took addtional ~ 3min to show the result
+[13:34:24.692] Starting Processing after initOpenCascade() call OcTest.tsx:38:6
+[13:34:25.731] Model Url set OcTest.tsx:38:6
+[13:34:25.753] Model URL = blob:http://localhost:3000/606ad50a-604d-4354-ba4e-c56b52adfb6b OcTest.tsx:38:6
+[13:34:25.831] Model URL = blob:http://localhost:3000/7e69eb93-ffb3-4e07-8a04-0c0e52d5efad

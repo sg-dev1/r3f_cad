@@ -14,6 +14,13 @@
   height: 100vh !important;
 }
 
+/* Use with the OcTest.tsx component. */
+.viewport {
+  margin-top: 25px;
+  width: 500px;
+  height: 500px;
+}
+
 .sketcherview {
   /* if this gets to high the page gets a scrollbar
      not the best solution, but for now it works */
