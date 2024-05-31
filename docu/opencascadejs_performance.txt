@@ -1,4 +1,13 @@
 //
+// Performance of @bitbybit-dev/occt-worker --> much faster!
+//  (takes a couple of seconds instead of minutes)
+//
+
+[11:42:22.707] Started init() log_utils.ts:26:6
+[11:42:22.756] bitbybit.init(occt) finished log_utils.ts:26:6
+[11:42:31.129] Occt init completed
+
+//
 // Output when loading on old Windows PC
 //
 [13:29:20.478] Before import model-viewer OcTest.tsx:38:6
@@ -19,3 +28,25 @@ Element model-viewer scheduled an update (generally because a property was set) 
 [13:34:25.731] Model Url set OcTest.tsx:38:6
 [13:34:25.753] Model URL = blob:http://localhost:3000/606ad50a-604d-4354-ba4e-c56b52adfb6b OcTest.tsx:38:6
 [13:34:25.831] Model URL = blob:http://localhost:3000/7e69eb93-ffb3-4e07-8a04-0c0e52d5efad
+
+// 2nd try on old Windows PC
+
+Download the React DevTools for a better development experience: https://reactjs.org/link/react-devtools react-dom.development.js:38388
+[10:21:48.432] Before import model-viewer OcTest.tsx:38:6
+[10:21:48.438] After import model-viewer OcTest.tsx:38:6
+[10:21:48.442] Before initOpenCascade() call OcTest.tsx:38:6
+[10:21:48.474] Model URL = null OcTest.tsx:38:6
+[10:21:48.493] Before import model-viewer OcTest.tsx:38:6
+[10:21:48.494] After import model-viewer OcTest.tsx:38:6
+[10:21:48.494] Before initOpenCascade() call OcTest.tsx:38:6
+[10:21:48.502] Model URL = null OcTest.tsx:38:6
+Lit is in dev mode. Not recommended for production! See https://lit.dev/msg/dev-mode for more information. reactive-element.js:45
+// ~ 3min later
+[10:24:54.401] Starting Processing after initOpenCascade() call OcTest.tsx:38:6
+[10:24:55.754] Model Url set OcTest.tsx:38:6
+Element model-viewer scheduled an update (generally because a property was set) after an update completed, causing a new update to be scheduled. This is inefficient and should be avoided unless the next update can only be scheduled as a side effect of the previous update. See https://lit.dev/msg/change-in-update for more information. reactive-element.js:45
+// ~ > 3 additional min later
+[10:28:16.367] Starting Processing after initOpenCascade() call OcTest.tsx:38:6
+[10:28:17.351] Model Url set OcTest.tsx:38:6
+[10:28:17.423] Model URL = blob:http://localhost:3000/e562bd40-f0bf-452d-b7e3-178bd57a568d OcTest.tsx:38:6
+[10:28:17.463] Model URL = blob:http://localhost:3000/e4cdd2a6-0a7c-432c-9fac-c1e28275ca46

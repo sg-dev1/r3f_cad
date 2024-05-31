@@ -5,6 +5,7 @@ import { Button, Layout } from 'antd';
 import OcTest from './OcTest';
 import { createSketch, selectActiveSketchId } from '@/app/slices/sketchSlice';
 import { useAppDispatch, useAppSelector } from '@/app/hooks';
+import OcctWorkerTest from './OcctWorkerTest';
 
 const { Header, Content } = Layout;
 
@@ -32,7 +33,8 @@ const MainView = () => {
         </Header>
 
         <Content style={{ padding: '10px 24px 24px', backgroundColor: 'slategray' }}>
-          <OcTest />
+          {/* <OcTest /> */}
+          <OcctWorkerTest />
         </Content>
       </Layout>
 

@@ -23,7 +23,7 @@ List of Improvements
     - All closed lines should be interpreted as faces
     - On each face (or multiple) an Extrude is possible to create a 3D object
 
-(B006) Integration of opencascade.js
+(B006) Integration of opencascade.js / @bitbybit-dev/occt-worker
     - Currently there are massive performance issues with initOpenCascade() function (to be tested on different machines)
     - Also when switching to the Sketcher View immediately performance is still impacted
        - in this case need to find a way to stop initOpenCascade() function
@@ -31,5 +31,5 @@ List of Improvements
        https://ocjs.org/docs/getting-started/configure-bundler
        - How to do that?
     - Check out if one of these should be used instead: 
-       https://www.npmjs.com/package/@bitbybit-dev/occt-worker
+       https://www.npmjs.com/package/@bitbybit-dev/occt-worker      // --> go for this since it is for the browser (uses a web worker)
        https://www.npmjs.com/package/@bitbybit-dev/occt
