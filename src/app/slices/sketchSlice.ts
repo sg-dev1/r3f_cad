@@ -97,7 +97,11 @@ export const sketchSlice = createSlice({
   initialState,
   reducers: {
     createSketch: (state: SketchState) => {
-      state.sketches[state.sketchIdCount] = { ...emptySketch, id: state.sketchIdCount };
+      state.sketches[state.sketchIdCount] = {
+        ...emptySketch,
+        id: state.sketchIdCount,
+        name: `Sketch${state.sketchIdCount}`,
+      };
       state.activeSketchId = state.sketchIdCount;
       state.sketchIdCount++;
     },
@@ -111,6 +115,9 @@ export const sketchSlice = createSlice({
         return;
       }
       state.activeSketchId = id;
+    },
+    resetActiveSketch: (state: SketchState) => {
+      state.activeSketchId = -1;
     },
     deleteSketch: (state: SketchState, { payload: id }) => {
       if (!(id in state.sketches)) {
@@ -192,6 +199,7 @@ export const sketchSlice = createSlice({
 export const {
   createSketch,
   setActiveSketch,
+  resetActiveSketch,
   deleteSketch,
   addEntity,
   removeEntity,
@@ -206,6 +214,7 @@ export const {
   deleteLengthConstraintForLine,
 } = sketchSlice.actions;
 
+export const selectSketchs = (state: RootState) => state.sketchs.sketches;
 export const selectActiveSketchId = (state: RootState) => state.sketchs.activeSketchId;
 
 export const selectPoints = (state: RootState) => state.sketchs.sketches[state.sketchs.activeSketchId].points;

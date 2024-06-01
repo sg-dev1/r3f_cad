@@ -9,6 +9,7 @@ import { useAppDispatch, useAppSelector } from '@/app/hooks';
 import {
   deleteConstraintById,
   deleteLengthConstraintForLine,
+  resetActiveSketch,
   selectConstraints,
   selectLastDof,
   selectLastSolverFailedConstraints,
@@ -269,6 +270,10 @@ const SketcherView = () => {
               bottom: 0,
             }}
           >
+            <Button type="primary" className="primary-button" onClick={() => dispatch(resetActiveSketch())}>
+              Back to 3D Modeller
+            </Button>
+
             <ConstraintTable />
             <EntitiesTable />
           </Sider>

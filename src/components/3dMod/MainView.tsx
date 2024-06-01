@@ -2,12 +2,13 @@
 
 import React from 'react';
 import { Button, Layout } from 'antd';
-import OcTest from './OcTest';
+//import OcTest from './OcTest';
 import { createSketch, selectActiveSketchId } from '@/app/slices/sketchSlice';
 import { useAppDispatch, useAppSelector } from '@/app/hooks';
 import OcctWorkerTest from './OcctWorkerTest';
+import SketchTable from './SketchTable';
 
-const { Header, Content } = Layout;
+const { Header, Content, Sider } = Layout;
 
 const MainView = () => {
   //const activeSketchId = useAppSelector(selectActiveSketchId);
@@ -32,10 +33,26 @@ const MainView = () => {
           </Button>
         </Header>
 
-        <Content style={{ padding: '10px 24px 24px', backgroundColor: 'slategray' }}>
-          {/* <OcTest /> */}
-          <OcctWorkerTest />
-        </Content>
+        <Layout>
+          <Sider
+            width={500}
+            style={{
+              overflow: 'auto',
+              //height: '100vh',
+              position: 'fixed',
+              left: 0,
+              top: 64,
+              bottom: 0,
+            }}
+          >
+            <SketchTable />
+          </Sider>
+
+          <Content style={{ marginLeft: 500, padding: '10px 24px 24px', backgroundColor: 'slategray' }}>
+            {/* <OcTest /> */}
+            <OcctWorkerTest />
+          </Content>
+        </Layout>
       </Layout>
 
       {/* <Canvas camera={{ fov, aspect, near, far }} className="mainview">
