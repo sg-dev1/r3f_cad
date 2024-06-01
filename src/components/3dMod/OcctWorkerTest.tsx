@@ -8,10 +8,10 @@ import * as THREE from 'three';
 import log from '../../utils/log_utils';
 import { BitByBitOCCT, OccStateEnum } from '@bitbybit-dev/occt-worker';
 import { Inputs } from '@bitbybit-dev/occt';
-import { useThree } from '@react-three/fiber';
-import { BufferAttribute, BufferGeometry, Group, Mesh, MeshNormalMaterial, Scene } from 'three';
+import { Group, Scene } from 'three';
 import { OrbitControls, STLExporter } from 'three/examples/jsm/Addons.js';
 import { Button, Flex, Slider, Spin } from 'antd';
+import { addShapeToScene } from './occt_visualize';
 
 console.log = log;
 
@@ -21,7 +21,6 @@ const OcctWorkerTest = () => {
   const [addTopHeight, setAddTopHeight] = useState<number>(0);
   const [addMiddleHeight, setAddMiddleHeight] = useState<number>(0);
 
-  //const { scene, gl, camera } = useThree();
   const [scene, setScene] = useState<Scene>();
   const [group, setGroup] = useState<Group>();
 
@@ -39,50 +38,6 @@ const OcctWorkerTest = () => {
     }
     init();
   }, []);
-
-  const visualize = async (bitbybitOcct: BitByBitOCCT, shape: Inputs.OCCT.TopoDSShapePointer, precision: number) => {
-    const geometries: BufferGeometry[] = [];
-    const res: Inputs.OCCT.DecomposedMeshDto = await bitbybitOcct.occt.shapeToMesh({
-      shape,
-      adjustYtoZ: false,
-      precision,
-    });
-    let meshData = res.faceList.map((face) => {
-      return {
-        positions: face.vertex_coord,
-        normals: face.normal_coord,
-        indices: face.tri_indexes,
-      };
-    });
-
-    meshData.forEach((mesh) => {
-      let geometry = new BufferGeometry();
-      geometry.setAttribute('position', new BufferAttribute(Float32Array.from(mesh.positions), 3));
-      geometry.setAttribute('normal', new BufferAttribute(Float32Array.from(mesh.normals), 3));
-      geometry.setIndex(new BufferAttribute(Uint32Array.from(mesh.indices), 1));
-      geometries.push(geometry);
-    });
-
-    return geometries;
-  };
-
-  const addShapeToScene = async (
-    bitbybitOcct: BitByBitOCCT,
-    shape: Inputs.OCCT.TopoDSShapePointer,
-    scene: Scene,
-    precision: number
-  ): Promise<Group> => {
-    const material = new MeshNormalMaterial();
-    let geometries = await visualize(bitbybitOcct, shape, precision);
-
-    let group = new Group();
-    geometries.forEach((geometry) => {
-      group.add(new Mesh(geometry, material));
-    });
-    group.name = 'shape';
-    scene.add(group);
-    return group;
-  };
 
   const createVaseByLoft = async (bitbybit?: BitByBitOCCT, scene?: Scene) => {
     if (scene && bitbybit) {

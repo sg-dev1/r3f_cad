@@ -1,8 +1,7 @@
 Priority of improvements (my ranking)
-  - B006
+  - B005
   - B002
   - B004
-  - B005
   - B003
   - B001  // updates as needed
 
@@ -12,16 +11,20 @@ List of Improvements
 (B001) Basic main view with camera control --> MainView.tsx
 
 (B002) Integration of Sketcher tool 
-    - create new sketch 
+    - create new sketch                 // done
     - update existing one -> set active one to the selected sketch and open Sketcher tool
+    - navigation between Sketcher and 3dMod tools
 
 (B003) List with sketches and geometries
 
 (B004) Datamodel update sketchSlice.ts --> Document with sketches and geometry
 
-(B005) Mapping of sketches to 3D View
+(B005) Mapping of sketches to 3D View (and basic workflow)
     - All closed lines should be interpreted as faces
     - On each face (or multiple) an Extrude is possible to create a 3D object
+
+
+Done Improvements
 
 (B006) Integration of opencascade.js / @bitbybit-dev/occt-worker
     - Currently there are massive performance issues with initOpenCascade() function (to be tested on different machines)
