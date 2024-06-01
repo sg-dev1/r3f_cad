@@ -9,7 +9,7 @@
 
 import React, { useEffect, useState } from 'react';
 import initOpenCascade, { OpenCascadeInstance, TopoDS_Shape, TDocStd_Document } from 'opencascade.js';
-import log from '../utils/log_utils';
+import log from '../../utils/log_utils';
 
 console.log = log;
 

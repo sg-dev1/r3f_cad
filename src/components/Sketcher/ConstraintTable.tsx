@@ -16,7 +16,7 @@ import { Form, Input, Popconfirm, Table } from 'antd';
 import { SorterResult } from 'antd/es/table/interface';
 import React, { useContext, useEffect, useRef, useState } from 'react';
 
-import '../app/globals.css';
+import '../../app/globals.css';
 import { DeleteOutlined } from '@ant-design/icons';
 import { selectSelectedConstraintId, setSelectedConstraintId } from '@/app/slices/sketchToolStateSlice';
 

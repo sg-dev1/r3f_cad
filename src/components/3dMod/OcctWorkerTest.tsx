@@ -5,7 +5,7 @@
 'use client';
 import React, { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
-import log from '../utils/log_utils';
+import log from '../../utils/log_utils';
 import { BitByBitOCCT, OccStateEnum } from '@bitbybit-dev/occt-worker';
 import { Inputs } from '@bitbybit-dev/occt';
 import { useThree } from '@react-three/fiber';
@@ -287,7 +287,7 @@ const OcctWorkerTest = () => {
           </Button>
         </Flex>
 
-        {showSpinner && <Spin tip="Loading" size="large" />}
+        {showSpinner && <Spin size="large" />}
       </Flex>
     </>
   );
