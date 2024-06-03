@@ -1,4 +1,5 @@
 Priority of improvements (my ranking)
+  - B007
   - B005
   - B002
   - B004
@@ -22,6 +23,16 @@ List of Improvements
 (B005) Mapping of sketches to 3D View (and basic workflow)
     - All closed lines should be interpreted as faces
     - On each face (or multiple) an Extrude is possible to create a 3D object
+    --> see B007
+
+(B007) Display Sketch in 3D View
+    - All closed surfaces shall be individually selectable --> to apply an operation (like extrude)
+    - Workflow: 
+       1) Create Sketch
+       2) Go back to 3D Modeller and Sketch is disabled
+       3) Select one/ multiple faces an apply operation (e.g. Extrude --> give a length)
+       4) 3D Body is created
+    - A history of these operations shall be stored (e.g. also to go back and forth in time)
 
 
 Done Improvements

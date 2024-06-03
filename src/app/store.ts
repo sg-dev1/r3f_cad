@@ -1,12 +1,14 @@
 import { configureStore } from '@reduxjs/toolkit';
 import sketchReducer from './slices/sketchSlice';
 import sketchToolReducer from './slices/sketchToolStateSlice';
+import modellingReducer from './slices/modellingToolStateSlice';
 // ...
 
 export const store = configureStore({
   reducer: {
     sketchs: sketchReducer,
     sketchTool: sketchToolReducer,
+    modellingTool: modellingReducer,
   },
 });
 

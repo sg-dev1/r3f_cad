@@ -4,14 +4,15 @@
 //
 'use client';
 import React, { useEffect, useRef, useState } from 'react';
-import * as THREE from 'three';
 import log from '../../utils/log_utils';
 import { BitByBitOCCT, OccStateEnum } from '@bitbybit-dev/occt-worker';
 import { Inputs } from '@bitbybit-dev/occt';
 import { Group, Scene } from 'three';
-import { OrbitControls, STLExporter } from 'three/examples/jsm/Addons.js';
+import { STLExporter } from 'three/examples/jsm/Addons.js';
 import { Button, Flex, Slider, Spin } from 'antd';
 import { addShapeToScene } from './occt_visualize';
+import { useThree } from '@react-three/fiber';
+import { Html } from '@react-three/drei';
 
 console.log = log;
 
@@ -21,7 +22,8 @@ const OcctWorkerTest = () => {
   const [addTopHeight, setAddTopHeight] = useState<number>(0);
   const [addMiddleHeight, setAddMiddleHeight] = useState<number>(0);
 
-  const [scene, setScene] = useState<Scene>();
+  const { scene, gl, camera, size } = useThree();
+  //const [scene, setScene] = useState<Scene>();
   const [group, setGroup] = useState<Group>();
 
   const [bitbybit, setBitbybit] = useState<BitByBitOCCT>();
@@ -29,13 +31,16 @@ const OcctWorkerTest = () => {
 
   const [showSpinner, setShowSpinner] = useState<boolean>(true);
 
-  const firstRenderRef = useRef(true);
+  //const firstRenderRef = useRef(true);
 
   useEffect(() => {
+    console.log('occt root init ...');
+    /*
     if (process.env.REACT_APP_ENVIRONMENT !== 'production' && firstRenderRef.current) {
       firstRenderRef.current = false;
       return;
     }
+    */
     init();
   }, []);
 
@@ -136,39 +141,44 @@ const OcctWorkerTest = () => {
 
     const animation = (time: number) => {
       gl.render(scene, camera);
-      controls.update();
+      //controls.update();  // not sure if this is needed
+      // When using drei's OrbitControls (instead of THREE.OrbitControls) there is no update() function.
     };
 
-    const camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.01, 1000);
+    // BEGIN not needed code - instead define Canvas, Scene, Renderer etc. declaratively (the React way) using Jsx
+    //
+    // const camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.01, 1000);
 
-    let scene = new THREE.Scene();
-    setScene(scene);
-    const gl = new THREE.WebGLRenderer({ antialias: true });
-    gl.setSize(window.innerWidth, window.innerHeight);
+    // let scene = new THREE.Scene();
+    // setScene(scene);
+    // const gl = new THREE.WebGLRenderer({ antialias: true });
+    // gl.setSize(window.innerWidth, window.innerHeight);
 
-    document.body.appendChild(gl.domElement);
+    // document.body.appendChild(gl.domElement);
 
-    const controls = new OrbitControls(camera, gl.domElement);
-    camera.position.set(30, 50, 50);
+    // const controls = new OrbitControls(camera, gl.domElement);
+    // camera.position.set(30, 50, 50);
 
-    controls.update();
-    controls.target = new THREE.Vector3(0, 20, 0);
-    controls.enableDamping = true;
-    controls.dampingFactor = 0.1;
-    controls.zoomSpeed = 0.1;
+    // controls.update();
+    // controls.target = new THREE.Vector3(0, 20, 0);
+    // controls.enableDamping = true;
+    // controls.dampingFactor = 0.1;
+    // controls.zoomSpeed = 0.1;
 
-    gl.shadowMap.enabled = true;
-    gl.shadowMap.type = THREE.PCFSoftShadowMap; // default THREE.PCFShadowMap
+    // gl.shadowMap.enabled = true;
+    // gl.shadowMap.type = THREE.PCFSoftShadowMap; // default THREE.PCFShadowMap
 
-    window.addEventListener('resize', onWindowResize, false);
+    // window.addEventListener('resize', onWindowResize, false);
 
-    function onWindowResize() {
-      camera.aspect = window.innerWidth / window.innerHeight;
-      camera.updateProjectionMatrix();
+    // function onWindowResize() {
+    //   camera.aspect = window.innerWidth / window.innerHeight;
+    //   camera.updateProjectionMatrix();
 
-      gl.setSize(window.innerWidth, window.innerHeight);
-    }
-    gl.setClearColor(new THREE.Color(0x000000), 1);
+    //   gl.setSize(window.innerWidth, window.innerHeight);
+    // }
+    // gl.setClearColor(new THREE.Color(0x000000), 1);
+    //
+    // END - not needed code
 
     bitbybit.occtWorkerManager.occWorkerState$.subscribe(async (s) => {
       if (s.state === OccStateEnum.initialised) {
@@ -182,8 +192,11 @@ const OcctWorkerTest = () => {
     });
   };
 
+  // Cannot use div's etc. within a Canvas, therefore use drei's Html helper.
+  // However, it has a bit weird behaviour since it reacts to transformation.
+  // But for this test component this is ok.
   return (
-    <>
+    <Html position={[-250, 0, 0]}>
       <div>Adjust wide radius:</div>
       <Slider
         disabled={showSpinner}
@@ -244,7 +257,7 @@ const OcctWorkerTest = () => {
 
         {showSpinner && <Spin size="large" />}
       </Flex>
-    </>
+    </Html>
   );
 };
 

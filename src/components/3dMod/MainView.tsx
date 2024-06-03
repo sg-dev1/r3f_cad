@@ -2,11 +2,13 @@
 
 import React from 'react';
 import { Button, Layout } from 'antd';
-//import OcTest from './OcTest';
 import { createSketch, selectActiveSketchId } from '@/app/slices/sketchSlice';
 import { useAppDispatch, useAppSelector } from '@/app/hooks';
 import OcctWorkerTest from './OcctWorkerTest';
 import SketchTable from './SketchTable';
+import OcctRoot from './OcctRoot';
+import { Canvas } from '@react-three/fiber';
+import { OrbitControls } from '@react-three/drei';
 
 const { Header, Content, Sider } = Layout;
 
@@ -15,10 +17,10 @@ const MainView = () => {
   const dispatch = useAppDispatch();
   // const cameraControlsRef = useRef<CameraControls>(null);
 
-  // const fov = 60;
-  // const aspect = 2; // the canvas default
-  // const near = 0.1;
-  // const far = 10;
+  const fov = 70;
+  const aspect = 2; // the canvas default
+  const near = 0.1;
+  const far = 1000;
 
   const onCreateNewSketch = () => {
     dispatch(createSketch());
@@ -49,8 +51,19 @@ const MainView = () => {
           </Sider>
 
           <Content style={{ marginLeft: 500, padding: '10px 24px 24px', backgroundColor: 'slategray' }}>
-            {/* <OcTest /> */}
-            <OcctWorkerTest />
+            <Canvas
+              //camera={{ zoom: 2 }}
+              camera={{ fov, aspect, near, far, position: [30, 50, 50] }}
+              className="mainview"
+            >
+              {/* <CameraControls minDistance={1.2} maxDistance={4} ref={cameraControlsRef} /> */}
+              <OrbitControls makeDefault enableDamping={true} dampingFactor={0.1} />
+              <ambientLight intensity={2} />
+
+              {/* Constains test component adding test object using Occt */}
+              {/* <OcctWorkerTest /> */}
+              <OcctRoot />
+            </Canvas>
           </Content>
         </Layout>
       </Layout>
