@@ -9,6 +9,7 @@ const visualize = async (bitbybitOcct: BitByBitOCCT, shape: Inputs.OCCT.TopoDSSh
     adjustYtoZ: false,
     precision,
   });
+  //console.log('[addShapeToScene] res=', res);
   let meshData = res.faceList.map((face) => {
     return {
       positions: face.vertex_coord,
@@ -34,10 +35,18 @@ export const addShapeToScene = async (
   scene: Scene,
   precision: number
 ): Promise<Group> => {
+  //console.log('[addShapeToScene] shape=', shape);
   const material = new MeshNormalMaterial();
   let geometries = await visualize(bitbybitOcct, shape, precision);
 
+  if (geometries.length === 0) {
+    console.warn('Geometries length is 0. Cannot visualize shape.');
+    // TODO fixme - this is a bit odd just returning an empty THREE.Group ...
+    return new Group();
+  }
+
   let group = new Group();
+  //console.log('[addShapeToScene]', 'Adding geometries', geometries, 'to group', group);
   geometries.forEach((geometry) => {
     group.add(new Mesh(geometry, material));
   });

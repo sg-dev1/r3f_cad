@@ -1,5 +1,7 @@
 Priority of improvements (my ranking)
+  - B007-A
   - B007
+  - B008
   - B005
   - B002
   - B004
@@ -29,10 +31,33 @@ List of Improvements
     - All closed surfaces shall be individually selectable --> to apply an operation (like extrude)
     - Workflow: 
        1) Create Sketch
-       2) Go back to 3D Modeller and Sketch is disabled
+       2) Go back to 3D Modeller and Sketch is displayed
        3) Select one/ multiple faces an apply operation (e.g. Extrude --> give a length)
+           e.g. right click on single Face (multiple Face selection) -> Extrude
        4) 3D Body is created
     - A history of these operations shall be stored (e.g. also to go back and forth in time)
+(B007-A) Improve the visualization
+    - Different Sketches should be highlighed differently
+    - Improve colors, highlighting etc. of displayed Sketches
+    - Add visualization of circles
+    - Show/ Hide of sketches displayed (future topic)
+    - Need a way to find out if lines are connected at all, lines describe multiple faces etc.?
+      E.g. get all Faces from given lines and circles --> e.g. these could be used for an extrude
+    - How does the current implementation handle multiple overlapping objects in one Sketch,
+      e.g. two rectangles?
+      - It currently only supports a single closed line segment (of any shape)
+      - If it is not closed --> Error (should be the case, however the error should 
+          be detected before calling combineEdgesAndWiresIntoAWire occt function)
+      - If it has more than one closed line segments --> Error:
+        Uncaught (in promise) OCCT computation failed. Error: Wire is disconnected and can not be
+        constructed While executing function - shapes.wire.combineEdgesAndWiresIntoAWire. 
+        Input values were: ...
+      --> so current implementation using combineEdgesAndWiresIntoAWire() only supports a 
+          single connected line segment
+
+(B008) Add attachment to Sketches, e.g. where they are located in 3D space
+    - For a sketch also the Plane should be selectable (X, Y, or Z)
+    - Additionally offsets in all directions are needed (per default it is located at [0,0,0])
 
 
 Done Improvements
