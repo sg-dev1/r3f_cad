@@ -6,13 +6,13 @@ import {
   selectLastSolverResultCode,
   selectLines,
   selectPointsMap,
+  selectSketchCurrentPlane,
   updateConstraint,
   updateLinePoints,
 } from '@/app/slices/sketchSlice';
 import {
   ToolState,
   selectAngleConstraintLineIds,
-  selectCurrentPlane,
   selectLengthConstraintLineId,
   selectSelectedEntityId,
   selectToolState,
@@ -80,7 +80,7 @@ const LineObject = ({
   const sketchAngleConstraintLineIds = useAppSelector(selectAngleConstraintLineIds);
   const sketchSelectedEntityId = useAppSelector(selectSelectedEntityId);
   const selectedToolState = useAppSelector(selectToolState);
-  const sketchCurrentPlane = useAppSelector(selectCurrentPlane);
+  const sketchCurrentPlane = useAppSelector(selectSketchCurrentPlane);
 
   const dispatch = useAppDispatch();
   const { size, camera, raycaster } = useThree();

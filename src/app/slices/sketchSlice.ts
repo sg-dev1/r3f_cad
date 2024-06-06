@@ -96,11 +96,12 @@ export const sketchSlice = createSlice({
   // `createSlice` will infer the state type from the `initialState` argument
   initialState,
   reducers: {
-    createSketch: (state: SketchState) => {
+    createSketch: (state: SketchState, { payload: plane }) => {
       state.sketches[state.sketchIdCount] = {
         ...emptySketch,
         id: state.sketchIdCount,
         name: `Sketch${state.sketchIdCount}`,
+        plane: plane,
       };
       state.activeSketchId = state.sketchIdCount;
       state.sketchIdCount++;
@@ -216,6 +217,8 @@ export const {
 
 export const selectSketchs = (state: RootState) => state.sketchs.sketches;
 export const selectActiveSketchId = (state: RootState) => state.sketchs.activeSketchId;
+export const selectSketchCurrentPlane = (state: RootState) =>
+  state.sketchs.sketches[state.sketchs.activeSketchId].plane;
 
 export const selectPoints = (state: RootState) => state.sketchs.sketches[state.sketchs.activeSketchId].points;
 export const selectPointsMap = (state: RootState) => state.sketchs.sketches[state.sketchs.activeSketchId].pointsMap;

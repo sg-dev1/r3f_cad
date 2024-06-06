@@ -4,12 +4,12 @@ import {
   selectConstraints,
   selectLastDof,
   selectLastSolverResultCode,
+  selectSketchCurrentPlane,
   updateCircleRadius,
   updateConstraint,
 } from '@/app/slices/sketchSlice';
 import {
   ToolState,
-  selectCurrentPlane,
   selectDiamConstraintCircleId,
   selectSelectedEntityId,
   selectToolState,
@@ -57,7 +57,7 @@ const CircleObject = ({
   const sketchLastSolverResultCode = useAppSelector(selectLastSolverResultCode);
   const sketchLastDof = useAppSelector(selectLastDof);
   const selectedToolState = useAppSelector(selectToolState);
-  const sketchCurrentPlane = useAppSelector(selectCurrentPlane);
+  const sketchCurrentPlane = useAppSelector(selectSketchCurrentPlane);
 
   const dispatch = useAppDispatch();
   const { size, camera, raycaster } = useThree();

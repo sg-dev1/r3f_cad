@@ -23,7 +23,9 @@ const MainView = () => {
   const far = 1000;
 
   const onCreateNewSketch = () => {
-    dispatch(createSketch());
+    // TODO when creating sketch on plane different than XY is implemented
+    // the sketchCurrentPlane needs to be updated
+    dispatch(createSketch('xy'));
   };
 
   return (

@@ -1,14 +1,14 @@
 import { useAppSelector } from '@/app/hooks';
-import { selectLines, selectPointsMap } from '@/app/slices/sketchSlice';
+import { selectLines, selectPointsMap, selectSketchCurrentPlane } from '@/app/slices/sketchSlice';
 import { ConstraintType } from '@/app/types/Constraints';
 import { getPlaneAwareSketchPosition } from '@/utils/threejs_planes';
 import React from 'react';
 import TextObject from './TextObject';
-import { selectCurrentPlane, selectSelectedConstraintId } from '@/app/slices/sketchToolStateSlice';
+import { selectSelectedConstraintId } from '@/app/slices/sketchToolStateSlice';
 import { Line } from '@react-three/drei';
 
 const AngleConstraintObject = ({ angleConstraint }: { angleConstraint: ConstraintType }) => {
-  const sketchCurrentPlane = useAppSelector(selectCurrentPlane);
+  const sketchCurrentPlane = useAppSelector(selectSketchCurrentPlane);
   const sketchPointsMap = useAppSelector(selectPointsMap);
   const sketchLines = useAppSelector(selectLines);
   const sketchSelectedConstraintId = useAppSelector(selectSelectedConstraintId);

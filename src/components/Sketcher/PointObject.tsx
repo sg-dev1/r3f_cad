@@ -1,11 +1,6 @@
 import { useAppDispatch, useAppSelector } from '@/app/hooks';
-import { selectConstraints, selectLastDof, updatePoint } from '@/app/slices/sketchSlice';
-import {
-  ToolState,
-  selectCurrentPlane,
-  selectSelectedEntityId,
-  selectToolState,
-} from '@/app/slices/sketchToolStateSlice';
+import { selectConstraints, selectLastDof, selectSketchCurrentPlane, updatePoint } from '@/app/slices/sketchSlice';
+import { ToolState, selectSelectedEntityId, selectToolState } from '@/app/slices/sketchToolStateSlice';
 import { SlvsConstraints } from '@/app/types/Constraints';
 import { GeometryType } from '@/app/types/EntityType';
 import { calcIntersectionWithPlaneFromRect } from '@/utils/threejs_utils';
@@ -32,7 +27,7 @@ const PointObject = ({
   const sketchLastDof = useAppSelector(selectLastDof);
   const sketchSelectedEntityId = useAppSelector(selectSelectedEntityId);
   const selectedToolState = useAppSelector(selectToolState);
-  const sketchCurrentPlane = useAppSelector(selectCurrentPlane);
+  const sketchCurrentPlane = useAppSelector(selectSketchCurrentPlane);
   const sketchConstraints = useAppSelector(selectConstraints);
   const constraintsAffectingPoint = sketchConstraints.filter((c) => c.v[1] === id || c.v[2] === id);
   const midPointConstraints = constraintsAffectingPoint.filter((c) => c.t === SlvsConstraints.SLVS_C_AT_MIDPOINT);

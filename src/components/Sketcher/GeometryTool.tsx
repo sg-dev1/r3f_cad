@@ -14,6 +14,7 @@ import {
   buildSolverRequestType,
   addConstraint,
   selectCircles,
+  selectSketchCurrentPlane,
 } from '@/app/slices/sketchSlice';
 import { calcIntersectionWithPlane } from '@/utils/threejs_utils';
 import { GeometryType, geometryTypeToString } from '@/app/types/EntityType';
@@ -21,7 +22,6 @@ import LineObject from './LineObject';
 import PointObject from './PointObject';
 import {
   ToolState,
-  selectCurrentPlane,
   selectToolState,
   setAngleConstraintLineIds,
   setDiamConstraintCircleId,
@@ -66,7 +66,7 @@ const GeometryTool = forwardRef<any, any>(({}: GeometryToolProps, ref) => {
   const sketchConstraints = useAppSelector(selectConstraints);
 
   const toolState = useAppSelector(selectToolState);
-  const sketchCurrentPlane = useAppSelector(selectCurrentPlane);
+  const sketchCurrentPlane = useAppSelector(selectSketchCurrentPlane);
 
   // ---
 

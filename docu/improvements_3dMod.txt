@@ -71,4 +71,9 @@ Done Improvements
        - How to do that?
     - Check out if one of these should be used instead: 
        https://www.npmjs.com/package/@bitbybit-dev/occt-worker      // --> go for this since it is for the browser (uses a web worker)
-       https://www.npmjs.com/package/@bitbybit-dev/occt
+       https://www.npmjs.com/package/@bitbybit-dev/occt             // this is just the dependency of occt-worker
+       https://www.npmjs.com/package/@bitbybit-dev/core
+       --> So there are:
+         - @bitbybit-dev/occt           Core implementation using opencascade.js as dependency  (may also be used with node.js)
+         - @bitbybit-dev/occt-worker    Core implementation + Web Worker (meant to be used in Browser)
+         - @bitbybit-dev/core           Also includes BabylonJS as rendering framework  (occt + occt-worker as dependencies) 

@@ -8,6 +8,7 @@ import { SolverEntityType } from '../types/SolverTypes';
 export interface SketchType {
   id: number;
   name: string;
+  plane: string;
 
   entityIdCounter: number;
   points: Point3DType[];
@@ -25,6 +26,7 @@ export interface SketchType {
 export const emptySketch: SketchType = {
   id: -1,
   name: '',
+  plane: '',
 
   entityIdCounter: 1,
   points: [],
