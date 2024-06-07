@@ -95,7 +95,7 @@ const EntitiesTable = () => {
   return (
     <>
       <Table
-        style={{ height: '50%', overflow: 'auto' }}
+        style={{ overflow: 'auto' }}
         //onChange={handleTableChange}
         pagination={false}
         scroll={{ y: '35vh' }}

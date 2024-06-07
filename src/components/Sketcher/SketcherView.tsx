@@ -148,7 +148,7 @@ const SketcherView = () => {
   return (
     <>
       <Layout>
-        <Header style={{ display: 'flex', alignItems: 'center' }}>
+        <Header style={{ display: 'flex', alignItems: 'center', height: '7vh' }}>
           <Button type="primary" className="primary-button" onClick={() => dispatch(setToolState(ToolState.LINE_TOOL))}>
             Line
             {/* <LineOutlined /> */}
@@ -258,7 +258,7 @@ const SketcherView = () => {
           </div>
         </Header>
 
-        <Layout>
+        <Layout style={{ height: '93vh' }}>
           <Sider
             width={500}
             style={{
@@ -282,7 +282,6 @@ const SketcherView = () => {
               orthographic
               //camera={{ zoom: 1, position: [0, 0, 200], top: 200, bottom: -200, left: 200, right: -200, near: 1, far: 2000 }}
               camera={{ zoom: 2 }}
-              className="sketcherview"
               onClick={(e) => geometryToolRef.current?.onClick(e)}
               onPointerMove={(e) => geometryToolRef.current?.onPointerMove(e)}
             >

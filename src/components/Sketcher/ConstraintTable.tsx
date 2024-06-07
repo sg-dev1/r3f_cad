@@ -376,7 +376,7 @@ const ConstraintTable = () => {
   return (
     <>
       <Table
-        style={{ height: '50%', overflow: 'auto' }}
+        style={{ overflow: 'auto' }}
         //style={{ overflow: 'scroll' }}
         //onChange={handleTableChange}
         components={{

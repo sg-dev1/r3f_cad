@@ -31,13 +31,13 @@ const MainView = () => {
   return (
     <>
       <Layout>
-        <Header style={{ display: 'flex', alignItems: 'center' }}>
+        <Header style={{ display: 'flex', alignItems: 'center', height: '7vh' }}>
           <Button type="primary" className="primary-button" onClick={() => onCreateNewSketch()}>
             Create new Sketch
           </Button>
         </Header>
 
-        <Layout>
+        <Layout style={{ height: '93vh' }}>
           <Sider
             width={500}
             style={{
@@ -56,7 +56,6 @@ const MainView = () => {
             <Canvas
               //camera={{ zoom: 2 }}
               camera={{ fov, aspect, near, far, position: [30, 50, 50] }}
-              className="mainview"
             >
               {/* <CameraControls minDistance={1.2} maxDistance={4} ref={cameraControlsRef} /> */}
               <OrbitControls makeDefault enableDamping={true} dampingFactor={0.1} />
