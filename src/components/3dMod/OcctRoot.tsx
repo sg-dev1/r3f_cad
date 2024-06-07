@@ -8,6 +8,7 @@ import { STLExporter } from 'three/examples/jsm/Addons.js';
 import { Inputs } from '@bitbybit-dev/occt';
 import { addShapeToScene } from './occt_visualize';
 import { selectSketchs } from '@/app/slices/sketchSlice';
+import { findConnectedLinesInSketch } from '@/utils/algo3d';
 
 const OcctRoot = () => {
   const [bitbybit, setBitbybit] = useState<BitByBitOCCT>();
@@ -55,6 +56,9 @@ const OcctRoot = () => {
     const newGroups: THREE.Group[] = [];
     const allSketchs = Object.entries(sketchs).map(([key, value]) => value);
     allSketchs.forEach(async (sketch) => {
+      // dummy call to algorithm
+      findConnectedLinesInSketch(sketch);
+
       // 1) Convert all lines to Wires
       const linesDto: Inputs.OCCT.LineDto[] = sketch.lines.map((line) => {
         const startP = sketch.pointsMap[line.p1_id];
