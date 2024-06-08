@@ -1,6 +1,7 @@
 import { SketchType } from '@/app/slices/Sketch';
-import Flatten, { Circle, Point, Segment, Shape } from '@flatten-js/core';
+import Flatten, { Arc, Circle, Point, Segment, Shape } from '@flatten-js/core';
 import { getPointU, getPointV } from './threejs_planes';
+import { instance } from 'three/examples/jsm/nodes/Nodes.js';
 
 export const findConnectedLinesInSketch = (sketch: SketchType) => {
   //const flattenPoints = sketch.points.map((point) => new Point(getPointU(sketch.plane, point), getPointV(sketch.plane, point)));
@@ -8,7 +9,7 @@ export const findConnectedLinesInSketch = (sketch: SketchType) => {
   sketch.points.forEach((point) => {
     flattenPointsMap[point.id] = new Point(getPointU(sketch.plane, point), getPointV(sketch.plane, point));
   });
-  type FlattenShapeSubset = Segment | Circle;
+  type FlattenShapeSubset = Segment | Circle | Arc;
   type FlattenShapeStruct = { id: number; entity: FlattenShapeSubset };
   const flattenShapes: FlattenShapeStruct[] = sketch.lines.map((line) => ({
     id: line.id,
@@ -77,108 +78,96 @@ export const findConnectedLinesInSketch = (sketch: SketchType) => {
   //const connectedShapes: CadToolShape2D[][] = [];  // CadToolShape2D = Line3DType | CircleType
   // TODO also return newly created points
 
-  const fPointContainedInSegment = (seg: Segment, pt: Point) => {
-    // check if point is part of the segment, but it is neither its start or end point
-    return seg.contains(pt) && !(pt.equalTo(seg.start) || pt.equalTo(seg.end));
-  };
+  //
+  // Perform the splits for the intersection points found and save the result in a list
+  //
   const segments: Segment[] = [];
-  const fProcessSegment = (seg: Segment, otherSeg1: Segment | null, otherSeg2: Segment | null) => {
-    let otherSeg1StartInSeg1 = false;
-    let otherSeg1EndInSeg1 = false;
-    let otherSeg2StartInSeg1 = false;
-    let otherSeg2EndInSeg1 = false;
-    if (otherSeg1 && !seg.equalTo(otherSeg1)) {
-      otherSeg1StartInSeg1 = fPointContainedInSegment(seg, otherSeg1.start);
-      otherSeg1EndInSeg1 = fPointContainedInSegment(seg, otherSeg1.end);
-    }
-    if (otherSeg2 && !seg.equalTo(otherSeg2)) {
-      otherSeg2StartInSeg1 = fPointContainedInSegment(seg, otherSeg2.start);
-      otherSeg2EndInSeg1 = fPointContainedInSegment(seg, otherSeg2.end);
-    }
-    const addSegment = !otherSeg1StartInSeg1 && !otherSeg1EndInSeg1 && !otherSeg2StartInSeg1 && !otherSeg2EndInSeg1;
-    if (addSegment) {
-      segments.push(seg);
-    } else {
-      // an additional split is necessary
-      console.log(
-        'otherSeg1StartInSeg1',
-        otherSeg1StartInSeg1,
-        'otherSeg1EndInSeg1',
-        otherSeg1EndInSeg1,
-        'otherSeg2StartInSeg1',
-        otherSeg2StartInSeg1,
-        'otherSeg2EndInSeg1',
-        otherSeg2EndInSeg1
-      );
-      let splitPoint: Point | null = null;
-      if (otherSeg1 && otherSeg1StartInSeg1) {
-        splitPoint = otherSeg1.start;
-      } else if (otherSeg1 && otherSeg1EndInSeg1) {
-        splitPoint = otherSeg1.end;
-      } else if (otherSeg2 && otherSeg2StartInSeg1) {
-        splitPoint = otherSeg2.start;
-      } else if (otherSeg2 && otherSeg2EndInSeg1) {
-        splitPoint = otherSeg2.end;
-      }
-      if (splitPoint) {
-        const [newSeg1, newSeg2] = seg.split(splitPoint);
-        // for now don't worry about duplicate segments, they are filtered in the next step
-        if (newSeg1 !== null) {
-          segments.push(newSeg1);
-        }
-        if (newSeg2 !== null) {
-          segments.push(newSeg2);
-        }
-      }
-    }
-  };
-
-  const allSegmentsFromSplit: [Segment | null, Segment | null][] = [];
+  const circles: Circle[] = [];
+  const arcs: Arc[] = [];
   flattenShapes.forEach((shape) => {
     if (!affectedShapes.has(shape.id)) {
       finalShapes.push(shape.entity);
     } else {
       // shapes need to be replaced
       const intersections = intersectMap[shape.id];
+
+      const intersectionPoints: Point[] = [];
       intersections?.forEach((intersection) => {
-        //        const otherShapeId = intersection.affectedShapes.filter((id) => id !== shape.id)[0];
-        //        const otherShape = flattenShapeMap[otherShapeId];
-        if (shape.entity instanceof Segment) {
-          const segment = shape.entity as Segment;
-
-          const segmentsFromSplit = intersection.intersectionPoints.map((point) => segment.split(point));
-          //console.log('segmentsFromSplit', segmentsFromSplit);
-          //console.log(shape.id, segment, intersection);
-          allSegmentsFromSplit.push(...segmentsFromSplit);
-        }
-
-        if (shape instanceof Circle) {
-          // TODO
-        }
+        intersectionPoints.push(...intersection.intersectionPoints);
       });
-    }
-  });
 
-  console.log('allSegmentsFromSplit', allSegmentsFromSplit);
-  allSegmentsFromSplit.forEach(([seg1, seg2]) => {
-    allSegmentsFromSplit.forEach(([seg3, seg4]) => {
-      if (seg1) {
-        fProcessSegment(seg1, seg3, seg4);
+      console.log('shape', shape.id, shape.entity, 'intersect points', intersectionPoints);
+
+      if (shape.entity instanceof Segment) {
+        const segment = shape.entity as Segment;
+
+        if (intersectionPoints.length > 0) {
+          const sortedPoints = segment.sortPoints(intersectionPoints);
+          console.log('<line>shape', shape.id, 'sortedPoints', sortedPoints);
+
+          // do the splits
+          let currentSegment = segment;
+          sortedPoints.forEach((point) => {
+            const [seg1, seg2] = currentSegment.split(point);
+            if (seg1 === null || seg2 === null) {
+              console.warn('Seg1 or seg2 was null. This should not happen');
+            }
+            if (seg1 && seg2) {
+              console.log('save seg1', seg1);
+              segments.push(seg1);
+              currentSegment = seg2;
+            }
+          });
+          segments.push(currentSegment);
+        } else {
+          // no split needed, save the segment
+          segments.push(segment);
+        }
       }
-      if (seg2) {
-        fProcessSegment(seg2, seg3, seg4);
+
+      if (shape.entity instanceof Circle) {
+        const circle = shape.entity as Circle;
+        if (intersectionPoints.length > 0) {
+          const circleAsArcTmp = circle.toArc();
+          const sortedPoints = circleAsArcTmp.sortPoints(intersectionPoints);
+
+          const [arc1, _] = circleAsArcTmp.split(sortedPoints[0]);
+          if (arc1) {
+            // Arcs go counter clockwise per default
+            const circleAsArc = new Arc(circle.pc, circle.r, arc1.endAngle, -arc1.endAngle);
+            console.log('<circle>shape', shape.id, circleAsArc, 'sortedPoints', sortedPoints);
+
+            // do the splits
+            let currentArc = circleAsArc;
+            // skip the first point
+            for (let i = 1; i < sortedPoints.length; i++) {
+              const point = sortedPoints[i];
+              const [arc1, arc2] = currentArc.split(point);
+              if (arc1 === null || arc2 === null) {
+                console.warn('Arc1 or arc2 was null. This should not happen');
+              }
+              if (arc1 && arc2) {
+                console.log('save arc1', arc1);
+                arcs.push(arc1);
+                currentArc = arc2;
+              }
+            }
+            arcs.push(currentArc);
+          }
+        } else {
+          circles.push(circle);
+        }
       }
-    });
+    }
   });
 
   console.log('segments', segments);
-  segments.forEach((seg) => {
-    // insert Segment into finalShapes removing duplicates
-    const idx = finalShapes.findIndex((shape) => shape instanceof Segment && seg.equalTo(shape as Segment));
-    if (idx === -1) {
-      finalShapes.push(seg);
-    }
-  });
+  //
+  // Obtain the list of final shapes
+  //
+  finalShapes.push(...segments);
+  finalShapes.push(...circles);
+  finalShapes.push(...arcs);
 
   console.log('finalShapes', finalShapes);
 };
