@@ -57,7 +57,7 @@ const OcctRoot = () => {
     const allSketchs = Object.entries(sketchs).map(([key, value]) => value);
     allSketchs.forEach(async (sketch) => {
       // dummy call to algorithm
-      findConnectedLinesInSketch(sketch);
+      const cyclesInSketch = findConnectedLinesInSketch(sketch);
 
       // 1) Convert all lines to Wires
       const linesDto: Inputs.OCCT.LineDto[] = sketch.lines.map((line) => {

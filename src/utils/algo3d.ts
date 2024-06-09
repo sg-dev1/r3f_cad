@@ -1,32 +1,30 @@
 import { SketchType } from '@/app/slices/Sketch';
-import Flatten, { Arc, Circle, Point, Segment, Shape } from '@flatten-js/core';
+import { Arc, Circle, Point, Segment } from '@flatten-js/core';
 import { getPointU, getPointV } from './threejs_planes';
-import { instance } from 'three/examples/jsm/nodes/Nodes.js';
 
 export const findConnectedLinesInSketch = (sketch: SketchType) => {
-  //const flattenPoints = sketch.points.map((point) => new Point(getPointU(sketch.plane, point), getPointV(sketch.plane, point)));
-  const flattenPointsMap: { [key: number]: Point } = {};
+  //
+  // Step 1 - find all intersection points of shapes in the Sketch
+  //
+  // Convert points and sketch shapes (Lines, Circles) into flatten shapes
+  type FlattenPointsMapType = { [key: number]: Point };
+  const flattenPointsMap: FlattenPointsMapType = {};
   sketch.points.forEach((point) => {
     flattenPointsMap[point.id] = new Point(getPointU(sketch.plane, point), getPointV(sketch.plane, point));
   });
   type FlattenShapeSubset = Segment | Circle | Arc;
-  type FlattenShapeStruct = { id: number; entity: FlattenShapeSubset };
+  type FlattenShapeStruct = { id: number; shape: FlattenShapeSubset };
   const flattenShapes: FlattenShapeStruct[] = sketch.lines.map((line) => ({
     id: line.id,
-    entity: new Segment(flattenPointsMap[line.p1_id], flattenPointsMap[line.p2_id]),
+    shape: new Segment(flattenPointsMap[line.p1_id], flattenPointsMap[line.p2_id]),
   }));
   const circleShapes = sketch.circles.map((circle) => ({
     id: circle.id,
-    entity: new Circle(flattenPointsMap[circle.mid_pt_id], circle.radius),
+    shape: new Circle(flattenPointsMap[circle.mid_pt_id], circle.radius),
   }));
   flattenShapes.push(...circleShapes);
 
-  // Not sure if this is needed, but keep it for now ...
-  const flattenShapeMap: { [key: number]: FlattenShapeStruct } = {};
-  flattenShapes.forEach((shape) => {
-    flattenShapeMap[shape.id] = shape;
-  });
-
+  // Calculate intersection points between two shapes
   type IntersectionType = { affectedShapes: number[]; intersectionPoints: Point[] };
   const intersectMap: { [key: number]: IntersectionType[] } = [];
   const affectedShapes = new Set<number>();
@@ -50,11 +48,11 @@ export const findConnectedLinesInSketch = (sketch: SketchType) => {
       // = ... because we don't want to intersect a shape with itself
       // > ... because we don't want to intersect twice (we would get the same points)
       if (shape.id < otherShape.id) {
-        const intersectionPoints = shape.entity.intersect(otherShape.entity);
+        const intersectionPoints = shape.shape.intersect(otherShape.shape);
 
         let discardIntersectionPoints = false;
-        if (shape.entity instanceof Segment) {
-          const segment = shape.entity as Segment;
+        if (shape.shape instanceof Segment) {
+          const segment = shape.shape as Segment;
           const idx1 = intersectionPoints.findIndex((point) => point.equalTo(segment.start));
           const idx2 = intersectionPoints.findIndex((point) => point.equalTo(segment.end));
           discardIntersectionPoints = idx1 !== -1 || idx2 != -1;
@@ -73,22 +71,22 @@ export const findConnectedLinesInSketch = (sketch: SketchType) => {
   console.log('intersectMap', intersectMap);
   console.log('affectedShapes', affectedShapes);
 
-  const finalShapes: FlattenShapeSubset[] = [];
-  // TODO For the output this needs to be calc as well:
-  //const connectedShapes: CadToolShape2D[][] = [];  // CadToolShape2D = Line3DType | CircleType
-  // TODO also return newly created points
+  const finalShapes: FlattenShapeStruct[] = [];
 
   //
   // Perform the splits for the intersection points found and save the result in a list
+  //   e.g. a line may be split multiple times by different shapes
   //
-  const segments: Segment[] = [];
-  const circles: Circle[] = [];
-  const arcs: Arc[] = [];
+  let currentId = sketch.entityIdCounter;
+  const insertIntoFinalShapes = (aShape: FlattenShapeSubset) => {
+    finalShapes.push({ id: currentId, shape: aShape });
+    currentId++;
+  };
   flattenShapes.forEach((shape) => {
     if (!affectedShapes.has(shape.id)) {
-      finalShapes.push(shape.entity);
+      finalShapes.push(shape);
     } else {
-      // shapes need to be replaced
+      // shape need to be replaced
       const intersections = intersectMap[shape.id];
 
       const intersectionPoints: Point[] = [];
@@ -96,14 +94,14 @@ export const findConnectedLinesInSketch = (sketch: SketchType) => {
         intersectionPoints.push(...intersection.intersectionPoints);
       });
 
-      console.log('shape', shape.id, shape.entity, 'intersect points', intersectionPoints);
+      //console.log('shape', shape.id, shape.shape, 'intersect points', intersectionPoints);
 
-      if (shape.entity instanceof Segment) {
-        const segment = shape.entity as Segment;
+      if (shape.shape instanceof Segment) {
+        const segment = shape.shape as Segment;
 
         if (intersectionPoints.length > 0) {
           const sortedPoints = segment.sortPoints(intersectionPoints);
-          console.log('<line>shape', shape.id, 'sortedPoints', sortedPoints);
+          //console.log('<line>shape', shape.id, 'sortedPoints', sortedPoints);
 
           // do the splits
           let currentSegment = segment;
@@ -114,28 +112,29 @@ export const findConnectedLinesInSketch = (sketch: SketchType) => {
             }
             if (seg1 && seg2) {
               console.log('save seg1', seg1);
-              segments.push(seg1);
+              insertIntoFinalShapes(seg1);
               currentSegment = seg2;
             }
           });
-          segments.push(currentSegment);
+          insertIntoFinalShapes(currentSegment);
         } else {
           // no split needed, save the segment
-          segments.push(segment);
+          insertIntoFinalShapes(segment);
         }
       }
 
-      if (shape.entity instanceof Circle) {
-        const circle = shape.entity as Circle;
+      if (shape.shape instanceof Circle) {
+        const circle = shape.shape as Circle;
         if (intersectionPoints.length > 0) {
-          const circleAsArcTmp = circle.toArc();
+          const circleAsArcTmp = circle.toArc(true);
           const sortedPoints = circleAsArcTmp.sortPoints(intersectionPoints);
 
           const [arc1, _] = circleAsArcTmp.split(sortedPoints[0]);
+          //console.log('<circle>circleAsArcTmp', circleAsArcTmp, 'arc1', arc1, 'arc2', arc2);
           if (arc1) {
             // Arcs go counter clockwise per default
-            const circleAsArc = new Arc(circle.pc, circle.r, arc1.endAngle, -arc1.endAngle);
-            console.log('<circle>shape', shape.id, circleAsArc, 'sortedPoints', sortedPoints);
+            const circleAsArc = new Arc(circle.pc, circle.r, arc1.endAngle, arc1.endAngle, true);
+            //console.log('<circle>shape', shape.id, circleAsArc, 'sortedPoints', sortedPoints);
 
             // do the splits
             let currentArc = circleAsArc;
@@ -147,27 +146,197 @@ export const findConnectedLinesInSketch = (sketch: SketchType) => {
                 console.warn('Arc1 or arc2 was null. This should not happen');
               }
               if (arc1 && arc2) {
-                console.log('save arc1', arc1);
-                arcs.push(arc1);
+                //console.log('save arc1', arc1);
+                insertIntoFinalShapes(arc1);
                 currentArc = arc2;
               }
             }
-            arcs.push(currentArc);
+            insertIntoFinalShapes(currentArc);
           }
         } else {
-          circles.push(circle);
+          insertIntoFinalShapes(circle);
         }
       }
     }
   });
 
-  console.log('segments', segments);
-  //
-  // Obtain the list of final shapes
-  //
-  finalShapes.push(...segments);
-  finalShapes.push(...circles);
-  finalShapes.push(...arcs);
-
   console.log('finalShapes', finalShapes);
+
+  //
+  // Step 2 - get all circles in the Sketch
+  //
+  const flattenShapeCycle: FlattenShapeSubset[][] = [];
+  // 1) Generate pointsMap
+  currentId = 1;
+  const pointsMap: FlattenPointsMapType = {};
+  const flattenPointToString = (point: Point) => {
+    return point.x.toFixed(3) + ',' + point.y.toFixed(3);
+  };
+  const pointStringMap: Map<string, number> = new Map<string, number>();
+  const tryInsertPoint = (point: Point) => {
+    const strRep = flattenPointToString(point);
+    if (!pointStringMap.has(strRep)) {
+      pointsMap[currentId] = point;
+      pointStringMap.set(strRep, currentId);
+      console.log('[insertPoint]', currentId, strRep, point);
+      currentId++;
+    }
+  };
+  finalShapes.forEach((shapeStruct) => {
+    if (shapeStruct.shape instanceof Segment) {
+      const segment = shapeStruct.shape as Segment;
+      tryInsertPoint(segment.ps);
+      tryInsertPoint(segment.pe);
+    } else if (shapeStruct.shape instanceof Circle) {
+      // what to insert for a circle - nothing needed since it is a "circle" itself
+      //tryInsertPoint((shapeStruct.shape as Circle).center);
+    } else if (shapeStruct.shape instanceof Arc) {
+      const arc = shapeStruct.shape as Arc;
+      //console.log('arc', arc, arc.start, arc.end, arc.middle());
+      tryInsertPoint(arc.start);
+      tryInsertPoint(arc.end);
+      //tryInsertPoint(arc.center); // center point not needed
+      tryInsertPoint(arc.middle()); // insert middle to be able to get circle between a line and an arc
+      // e.g. a two circles for a line splitting a circle in two halfs
+    }
+  });
+
+  console.log('pointsMap', pointsMap);
+  console.log('pointStringMap', pointStringMap);
+
+  const N = currentId; // number of points + 1 (first one is not used by algorithm)
+  //console.log('Number of points:' + N);
+
+  // 2) Build the graph
+  const graph = Array.from(Array(N), () => Array());
+  const graphShapes = Array.from(Array(N), () => Array());
+  const getIdOfPoint = (point: Point) => {
+    const strRep = flattenPointToString(point);
+    const id = pointStringMap.get(strRep);
+    if (id !== undefined) {
+      return id;
+    } else {
+      return -1;
+    }
+  };
+  finalShapes.forEach((shapeStruct) => {
+    if (shapeStruct.shape instanceof Segment) {
+      const segment = shapeStruct.shape as Segment;
+      const startPointId = getIdOfPoint(segment.ps);
+      const endPointId = getIdOfPoint(segment.pe);
+      graph[startPointId].push(endPointId);
+      graph[endPointId].push(startPointId);
+      graphShapes[startPointId].push(shapeStruct);
+      graphShapes[endPointId].push(shapeStruct);
+    } else if (shapeStruct.shape instanceof Circle) {
+      // for cycle just store it into the result variable
+      flattenShapeCycle.push([shapeStruct.shape]);
+    } else if (shapeStruct.shape instanceof Arc) {
+      const arc = shapeStruct.shape as Arc;
+      const startPointId = getIdOfPoint(arc.start);
+      const endPointId = getIdOfPoint(arc.end);
+      const middle = arc.middle();
+      const middlePointId = getIdOfPoint(middle);
+      graph[startPointId].push(middlePointId);
+      graph[endPointId].push(middlePointId);
+      graph[middlePointId].push(startPointId);
+      graph[middlePointId].push(endPointId);
+      graphShapes[startPointId].push(shapeStruct);
+      graphShapes[endPointId].push(shapeStruct);
+      // also insert the arc shape two times for the middle point
+      // so warning in (4) --> "Neighbor shape was undefined"
+      // will not be generated
+      graphShapes[middlePointId].push(shapeStruct);
+      graphShapes[middlePointId].push(shapeStruct);
+    }
+  });
+
+  // 3) Run the DFS algorithm on the graph
+  const color = Array(N).fill(0);
+  const par = Array(N).fill(0);
+  const cycles: number[][] = [];
+  dfs_cycle(graph, 1, 0, color, par, cycles);
+
+  console.log('graph', graph);
+  console.log('graphShapes', graphShapes);
+  console.log('color', color);
+  console.log('par', par);
+  console.log('cycles', cycles);
+
+  // 4) Convert the result of the DFS algorithm
+  cycles.forEach((cycle) => {
+    const shapeSet: Set<FlattenShapeSubset> = new Set<FlattenShapeSubset>();
+    cycle.forEach((pointIdx) => {
+      const neighbors = graph[pointIdx].filter((id) => cycle.includes(id));
+      if (neighbors.length === 0) {
+        console.warn('Neighbors length was 0. This must not happend');
+      }
+      neighbors.forEach((neighbor) => {
+        const idx = graph[pointIdx].findIndex((id) => id === neighbor);
+        if (idx !== -1) {
+          const shape = graphShapes[pointIdx][idx];
+          if (shape !== undefined) {
+            shapeSet.add(shape);
+          } else {
+            console.warn('Neighbor shape was undefined for point ' + pointIdx + ' and idx ' + idx);
+          }
+        } else {
+          console.warn('Index for neighbor with id ' + neighbor + ' not found.');
+        }
+      });
+    });
+    flattenShapeCycle.push(Array.from(shapeSet));
+  });
+
+  console.log('flattenShapeCycle', flattenShapeCycle);
+
+  return flattenShapeCycle;
+};
+
+const dfs_cycle = (graph: number[][], u: number, p: number, color: number[], par: number[], cycles: number[][]) => {
+  // already (completely)
+  // visited vertex.
+  if (color[u] == 2) {
+    return;
+  }
+
+  // seen vertex, but was not
+  // completely visited -> cycle
+  // detected. backtrack based on
+  // parents to find the complete
+  // cycle.
+  if (color[u] == 1) {
+    var v = [];
+    var cur = p;
+    v.push(cur);
+
+    // backtrack the vertex which
+    // are in the current cycle
+    // thats found
+    while (cur != u) {
+      cur = par[cur];
+      v.push(cur);
+    }
+    //cycles[cyclenumber] = v;
+    //cyclenumber++;
+    cycles.push(v);
+    return;
+  }
+  par[u] = p;
+
+  // partially visited.
+  color[u] = 1;
+
+  // simple dfs on graph
+  for (let v of graph[u]) {
+    // if it has not been
+    // visited previously
+    if (v == par[u]) {
+      continue;
+    }
+    dfs_cycle(graph, v, u, color, par, cycles);
+  }
+
+  // completely visited.
+  color[u] = 2;
 };
