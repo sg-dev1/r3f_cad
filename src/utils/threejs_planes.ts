@@ -32,6 +32,19 @@ export const getPointV = (plane: string, point: THREE.Vector3Like) => {
   }
 };
 
+export const convert2DPointTo3D = (plane: string, u: number, v: number): [number, number, number] => {
+  if ('xy' === plane) {
+    return [u, v, 0];
+  } else if ('xz' === plane) {
+    return [u, 0, v];
+  } else if ('yz' == plane) {
+    return [0, u, v];
+  } else {
+    console.error('[convert2DPointTo3D] Invalid plane given: ' + plane);
+    return [0, 0, 0];
+  }
+};
+
 export const getPlaneAwareSketchPosition = (
   plane: string,
   basePosition: [number, number, number],

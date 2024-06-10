@@ -8,7 +8,7 @@ import { STLExporter } from 'three/examples/jsm/Addons.js';
 import { Inputs } from '@bitbybit-dev/occt';
 import { addShapeToScene } from './occt_visualize';
 import { selectSketchs } from '@/app/slices/sketchSlice';
-import { findConnectedLinesInSketch } from '@/utils/algo3d';
+import { findCyclesInSketchAndConvertToOcct } from '@/utils/algo3d';
 
 const OcctRoot = () => {
   const [bitbybit, setBitbybit] = useState<BitByBitOCCT>();
@@ -55,42 +55,23 @@ const OcctRoot = () => {
     const shapes: Inputs.OCCT.TopoDSShapePointer[] = [];
     const newGroups: THREE.Group[] = [];
     const allSketchs = Object.entries(sketchs).map(([key, value]) => value);
-    allSketchs.forEach(async (sketch) => {
-      // dummy call to algorithm
-      const cyclesInSketch = findConnectedLinesInSketch(sketch);
+    for (const sketch of allSketchs) {
+      const faces = await findCyclesInSketchAndConvertToOcct(sketch, bitbybit);
 
-      // 1) Convert all lines to Wires
-      const linesDto: Inputs.OCCT.LineDto[] = sketch.lines.map((line) => {
-        const startP = sketch.pointsMap[line.p1_id];
-        const endP = sketch.pointsMap[line.p2_id];
-        return { start: [startP.x, startP.y, startP.z], end: [endP.x, endP.y, endP.z] };
-      });
-      const lineWires = (await bitbybit.occt.shapes.wire.createLines({
-        lines: linesDto,
-        returnCompound: false,
-      })) as Inputs.OCCT.TopoDSWirePointer[];
-      //console.log('lineWires', lineWires);
+      console.log('faces', faces, faces.length);
 
-      // 2) Combine all Wires to a single Wire
-      const wire1 = await bitbybit.occt.shapes.wire.combineEdgesAndWiresIntoAWire({ shapes: lineWires });
-      console.log('wire1', wire1);
+      for (let i = 0; i < faces.length; i++) {
+        const face = faces[i];
+        console.log('add to scene', face);
+        const group = await addShapeToScene(bitbybit, face, scene, 0.05);
+        newGroups.push(group);
+      }
 
-      // 3) Create a Face from the Wire - Fails if Wire is not closed
-      const baseFace = await bitbybit.occt.shapes.face.createFaceFromWire({ shape: wire1, planar: true });
-      console.log('baseFace', baseFace);
+      shapes.push(...faces);
+    }
 
-      // 4) Create THREE.Group for visualization
-      const group = await addShapeToScene(bitbybit, baseFace, scene, 0.05);
-      newGroups.push(group);
-      // result should be a Inputs.OCCT.TopoDSShapePointer, note:
-      // type TopoDSShapePointer = TopoDSVertexPointer | TopoDSEdgePointer | TopoDSWirePointer | TopoDSFacePointer | TopoDSShellPointer | TopoDSSolidPointer | TopoDSCompoundPointer;
-      shapes.push(baseFace);
-
-      // TODO add improvements from B007-A
-
-      // 5) Delete all helper faces (except the final one)
-      await bitbybit.occt.deleteShapes({ shapes: [...lineWires, wire1] });
-    });
+    console.log('newGroups', newGroups);
+    console.log('shapes', shapes);
 
     setGroups(newGroups);
     setSketchShapes(shapes);

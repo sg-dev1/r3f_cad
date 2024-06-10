@@ -1,8 +1,12 @@
 import { SketchType } from '@/app/slices/Sketch';
 import { Arc, Circle, Point, Segment } from '@flatten-js/core';
-import { getPointU, getPointV } from './threejs_planes';
+import { convert2DPointTo3D, getPointU, getPointV } from './threejs_planes';
+import { BitByBitOCCT } from '@bitbybit-dev/occt-worker';
+import { Inputs } from '@bitbybit-dev/occt';
 
-export const findConnectedLinesInSketch = (sketch: SketchType) => {
+type FlattenShapeSubset = Segment | Circle | Arc;
+
+const findConnectedLinesInSketch = (sketch: SketchType) => {
   //
   // Step 1 - find all intersection points of shapes in the Sketch
   //
@@ -10,9 +14,10 @@ export const findConnectedLinesInSketch = (sketch: SketchType) => {
   type FlattenPointsMapType = { [key: number]: Point };
   const flattenPointsMap: FlattenPointsMapType = {};
   sketch.points.forEach((point) => {
+    //console.log('point', point);
     flattenPointsMap[point.id] = new Point(getPointU(sketch.plane, point), getPointV(sketch.plane, point));
   });
-  type FlattenShapeSubset = Segment | Circle | Arc;
+
   type FlattenShapeStruct = { id: number; shape: FlattenShapeSubset };
   const flattenShapes: FlattenShapeStruct[] = sketch.lines.map((line) => ({
     id: line.id,
@@ -274,7 +279,7 @@ export const findConnectedLinesInSketch = (sketch: SketchType) => {
       neighbors.forEach((neighbor) => {
         const idx = graph[pointIdx].findIndex((id) => id === neighbor);
         if (idx !== -1) {
-          const shape = graphShapes[pointIdx][idx];
+          const shape = graphShapes[pointIdx][idx].shape;
           if (shape !== undefined) {
             shapeSet.add(shape);
           } else {
@@ -339,4 +344,71 @@ const dfs_cycle = (graph: number[][], u: number, p: number, color: number[], par
 
   // completely visited.
   color[u] = 2;
+};
+
+export const findCyclesInSketchAndConvertToOcct = async (sketch: SketchType, bitbybit: BitByBitOCCT) => {
+  const cyclesInSketch = findConnectedLinesInSketch(sketch);
+
+  console.log('cyclesInSketch', cyclesInSketch);
+
+  const faces: Inputs.OCCT.TopoDSFacePointer[] = [];
+  for (const cycle of cyclesInSketch) {
+    // 1) Convert shapes to edges
+    const edges = (await Promise.all(
+      cycle.map(async (shape) => {
+        if (shape instanceof Segment) {
+          const segment = shape as Segment;
+          const dto = {
+            start: convert2DPointTo3D(sketch.plane, segment.start.x, segment.start.y),
+            end: convert2DPointTo3D(sketch.plane, segment.end.x, segment.end.y),
+          };
+          //console.log('dto', dto);
+          return await bitbybit.occt.shapes.edge.line(dto);
+        } else if (shape instanceof Arc) {
+          const arc = shape as Arc;
+          const startPoint = arc.start;
+          const endPoint = arc.end;
+          const middlePoint = arc.middle();
+          const dto = {
+            start: convert2DPointTo3D(sketch.plane, startPoint.x, startPoint.y),
+            middle: convert2DPointTo3D(sketch.plane, middlePoint.x, middlePoint.y),
+            end: convert2DPointTo3D(sketch.plane, endPoint.x, endPoint.y),
+          };
+          return await bitbybit.occt.shapes.edge.arcThroughThreePoints(dto);
+        } else if (shape instanceof Circle) {
+          const circle = shape as Circle;
+          // TODO - not sure about direction, needs this to change according to plane?
+          return await bitbybit.occt.shapes.edge.createCircleEdge({
+            radius: circle.r,
+            center: convert2DPointTo3D(sketch.plane, circle.center.x, circle.center.y),
+            direction: [0, 1, 0],
+          });
+        }
+        console.error('Must not get here ...', shape);
+      })
+    )) as Inputs.OCCT.TopoDSEdgePointer[];
+
+    console.log('edges', edges);
+
+    // 2) Convert edges to wires
+    const wire = await bitbybit.occt.shapes.wire.combineEdgesAndWiresIntoAWire({ shapes: edges });
+    console.log('wire', wire);
+
+    const isClosed = await bitbybit.occt.shapes.shape.isClosed({ shape: wire });
+    console.log('wire isClosed', isClosed); // returns true - if this is not the case this is an error!
+
+    // 3) Convert wires to faces
+    const face = await bitbybit.occt.shapes.face.createFaceFromWire({ shape: wire, planar: true });
+
+    const isClosedFace = await bitbybit.occt.shapes.shape.isClosed({ shape: face });
+    console.log('face isClosed', isClosedFace); // returns false
+
+    faces.push(face);
+
+    // cleanup - don't do this else we get an "Encountered Null Face!" error
+    //await bitbybit.occt.deleteShapes({ shapes: [...edges, wire] });
+    //await bitbybit.occt.deleteShapes({ shapes: [...edges] });
+  }
+
+  return faces;
 };
