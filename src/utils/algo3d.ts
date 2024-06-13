@@ -224,6 +224,7 @@ const findConnectedLinesInSketch = (sketch: SketchType) => {
       return -1;
     }
   };
+  let shapesInGraph = 0;
   finalShapes.forEach((shapeStruct) => {
     if (shapeStruct.shape instanceof Segment) {
       const segment = shapeStruct.shape as Segment;
@@ -233,6 +234,7 @@ const findConnectedLinesInSketch = (sketch: SketchType) => {
       graph[endPointId].push(startPointId);
       graphShapes[startPointId].push(shapeStruct);
       graphShapes[endPointId].push(shapeStruct);
+      shapesInGraph++;
     } else if (shapeStruct.shape instanceof Circle) {
       // for cycle just store it into the result variable
       flattenShapeCycle.push([shapeStruct.shape]);
@@ -253,20 +255,25 @@ const findConnectedLinesInSketch = (sketch: SketchType) => {
       // will not be generated
       graphShapes[middlePointId].push(shapeStruct);
       graphShapes[middlePointId].push(shapeStruct);
+      shapesInGraph++;
     }
   });
 
   // 3) Run the DFS algorithm on the graph
-  const color = Array(N).fill(0);
-  const par = Array(N).fill(0);
   const cycles: number[][] = [];
-  dfs_cycle(graph, 1, 0, color, par, cycles);
+  if (shapesInGraph > 0) {
+    const color = Array(N).fill(0);
+    const par = Array(N).fill(0);
+    dfs_cycle(graph, 1, 0, color, par, cycles);
 
-  console.log('graph', graph);
-  console.log('graphShapes', graphShapes);
-  console.log('color', color);
-  console.log('par', par);
-  console.log('cycles', cycles);
+    console.log('graph', graph);
+    console.log('graphShapes', graphShapes);
+    console.log('color', color);
+    console.log('par', par);
+    console.log('cycles', cycles);
+  } else {
+    console.log('No shapes in graph. dfs_cycle need not be run.');
+  }
 
   // 4) Convert the result of the DFS algorithm
   cycles.forEach((cycle) => {
