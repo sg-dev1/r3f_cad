@@ -87,7 +87,9 @@ const OcctWorkerTest = () => {
         shapes: [wire1, wire2, wire3, wire4, loft, loftFace, baseFace, shell, fillet, thick],
       });
 
-      setGroup(group);
+      if (group !== null) {
+        setGroup(group);
+      }
       setVase(finalVase);
     }
   };

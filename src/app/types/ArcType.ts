@@ -1,14 +1,9 @@
 import { Point3DInlineType } from './Point3DType';
 import { SHAPE3D_TYPE } from './ShapeType';
 
-export interface CircleType {
-  id: number;
-  mid_pt_id: number;
-  radius: number;
-}
-
-export interface CircleInlinePointType {
+export interface ArcInlinePointType {
   t: SHAPE3D_TYPE;
+  start: Point3DInlineType;
+  end: Point3DInlineType;
   mid_pt: Point3DInlineType;
-  radius: number;
 }

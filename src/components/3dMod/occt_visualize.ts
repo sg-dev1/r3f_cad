@@ -34,15 +34,14 @@ export const addShapeToScene = async (
   shape: Inputs.OCCT.TopoDSShapePointer,
   scene: Scene,
   precision: number
-): Promise<Group> => {
+): Promise<Group | null> => {
   //console.log('[addShapeToScene] shape=', shape);
   const material = new MeshNormalMaterial();
   let geometries = await visualize(bitbybitOcct, shape, precision);
 
   if (geometries.length === 0) {
     console.warn('Geometries length is 0. Cannot visualize shape.');
-    // TODO fixme - this is a bit odd just returning an empty THREE.Group ...
-    return new Group();
+    return null;
   }
 
   let group = new Group();

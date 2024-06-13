@@ -8,7 +8,8 @@ import { STLExporter } from 'three/examples/jsm/Addons.js';
 import { Inputs } from '@bitbybit-dev/occt';
 import { addShapeToScene } from './occt_visualize';
 import { selectSketchs } from '@/app/slices/sketchSlice';
-import { findCyclesInSketchAndConvertToOcct } from '@/utils/algo3d';
+import { SketchCycleType, findCyclesInSketchAndConvertToOcct } from '@/utils/algo3d';
+import SketchCycleObject from './SketchCycleObject';
 
 const OcctRoot = () => {
   const [bitbybit, setBitbybit] = useState<BitByBitOCCT>();
@@ -19,7 +20,7 @@ const OcctRoot = () => {
   const sketchToExtrude = useAppSelector(selectSketchToExtrude);
 
   const [groups, setGroups] = useState<THREE.Group[]>([]);
-  const [sketchShapes, setSketchShapes] = useState<Inputs.OCCT.TopoDSShapePointer[]>([]);
+  const [sketchShapes, setSketchShapes] = useState<SketchCycleType[]>([]);
 
   // Note: Currently the init() needs to be re called when coming back from Sketcher
   // Most likely this is because this component needs to be mounted again
@@ -39,7 +40,7 @@ const OcctRoot = () => {
     if (sketchShapes.length > 0) {
       console.log('Deleting previous sketchShapes');
       await bitbybit.occt.deleteShapes({
-        shapes: sketchShapes,
+        shapes: sketchShapes.map((sketchCycle) => sketchCycle.face),
       });
     }
 
@@ -52,26 +53,30 @@ const OcctRoot = () => {
       );
     }
 
-    const shapes: Inputs.OCCT.TopoDSShapePointer[] = [];
+    const shapes: SketchCycleType[] = [];
     const newGroups: THREE.Group[] = [];
     const allSketchs = Object.entries(sketchs).map(([key, value]) => value);
     for (const sketch of allSketchs) {
-      const faces = await findCyclesInSketchAndConvertToOcct(sketch, bitbybit);
+      const sketchCycle = await findCyclesInSketchAndConvertToOcct(sketch, bitbybit);
 
       //console.log('faces', faces, faces.length);
 
-      for (let i = 0; i < faces.length; i++) {
-        const face = faces[i];
+      for (let i = 0; i < sketchCycle.length; i++) {
+        const cycle = sketchCycle[i];
         //console.log('add to scene', face);
-        const group = await addShapeToScene(bitbybit, face, scene, 0.05);
-        newGroups.push(group);
+        /*
+        const group = await addShapeToScene(bitbybit, cycle.face, scene, 0.05);
+        if (group !== null) {
+          newGroups.push(group);
+        }
+        */
       }
 
-      shapes.push(...faces);
+      shapes.push(...sketchCycle);
     }
 
-    console.log('newGroups', newGroups);
-    console.log('shapes', shapes);
+    //console.log('newGroups', newGroups);
+    //console.log('shapes', shapes);
 
     setGroups(newGroups);
     setSketchShapes(shapes);
@@ -109,7 +114,13 @@ const OcctRoot = () => {
   console.log('[OcctRoot] groups', groups);
   console.log('[OcctRoot] sketchShapes', sketchShapes);
 
-  return <></>;
+  return (
+    <>
+      {sketchShapes.map((sketchCycle) => (
+        <SketchCycleObject key={sketchCycle.face.hash} sketchCycle={sketchCycle} />
+      ))}
+    </>
+  );
 };
 
 export default OcctRoot;

@@ -3,8 +3,13 @@ import { Arc, Circle, Point, Segment } from '@flatten-js/core';
 import { convert2DPointTo3D, getNormalVectorForPlane, getPointU, getPointV } from './threejs_planes';
 import { BitByBitOCCT } from '@bitbybit-dev/occt-worker';
 import { Inputs } from '@bitbybit-dev/occt';
+import { CircleInlinePointType } from '@/app/types/CircleType';
+import { Line3DInlinePointType } from '@/app/types/Line3DType';
+import { ArcInlinePointType } from '@/app/types/ArcType';
+import { SHAPE3D_TYPE } from '@/app/types/ShapeType';
 
 type FlattenShapeSubset = Segment | Circle | Arc;
+type CadTool3DShapeSubset = Line3DInlinePointType | CircleInlinePointType | ArcInlinePointType;
 
 const findConnectedLinesInSketch = (sketch: SketchType) => {
   //
@@ -355,12 +360,17 @@ const dfs_cycle = (graph: number[][], u: number, p: number, color: number[], par
   color[u] = 2;
 };
 
+export interface SketchCycleType {
+  cycle: CadTool3DShapeSubset[];
+  face: Inputs.OCCT.TopoDSFacePointer;
+}
+
 export const findCyclesInSketchAndConvertToOcct = async (sketch: SketchType, bitbybit: BitByBitOCCT) => {
   const cyclesInSketch = findConnectedLinesInSketch(sketch);
 
   //console.log('cyclesInSketch', cyclesInSketch);
 
-  const faces: Inputs.OCCT.TopoDSFacePointer[] = [];
+  const result: SketchCycleType[] = [];
   for (const cycle of cyclesInSketch) {
     // 1) Convert shapes to edges
     const edges = (await Promise.all(
@@ -396,6 +406,36 @@ export const findCyclesInSketchAndConvertToOcct = async (sketch: SketchType, bit
       })
     )) as Inputs.OCCT.TopoDSEdgePointer[];
 
+    const cycleIn3D: CadTool3DShapeSubset[] = cycle.map((shape) => {
+      if (shape instanceof Segment) {
+        const segment = shape as Segment;
+        return {
+          t: SHAPE3D_TYPE.LINE,
+          start: convert2DPointTo3D(sketch.plane, segment.start.x, segment.start.y),
+          end: convert2DPointTo3D(sketch.plane, segment.end.x, segment.end.y),
+        } as Line3DInlinePointType;
+      } else if (shape instanceof Arc) {
+        const arc = shape as Arc;
+        const startPoint = arc.start;
+        const endPoint = arc.end;
+        const middlePoint = arc.middle();
+        return {
+          t: SHAPE3D_TYPE.ARC,
+          start: convert2DPointTo3D(sketch.plane, startPoint.x, startPoint.y),
+          mid_pt: convert2DPointTo3D(sketch.plane, middlePoint.x, middlePoint.y),
+          end: convert2DPointTo3D(sketch.plane, endPoint.x, endPoint.y),
+        } as ArcInlinePointType;
+      } else if (shape instanceof Circle) {
+        const circle = shape as Circle;
+        return {
+          t: SHAPE3D_TYPE.CIRCLE,
+          mid_pt: convert2DPointTo3D(sketch.plane, circle.center.x, circle.center.y),
+          radius: circle.r,
+        } as CircleInlinePointType;
+      }
+      console.error('Should never get here.');
+    }) as CadTool3DShapeSubset[];
+
     //console.log('edges', edges);
 
     // 2) Convert edges to wires
@@ -411,12 +451,12 @@ export const findCyclesInSketchAndConvertToOcct = async (sketch: SketchType, bit
     const isClosedFace = await bitbybit.occt.shapes.shape.isClosed({ shape: face });
     //console.log('face isClosed', isClosedFace); // returns false
 
-    faces.push(face);
+    result.push({ cycle: cycleIn3D, face: face });
 
     // cleanup - don't do this else we get an "Encountered Null Face!" error
     //await bitbybit.occt.deleteShapes({ shapes: [...edges, wire] });
     //await bitbybit.occt.deleteShapes({ shapes: [...edges] });
   }
 
-  return faces;
+  return result;
 };
