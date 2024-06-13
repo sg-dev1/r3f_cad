@@ -418,12 +418,17 @@ export const findCyclesInSketchAndConvertToOcct = async (sketch: SketchType, bit
         const arc = shape as Arc;
         const startPoint = arc.start;
         const endPoint = arc.end;
-        const middlePoint = arc.middle();
+        const middlePoint = arc.center;
         return {
           t: SHAPE3D_TYPE.ARC,
           start: convert2DPointTo3D(sketch.plane, startPoint.x, startPoint.y),
           mid_pt: convert2DPointTo3D(sketch.plane, middlePoint.x, middlePoint.y),
           end: convert2DPointTo3D(sketch.plane, endPoint.x, endPoint.y),
+          radius: arc.r,
+          start_angle: arc.startAngle,
+          end_angle: arc.endAngle,
+          clockwise: !arc.counterClockwise,
+          midPt2d: [middlePoint.x, middlePoint.y],
         } as ArcInlinePointType;
       } else if (shape instanceof Circle) {
         const circle = shape as Circle;

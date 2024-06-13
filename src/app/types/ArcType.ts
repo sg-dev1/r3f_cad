@@ -6,4 +6,9 @@ export interface ArcInlinePointType {
   start: Point3DInlineType;
   end: Point3DInlineType;
   mid_pt: Point3DInlineType;
+  radius: number;
+  start_angle: number;
+  end_angle: number;
+  clockwise: boolean;
+  midPt2d: [number, number];
 }
