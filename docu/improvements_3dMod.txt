@@ -41,9 +41,19 @@ List of Improvements
     - Improve colors, highlighting etc. of displayed Sketches
     - Add visualization of circles
     - Show/ Hide of sketches displayed (future topic)
-    - Need a way to find out if lines are connected at all, lines describe multiple faces etc.?
+    
+
+(B008) Add attachment to Sketches, e.g. where they are located in 3D space
+    - For a sketch also the Plane should be selectable (X, Y, or Z)
+    - Additionally offsets in all directions are needed (per default it is located at [0,0,0])
+
+
+Done Improvements
+
+(B007-B) Detection of circles in sketch
+  - Need a way to find out if lines are connected at all, lines describe multiple faces etc.?
       E.g. get all Faces from given lines and circles --> e.g. these could be used for an extrude
-    - How does the current implementation handle multiple overlapping objects in one Sketch,
+  - How does the current implementation handle multiple overlapping objects in one Sketch,
       e.g. two rectangles?
       - It currently only supports a single closed line segment (of any shape)
       - If it is not closed --> Error (should be the case, however the error should 
@@ -52,15 +62,9 @@ List of Improvements
         Uncaught (in promise) OCCT computation failed. Error: Wire is disconnected and can not be
         constructed While executing function - shapes.wire.combineEdgesAndWiresIntoAWire. 
         Input values were: ...
-      --> so current implementation using combineEdgesAndWiresIntoAWire() only supports a 
+      - so current implementation using combineEdgesAndWiresIntoAWire() only supports a 
           single connected line segment
-
-(B008) Add attachment to Sketches, e.g. where they are located in 3D space
-    - For a sketch also the Plane should be selectable (X, Y, or Z)
-    - Additionally offsets in all directions are needed (per default it is located at [0,0,0])
-
-
-Done Improvements
+      ---> This implementation is no longer in use
 
 (B006) Integration of opencascade.js / @bitbybit-dev/occt-worker
     - Currently there are massive performance issues with initOpenCascade() function (to be tested on different machines)

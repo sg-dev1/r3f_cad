@@ -45,6 +45,19 @@ export const convert2DPointTo3D = (plane: string, u: number, v: number): [number
   }
 };
 
+export const getNormalVectorForPlane = (plane: string): [number, number, number] => {
+  if ('xy' === plane) {
+    return [0, 0, 1];
+  } else if ('xz' === plane) {
+    return [0, 1, 0];
+  } else if ('yz' == plane) {
+    return [1, 0, 0];
+  } else {
+    console.error('[getNormalVectorForPlane] Invalid plane given: ' + plane);
+    return [0, 0, 0];
+  }
+};
+
 export const getPlaneAwareSketchPosition = (
   plane: string,
   basePosition: [number, number, number],

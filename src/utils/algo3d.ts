@@ -1,6 +1,6 @@
 import { SketchType } from '@/app/slices/Sketch';
 import { Arc, Circle, Point, Segment } from '@flatten-js/core';
-import { convert2DPointTo3D, getPointU, getPointV } from './threejs_planes';
+import { convert2DPointTo3D, getNormalVectorForPlane, getPointU, getPointV } from './threejs_planes';
 import { BitByBitOCCT } from '@bitbybit-dev/occt-worker';
 import { Inputs } from '@bitbybit-dev/occt';
 
@@ -72,9 +72,9 @@ const findConnectedLinesInSketch = (sketch: SketchType) => {
     });
   });
 
-  console.log('flattenShapes', flattenShapes);
-  console.log('intersectMap', intersectMap);
-  console.log('affectedShapes', affectedShapes);
+  //console.log('flattenShapes', flattenShapes);
+  //console.log('intersectMap', intersectMap);
+  //console.log('affectedShapes', affectedShapes);
 
   const finalShapes: FlattenShapeStruct[] = [];
 
@@ -116,7 +116,7 @@ const findConnectedLinesInSketch = (sketch: SketchType) => {
               console.warn('Seg1 or seg2 was null. This should not happen');
             }
             if (seg1 && seg2) {
-              console.log('save seg1', seg1);
+              //console.log('save seg1', seg1);
               insertIntoFinalShapes(seg1);
               currentSegment = seg2;
             }
@@ -165,7 +165,7 @@ const findConnectedLinesInSketch = (sketch: SketchType) => {
     }
   });
 
-  console.log('finalShapes', finalShapes);
+  //console.log('finalShapes', finalShapes);
 
   //
   // Step 2 - get all circles in the Sketch
@@ -183,7 +183,7 @@ const findConnectedLinesInSketch = (sketch: SketchType) => {
     if (!pointStringMap.has(strRep)) {
       pointsMap[currentId] = point;
       pointStringMap.set(strRep, currentId);
-      console.log('[insertPoint]', currentId, strRep, point);
+      //console.log('[insertPoint]', currentId, strRep, point);
       currentId++;
     }
   };
@@ -206,8 +206,8 @@ const findConnectedLinesInSketch = (sketch: SketchType) => {
     }
   });
 
-  console.log('pointsMap', pointsMap);
-  console.log('pointStringMap', pointStringMap);
+  //console.log('pointsMap', pointsMap);
+  //console.log('pointStringMap', pointStringMap);
 
   const N = currentId; // number of points + 1 (first one is not used by algorithm)
   //console.log('Number of points:' + N);
@@ -266,13 +266,15 @@ const findConnectedLinesInSketch = (sketch: SketchType) => {
     const par = Array(N).fill(0);
     dfs_cycle(graph, 1, 0, color, par, cycles);
 
+    /*
     console.log('graph', graph);
     console.log('graphShapes', graphShapes);
     console.log('color', color);
     console.log('par', par);
     console.log('cycles', cycles);
+    */
   } else {
-    console.log('No shapes in graph. dfs_cycle need not be run.');
+    console.info('No shapes in graph. dfs_cycle need not be run.');
   }
 
   // 4) Convert the result of the DFS algorithm
@@ -300,7 +302,7 @@ const findConnectedLinesInSketch = (sketch: SketchType) => {
     flattenShapeCycle.push(Array.from(shapeSet));
   });
 
-  console.log('flattenShapeCycle', flattenShapeCycle);
+  //console.log('flattenShapeCycle', flattenShapeCycle);
 
   return flattenShapeCycle;
 };
@@ -356,7 +358,7 @@ const dfs_cycle = (graph: number[][], u: number, p: number, color: number[], par
 export const findCyclesInSketchAndConvertToOcct = async (sketch: SketchType, bitbybit: BitByBitOCCT) => {
   const cyclesInSketch = findConnectedLinesInSketch(sketch);
 
-  console.log('cyclesInSketch', cyclesInSketch);
+  //console.log('cyclesInSketch', cyclesInSketch);
 
   const faces: Inputs.OCCT.TopoDSFacePointer[] = [];
   for (const cycle of cyclesInSketch) {
@@ -384,31 +386,30 @@ export const findCyclesInSketchAndConvertToOcct = async (sketch: SketchType, bit
           return await bitbybit.occt.shapes.edge.arcThroughThreePoints(dto);
         } else if (shape instanceof Circle) {
           const circle = shape as Circle;
-          // TODO - not sure about direction, needs this to change according to plane?
           return await bitbybit.occt.shapes.edge.createCircleEdge({
             radius: circle.r,
             center: convert2DPointTo3D(sketch.plane, circle.center.x, circle.center.y),
-            direction: [0, 1, 0],
+            direction: getNormalVectorForPlane(sketch.plane),
           });
         }
         console.error('Must not get here ...', shape);
       })
     )) as Inputs.OCCT.TopoDSEdgePointer[];
 
-    console.log('edges', edges);
+    //console.log('edges', edges);
 
     // 2) Convert edges to wires
     const wire = await bitbybit.occt.shapes.wire.combineEdgesAndWiresIntoAWire({ shapes: edges });
-    console.log('wire', wire);
+    //console.log('wire', wire);
 
     const isClosed = await bitbybit.occt.shapes.shape.isClosed({ shape: wire });
-    console.log('wire isClosed', isClosed); // returns true - if this is not the case this is an error!
+    //console.log('wire isClosed', isClosed); // returns true - if this is not the case this is an error!
 
     // 3) Convert wires to faces
     const face = await bitbybit.occt.shapes.face.createFaceFromWire({ shape: wire, planar: true });
 
     const isClosedFace = await bitbybit.occt.shapes.shape.isClosed({ shape: face });
-    console.log('face isClosed', isClosedFace); // returns false
+    //console.log('face isClosed', isClosedFace); // returns false
 
     faces.push(face);
 

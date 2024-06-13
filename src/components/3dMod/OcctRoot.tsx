@@ -58,11 +58,11 @@ const OcctRoot = () => {
     for (const sketch of allSketchs) {
       const faces = await findCyclesInSketchAndConvertToOcct(sketch, bitbybit);
 
-      console.log('faces', faces, faces.length);
+      //console.log('faces', faces, faces.length);
 
       for (let i = 0; i < faces.length; i++) {
         const face = faces[i];
-        console.log('add to scene', face);
+        //console.log('add to scene', face);
         const group = await addShapeToScene(bitbybit, face, scene, 0.05);
         newGroups.push(group);
       }
@@ -105,6 +105,9 @@ const OcctRoot = () => {
       }
     });
   };
+
+  console.log('[OcctRoot] groups', groups);
+  console.log('[OcctRoot] sketchShapes', sketchShapes);
 
   return <></>;
 };
