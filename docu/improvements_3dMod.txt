@@ -1,7 +1,6 @@
 Priority of improvements (my ranking)
   - B007-A
   - B007
-  - B009
   - B002 -> edit sketch
   - B008
   - B010
@@ -49,6 +48,15 @@ List of Improvements
 (B007-A) Improve the visualization
     - Fix display of arcs -> if an arc is part of a (line-)segment outside of shape
       is also shown to be part of the face
+    - SketchCycleObject need to be refactored to not handle segments / arcs 
+      separately, so either we can have
+      1) a cycle with a single circle (circle may not appear multiple times and only once)
+      2) a cycle only consisting of segments
+      3) a cycle consisting of segements and arcs
+      4) a cycle consisting only of arcs 
+      - For (3) and (4) convex / concav shapes need to be considered
+        (by properly drawing a shape from start to end) which is currently not the case
+        (especially because segements and arcs are handled differently)
     - Different Sketches should be highlighed differently         [done]
     - Improve colors, highlighting etc. of displayed Sketches     [done]
     - Add visualization of circles                                [done]
@@ -59,6 +67,17 @@ List of Improvements
     - Additionally offsets in all directions are needed (per default it is located at [0,0,0])
     - for future also an arbitrary plane may be selected (e.g. need for rotations etc.)
 
+(B010) Improvement of algo3d routines
+    - issues when line segments (arcs?) are facing into the wrong direction
+      --> they need to be reversed at the end of findConnectedLinesInSketch()
+      (Sort the segments s.t. they are in the correct order ...)
+    - not all cycles are found in complex situations
+    - need to find a way to improve it
+    - there are still some issues (e.g. generation of Arcs)
+
+
+Done Improvements
+
 (B009) Bug in algo3d.ts - findConnectedLinesInSketch:
     - if there are multiple unconnected parts in the sketch
       only connected lines in one part are found
@@ -67,14 +86,6 @@ List of Improvements
       it is only started for the first node
     - need to do an additional check if there are unconnected
       parts in the sketch
-
-(B010) Improvement of algo3d routines
-    - not all cycles are found in complex situations
-    - need to find a way to improve it, also includes fixing (B009)
-    - there are still some issues (e.g. generation of Arcs)
-
-
-Done Improvements
 
 (B007-B) Detection of circles in sketch
   - Need a way to find out if lines are connected at all, lines describe multiple faces etc.?

@@ -58,17 +58,17 @@ const findConnectedLinesInSketch = (sketch: SketchType) => {
       // = ... because we don't want to intersect a shape with itself
       // > ... because we don't want to intersect twice (we would get the same points)
       if (shape.id < otherShape.id) {
-        const intersectionPoints = shape.shape.intersect(otherShape.shape);
+        let intersectionPoints = shape.shape.intersect(otherShape.shape);
 
-        let discardIntersectionPoints = false;
         if (shape.shape instanceof Segment) {
           const segment = shape.shape as Segment;
-          const idx1 = intersectionPoints.findIndex((point) => point.equalTo(segment.start));
-          const idx2 = intersectionPoints.findIndex((point) => point.equalTo(segment.end));
-          discardIntersectionPoints = idx1 !== -1 || idx2 != -1;
+          // filter out the trivial start and end points found as intersection
+          intersectionPoints = intersectionPoints.filter(
+            (point) => !point.equalTo(segment.start) && !point.equalTo(segment.end)
+          );
         }
 
-        if (!discardIntersectionPoints && intersectionPoints.length > 0) {
+        if (intersectionPoints.length > 0) {
           insertIntoIntersectionMap(shape, otherShape, intersectionPoints);
           insertIntoIntersectionMap(otherShape, shape, intersectionPoints);
           affectedShapes.add(shape.id).add(otherShape.id);
@@ -114,6 +114,9 @@ const findConnectedLinesInSketch = (sketch: SketchType) => {
           //console.log('<line>shape', shape.id, 'sortedPoints', sortedPoints);
 
           // do the splits
+          // the idea here is to do the cuts like when cutting pieces from a rope
+          // with sciccors, one piece after another, keeping the left piece
+          // and using the right piece for the next cut
           let currentSegment = segment;
           sortedPoints.forEach((point) => {
             const [seg1, seg2] = currentSegment.split(point);
@@ -133,6 +136,7 @@ const findConnectedLinesInSketch = (sketch: SketchType) => {
         }
       }
 
+      // convention: all arcs are drawn counter clockwise
       if (shape.shape instanceof Circle) {
         const circle = shape.shape as Circle;
         if (intersectionPoints.length > 0) {
@@ -141,10 +145,11 @@ const findConnectedLinesInSketch = (sketch: SketchType) => {
 
           const [arc1, _] = circleAsArcTmp.split(sortedPoints[0]);
           //console.log('<circle>circleAsArcTmp', circleAsArcTmp, 'arc1', arc1, 'arc2', arc2);
+          //console.log(arc1?.start, arc1?.end);
           if (arc1) {
             // Arcs go counter clockwise per default
             const circleAsArc = new Arc(circle.pc, circle.r, arc1.endAngle, arc1.endAngle, true);
-            //console.log('<circle>shape', shape.id, circleAsArc, 'sortedPoints', sortedPoints);
+            //console.log('<circle>shape', shape.id, circleAsArc.start, circleAsArc.end, 'sortedPoints', sortedPoints);
 
             // do the splits
             let currentArc = circleAsArc;
@@ -156,16 +161,22 @@ const findConnectedLinesInSketch = (sketch: SketchType) => {
                 console.warn('Arc1 or arc2 was null. This should not happen');
               }
               if (arc1 && arc2) {
-                //console.log('save arc1', arc1);
+                //console.log('save arc1', arc1.start, arc1.end);
+                //console.log('arc2', arc2.start, arc2.end);
                 insertIntoFinalShapes(arc1);
                 currentArc = arc2;
               }
             }
             insertIntoFinalShapes(currentArc);
+          } else {
+            console.warn('Splitting circle - arc1 was null.');
           }
         } else {
+          // no split needed, use the complete circle
           insertIntoFinalShapes(circle);
         }
+
+        // TODO later on when sketcher supports arcs this needs to be implemented here
       }
     }
   });
@@ -173,11 +184,11 @@ const findConnectedLinesInSketch = (sketch: SketchType) => {
   //console.log('finalShapes', finalShapes);
 
   //
-  // Step 2 - get all circles in the Sketch
+  // Step 2 - get all cycles in the Sketch
   //
   const flattenShapeCycle: FlattenShapeSubset[][] = [];
   // 1) Generate pointsMap
-  currentId = 1;
+  currentId = 1; // node 0 is used as "dummy start node", therefore use 1
   const pointsMap: FlattenPointsMapType = {};
   const flattenPointToString = (point: Point) => {
     return point.x.toFixed(3) + ',' + point.y.toFixed(3);
@@ -198,8 +209,7 @@ const findConnectedLinesInSketch = (sketch: SketchType) => {
       tryInsertPoint(segment.ps);
       tryInsertPoint(segment.pe);
     } else if (shapeStruct.shape instanceof Circle) {
-      // what to insert for a circle - nothing needed since it is a "circle" itself
-      //tryInsertPoint((shapeStruct.shape as Circle).center);
+      // nothing to do for a circle (it is already a cycle alone with no other shapes)
     } else if (shapeStruct.shape instanceof Arc) {
       const arc = shapeStruct.shape as Arc;
       //console.log('arc', arc, arc.start, arc.end, arc.middle());
@@ -207,7 +217,7 @@ const findConnectedLinesInSketch = (sketch: SketchType) => {
       tryInsertPoint(arc.end);
       //tryInsertPoint(arc.center); // center point not needed
       tryInsertPoint(arc.middle()); // insert middle to be able to get circle between a line and an arc
-      // e.g. a two circles for a line splitting a circle in two halfs
+      // e.g. a two cycles for a line splitting a circle in two halfs
     }
   });
 
@@ -217,7 +227,7 @@ const findConnectedLinesInSketch = (sketch: SketchType) => {
   const N = currentId; // number of points + 1 (first one is not used by algorithm)
   //console.log('Number of points:' + N);
 
-  // 2) Build the graph
+  // 2) Build the graph (stored as array of adjacency lists)
   const graph = Array.from(Array(N), () => Array());
   const graphShapes = Array.from(Array(N), () => Array());
   const getIdOfPoint = (point: Point) => {
@@ -241,7 +251,7 @@ const findConnectedLinesInSketch = (sketch: SketchType) => {
       graphShapes[endPointId].push(shapeStruct);
       shapesInGraph++;
     } else if (shapeStruct.shape instanceof Circle) {
-      // for cycle just store it into the result variable
+      // for circle just store it into the result variable (it is already a cycle with single element)
       flattenShapeCycle.push([shapeStruct.shape]);
     } else if (shapeStruct.shape instanceof Arc) {
       const arc = shapeStruct.shape as Arc;
@@ -271,15 +281,35 @@ const findConnectedLinesInSketch = (sketch: SketchType) => {
     const par = Array(N).fill(0);
     dfs_cycle(graph, 1, 0, color, par, cycles);
 
-    /*
-    console.log('graph', graph);
-    console.log('graphShapes', graphShapes);
-    console.log('color', color);
-    console.log('par', par);
-    console.log('cycles', cycles);
-    */
+    // rerun the dfs algorithm as long as there are uncolored nodes in the graph
+    while (true) {
+      const numCycles = cycles.length;
+      let idx = -1;
+      for (let i = 1; i < color.length; i++) {
+        // search for "uncolored" nodes where the dfs algorithm still needs to be run
+        if (color[i] !== 2) {
+          idx = i;
+          break;
+        }
+      }
+      if (idx === -1) {
+        // found all cycles
+        break;
+      }
+      dfs_cycle(graph, idx, 0, color, par, cycles);
+      if (cycles.length === numCycles) {
+        console.info('Nothing found in this dfs_cycle call. Giving up.');
+        break;
+      }
+    }
+
+    // console.log('graph', graph);
+    // console.log('graphShapes', graphShapes);
+    // console.log('color', color);
+    // console.log('par', par);
+    // console.log('cycles', cycles);
   } else {
-    console.info('No shapes in graph. dfs_cycle need not be run.');
+    console.info('No segment/ arc shapes in the graph. dfs_cycle need not be run.');
   }
 
   // 4) Convert the result of the DFS algorithm
