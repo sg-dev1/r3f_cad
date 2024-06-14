@@ -1,5 +1,5 @@
 import { SketchCycleType } from '@/utils/algo3d';
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import * as THREE from 'three';
 import { Line, Segment, Segments, Shape } from '@react-three/drei';
 import { CircleInlinePointType } from '@/app/types/CircleType';
@@ -11,14 +11,32 @@ import useArcPoints from '@/utils/useArcPoints';
 import useCirclePoints from '@/utils/useCirclePoints';
 
 const SketchCycleObject = ({ sketchCycle, bitbybit }: { sketchCycle: SketchCycleType; bitbybit: BitByBitOCCT }) => {
+  // if hidden we don't have to do anything
+  if (sketchCycle.isHidden) {
+    return <></>;
+  }
+
   const segments = sketchCycle.cycle.filter((shape) => shape.t === SHAPE3D_TYPE.LINE) as Line3DInlinePointType[];
   const arcs = sketchCycle.cycle.filter((shape) => shape.t === SHAPE3D_TYPE.ARC) as ArcInlinePointType[];
   const circles = sketchCycle.cycle.filter((shape) => shape.t === SHAPE3D_TYPE.CIRCLE) as CircleInlinePointType[];
 
+  const [segmentHovered, setSegmentHovered] = useState<boolean>(false);
+  const [arcHovered, setArcHovered] = useState<boolean>(false);
+  const [circleHovered, setCircleHovered] = useState<boolean>(false);
+  const hovered = segmentHovered || arcHovered || circleHovered;
+
+  const obtainShapeColor = () => {
+    if (hovered) {
+      return 'yellow';
+    } else {
+      return 'green';
+    }
+  };
+
   //console.log('[SketchCycleObject], segments', segments);
 
   // TODO fixme - this does not work for arbitrary shapes
-  // maybe points need to be sorted?
+  // maybe points need to be sorted? - seems that they need to be after each other  to form a path
   // shapes have holes etc.
   const segmentShape = useMemo(() => {
     //const segmentArray = segments.map((segment) => [segment.start, segment.end])
@@ -73,8 +91,12 @@ const SketchCycleObject = ({ sketchCycle, bitbybit }: { sketchCycle: SketchCycle
   return (
     <>
       {segmentShape !== null && (
-        <Shape args={[segmentShape]}>
-          <meshBasicMaterial color="green" side={THREE.DoubleSide} />
+        <Shape
+          args={[segmentShape]}
+          onPointerOver={() => setSegmentHovered(true)}
+          onPointerOut={() => setSegmentHovered(false)}
+        >
+          <meshBasicMaterial color={obtainShapeColor()} side={THREE.DoubleSide} />
         </Shape>
       )}
       {segments.length > 0 && (
@@ -91,16 +113,20 @@ const SketchCycleObject = ({ sketchCycle, bitbybit }: { sketchCycle: SketchCycle
       )}
 
       {circleShape !== null && (
-        <Shape args={[circleShape]}>
-          <meshBasicMaterial color="green" side={THREE.DoubleSide} />
+        <Shape
+          args={[circleShape]}
+          onPointerOver={() => setCircleHovered(true)}
+          onPointerOut={() => setCircleHovered(false)}
+        >
+          <meshBasicMaterial color={obtainShapeColor()} side={THREE.DoubleSide} />
         </Shape>
       )}
       {circlePointsArray.length > 0 &&
         circlePointsArray.map((points, index) => <Line key={index} points={points} color={'blue'} />)}
 
       {arcShape !== null && (
-        <Shape args={[arcShape]}>
-          <meshBasicMaterial color="green" side={THREE.DoubleSide} />
+        <Shape args={[arcShape]} onPointerOver={() => setArcHovered(true)} onPointerOut={() => setArcHovered(false)}>
+          <meshBasicMaterial color={obtainShapeColor()} side={THREE.DoubleSide} />
         </Shape>
       )}
       {arcsPointsArray.length > 0 &&

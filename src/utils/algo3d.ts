@@ -307,9 +307,82 @@ const findConnectedLinesInSketch = (sketch: SketchType) => {
     flattenShapeCycle.push(Array.from(shapeSet));
   });
 
-  //console.log('flattenShapeCycle', flattenShapeCycle);
+  // Sort the segments s.t. they are in the correct order
+  // The shape drawing needs the points to be sorted so one line segment / arc follows the other
+  const flattenShapeCycle2: FlattenShapeSubset[][] = [];
+  flattenShapeCycle.forEach((cycle) => {
+    if (cycle.length === 1 || cycle.length === 2) {
+      // trivial case, do not have to run the algorithm
+      flattenShapeCycle2.push(cycle);
+      return;
+    }
 
-  return flattenShapeCycle;
+    const idxSet = new Set<number>();
+    const newCycle: FlattenShapeSubset[] = [cycle[0]];
+    idxSet.add(0);
+    let endPoint: Point | null = null;
+    if (newCycle[0] instanceof Segment) {
+      endPoint = (newCycle[0] as Segment).end;
+    } else if (newCycle[0] instanceof Arc) {
+      endPoint = (newCycle[0] as Arc).end;
+    } else {
+      if (cycle.length > 1) {
+        console.error('A cycle contain a circle is only allowed to have a single element.');
+      }
+    }
+
+    //console.log('cycle', cycle, 'endPoint', endPoint);
+    while (idxSet.size !== cycle.length) {
+      let shapeFound: boolean = false;
+      for (let i = 1; i < cycle.length; i++) {
+        if (idxSet.has(i)) {
+          // element already taken, skip it
+          continue;
+        }
+
+        const shape = cycle[i];
+        if (shape instanceof Segment) {
+          const segment = shape as Segment;
+          //console.log('segment', segment);
+          if (endPoint && segment.start.equalTo(endPoint)) {
+            newCycle.push(segment);
+            idxSet.add(i);
+            endPoint = segment.end;
+            shapeFound = true;
+            break;
+          }
+        } else if (shape instanceof Arc) {
+          const arc = shape as Arc;
+          //console.log('arc', arc, 'start', arc.start, 'end', arc.end);
+          // Some weirdness with start/end of arcs - sometimes start match, sometimes end
+          // maybe there is still an issue with arc generation
+          if (endPoint && (arc.start.equalTo(endPoint) || arc.end.equalTo(endPoint))) {
+            newCycle.push(arc);
+            idxSet.add(i);
+            if (arc.start.equalTo(endPoint)) {
+              endPoint = arc.end;
+            } else {
+              endPoint = arc.start;
+            }
+            shapeFound = true;
+            break;
+          }
+        } else if (shape instanceof Circle) {
+          console.error('A circle was found in a cycle with more than 1 element. This should not happend.');
+        }
+      }
+      if (!shapeFound) {
+        console.error('In this iteration no shape was found.');
+        break;
+      }
+    }
+
+    flattenShapeCycle2.push(newCycle);
+  });
+
+  console.log('flattenShapeCycle', flattenShapeCycle, 'flattenShapeCycle2', flattenShapeCycle2);
+
+  return flattenShapeCycle2;
 };
 
 const dfs_cycle = (graph: number[][], u: number, p: number, color: number[], par: number[], cycles: number[][]) => {
@@ -363,6 +436,7 @@ const dfs_cycle = (graph: number[][], u: number, p: number, color: number[], par
 export interface SketchCycleType {
   cycle: CadTool3DShapeSubset[];
   face: Inputs.OCCT.TopoDSFacePointer;
+  isHidden: boolean;
 }
 
 export const findCyclesInSketchAndConvertToOcct = async (sketch: SketchType, bitbybit: BitByBitOCCT) => {
@@ -457,7 +531,7 @@ export const findCyclesInSketchAndConvertToOcct = async (sketch: SketchType, bit
     //const isClosedFace = await bitbybit.occt.shapes.shape.isClosed({ shape: face });
     //console.log('face isClosed', isClosedFace); // returns false
 
-    result.push({ cycle: cycleIn3D, face: face });
+    result.push({ cycle: cycleIn3D, face: face, isHidden: false });
 
     // cleanup - don't do this else we get an "Encountered Null Face!" error
     //await bitbybit.occt.deleteShapes({ shapes: [...edges, wire] });

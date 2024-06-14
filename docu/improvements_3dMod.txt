@@ -2,9 +2,10 @@ Priority of improvements (my ranking)
   - B007-A
   - B007
   - B009
+  - B002 -> edit sketch
   - B008
-  - B005
-  - B002
+  - B010
+  - B005  
   - B004
   - B003
   - B001  // updates as needed
@@ -20,8 +21,16 @@ List of Improvements
     - navigation between Sketcher and 3dMod tools
 
 (B003) List with sketches and geometries
+    - we already have list with sketches --> for basic navigation
+    - need to also have objects in sketch in the list, e.g. use a tree view:
+        - <Sketch>
+           - Object1
+           - Object2
+           ...
+        (where Object1 can be a face etc.)
 
 (B004) Datamodel update sketchSlice.ts --> Document with sketches and geometry
+    - need a way to store (3d) geometry
 
 (B005) Mapping of sketches to 3D View (and basic workflow)
     - All closed lines should be interpreted as faces
@@ -38,15 +47,17 @@ List of Improvements
        4) 3D Body is created
     - A history of these operations shall be stored (e.g. also to go back and forth in time)
 (B007-A) Improve the visualization
-    - Different Sketches should be highlighed differently
-    - Improve colors, highlighting etc. of displayed Sketches
-    - Add visualization of circles
-    - Show/ Hide of sketches displayed (future topic)
-    
+    - Fix display of arcs -> if an arc is part of a (line-)segment outside of shape
+      is also shown to be part of the face
+    - Different Sketches should be highlighed differently         [done]
+    - Improve colors, highlighting etc. of displayed Sketches     [done]
+    - Add visualization of circles                                [done]
+    - Show/ Hide of sketches displayed (future topic)             [done, simple solution]
 
 (B008) Add attachment to Sketches, e.g. where they are located in 3D space
     - For a sketch also the Plane should be selectable (X, Y, or Z)
     - Additionally offsets in all directions are needed (per default it is located at [0,0,0])
+    - for future also an arbitrary plane may be selected (e.g. need for rotations etc.)
 
 (B009) Bug in algo3d.ts - findConnectedLinesInSketch:
     - if there are multiple unconnected parts in the sketch
@@ -56,6 +67,12 @@ List of Improvements
       it is only started for the first node
     - need to do an additional check if there are unconnected
       parts in the sketch
+
+(B010) Improvement of algo3d routines
+    - not all cycles are found in complex situations
+    - need to find a way to improve it, also includes fixing (B009)
+    - there are still some issues (e.g. generation of Arcs)
+
 
 Done Improvements
 
