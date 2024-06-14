@@ -1,3 +1,5 @@
+// TODO this component is no longer needed
+// it may be removed
 import { ArcInlinePointType } from '@/app/types/ArcType';
 import { Line, Point, Points } from '@react-three/drei';
 import React, { useMemo, useState } from 'react';

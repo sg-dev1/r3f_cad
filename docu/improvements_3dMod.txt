@@ -1,6 +1,7 @@
 Priority of improvements (my ranking)
   - B007-A
   - B007
+  - B009
   - B008
   - B005
   - B002
@@ -47,6 +48,14 @@ List of Improvements
     - For a sketch also the Plane should be selectable (X, Y, or Z)
     - Additionally offsets in all directions are needed (per default it is located at [0,0,0])
 
+(B009) Bug in algo3d.ts - findConnectedLinesInSketch:
+    - if there are multiple unconnected parts in the sketch
+      only connected lines in one part are found
+    - the others are ignored
+    - most likely caused how the dfs algorithm is started,
+      it is only started for the first node
+    - need to do an additional check if there are unconnected
+      parts in the sketch
 
 Done Improvements
 
