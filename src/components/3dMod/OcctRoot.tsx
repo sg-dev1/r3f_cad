@@ -19,7 +19,6 @@ const OcctRoot = () => {
   const sketchs = useAppSelector(selectSketchs);
   const sketchToExtrude = useAppSelector(selectSketchToExtrude);
 
-  const [groups, setGroups] = useState<THREE.Group[]>([]);
   const [sketchShapes, setSketchShapes] = useState<SketchCycleType[]>([]);
 
   // Note: Currently the init() needs to be re called when coming back from Sketcher
@@ -37,48 +36,30 @@ const OcctRoot = () => {
       return;
     }
 
+    /*
+    // Disabled this since it created issues on rerender, e.g.
+    // after deleting a sketch
+    // Occt lib occassionally behaves a bit strange ...
     if (sketchShapes.length > 0) {
       console.log('Deleting previous sketchShapes');
       await bitbybit.occt.deleteShapes({
         shapes: sketchShapes.map((sketchCycle) => sketchCycle.face),
       });
     }
-
-    if (groups.length > 0) {
-      console.log('Deleting previous groups');
-      groups.forEach((group) =>
-        group.traverse((obj) => {
-          scene.remove(obj);
-        })
-      );
-    }
+    */
 
     const shapes: SketchCycleType[] = [];
     const newGroups: THREE.Group[] = [];
     const allSketchs = Object.entries(sketchs).map(([key, value]) => value);
     for (const sketch of allSketchs) {
       const sketchCycle = await findCyclesInSketchAndConvertToOcct(sketch, bitbybit);
-
       //console.log('faces', faces, faces.length);
-
-      for (let i = 0; i < sketchCycle.length; i++) {
-        const cycle = sketchCycle[i];
-        //console.log('add to scene', face);
-        /*
-        const group = await addShapeToScene(bitbybit, cycle.face, scene, 0.05);
-        if (group !== null) {
-          newGroups.push(group);
-        }
-        */
-      }
-
       shapes.push(...sketchCycle);
     }
 
     //console.log('newGroups', newGroups);
     //console.log('shapes', shapes);
 
-    setGroups(newGroups);
     setSketchShapes(shapes);
   };
 
@@ -111,14 +92,14 @@ const OcctRoot = () => {
     });
   };
 
-  console.log('[OcctRoot] groups', groups);
   console.log('[OcctRoot] sketchShapes', sketchShapes);
 
   return (
     <>
-      {sketchShapes.map((sketchCycle) => (
-        <SketchCycleObject key={sketchCycle.face.hash} sketchCycle={sketchCycle} />
-      ))}
+      {bitbybit &&
+        sketchShapes.map((sketchCycle) => (
+          <SketchCycleObject key={sketchCycle.face.hash} sketchCycle={sketchCycle} bitbybit={bitbybit} />
+        ))}
     </>
   );
 };

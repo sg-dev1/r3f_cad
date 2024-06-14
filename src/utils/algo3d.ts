@@ -436,6 +436,7 @@ export const findCyclesInSketchAndConvertToOcct = async (sketch: SketchType, bit
           t: SHAPE3D_TYPE.CIRCLE,
           mid_pt: convert2DPointTo3D(sketch.plane, circle.center.x, circle.center.y),
           radius: circle.r,
+          midPt2d: [circle.center.x, circle.center.y],
         } as CircleInlinePointType;
       }
       console.error('Should never get here.');
@@ -447,13 +448,13 @@ export const findCyclesInSketchAndConvertToOcct = async (sketch: SketchType, bit
     const wire = await bitbybit.occt.shapes.wire.combineEdgesAndWiresIntoAWire({ shapes: edges });
     //console.log('wire', wire);
 
-    const isClosed = await bitbybit.occt.shapes.shape.isClosed({ shape: wire });
+    //const isClosed = await bitbybit.occt.shapes.shape.isClosed({ shape: wire });
     //console.log('wire isClosed', isClosed); // returns true - if this is not the case this is an error!
 
     // 3) Convert wires to faces
     const face = await bitbybit.occt.shapes.face.createFaceFromWire({ shape: wire, planar: true });
 
-    const isClosedFace = await bitbybit.occt.shapes.shape.isClosed({ shape: face });
+    //const isClosedFace = await bitbybit.occt.shapes.shape.isClosed({ shape: face });
     //console.log('face isClosed', isClosedFace); // returns false
 
     result.push({ cycle: cycleIn3D, face: face });

@@ -11,4 +11,5 @@ export interface CircleInlinePointType {
   t: SHAPE3D_TYPE;
   mid_pt: Point3DInlineType;
   radius: number;
+  midPt2d: [number, number];
 }

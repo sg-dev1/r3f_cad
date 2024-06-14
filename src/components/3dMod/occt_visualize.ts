@@ -29,6 +29,32 @@ const visualize = async (bitbybitOcct: BitByBitOCCT, shape: Inputs.OCCT.TopoDSSh
   return geometries;
 };
 
+export const faceToMeshData = async (bitbybitOcct: BitByBitOCCT, face: Inputs.OCCT.TopoDSFacePointer) => {
+  const res: Inputs.OCCT.DecomposedMeshDto = await bitbybitOcct.occt.shapeToMesh({
+    shape: face,
+    adjustYtoZ: false,
+    precision: 0.1,
+  });
+  console.log('[faceToMeshData] res=', res);
+  if (res.faceList.length > 0) {
+    if (res.faceList.length > 1) {
+      console.warn('Facelist for given face had more than 1 entry. This is not expected', face, res);
+    }
+    return {
+      positions: res.faceList[0].vertex_coord,
+      normals: res.faceList[0].normal_coord,
+      indices: res.faceList[0].tri_indexes,
+    };
+  } else {
+    console.error('Facelist for given face was empty. This should not happend.', face, res);
+    return {
+      positions: [],
+      normals: [],
+      indices: [],
+    };
+  }
+};
+
 export const addShapeToScene = async (
   bitbybitOcct: BitByBitOCCT,
   shape: Inputs.OCCT.TopoDSShapePointer,
