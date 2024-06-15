@@ -13,7 +13,7 @@ type CadTool3DShapeSubset = Line3DInlinePointType | CircleInlinePointType | ArcI
 
 const findConnectedLinesInSketch = (sketch: SketchType) => {
   //
-  // Step 1 - find all intersection points of shapes in the Sketch
+  // <Step 1> - find all intersection points of shapes in the Sketch
   //
   // Convert points and sketch shapes (Lines, Circles) into flatten shapes
   type FlattenPointsMapType = { [key: number]: Point };
@@ -184,7 +184,7 @@ const findConnectedLinesInSketch = (sketch: SketchType) => {
   //console.log('finalShapes', finalShapes);
 
   //
-  // Step 2 - get all cycles in the Sketch
+  // <Step 2> - get all cycles in the Sketch
   //
   const flattenShapeCycle: FlattenShapeSubset[][] = [];
   // 1) Generate pointsMap
@@ -337,7 +337,7 @@ const findConnectedLinesInSketch = (sketch: SketchType) => {
     flattenShapeCycle.push(Array.from(shapeSet));
   });
 
-  // Sort the segments s.t. they are in the correct order
+  // 5) Sort the segments s.t. they are in the correct order
   // The shape drawing needs the points to be sorted so one line segment / arc follows the other
   const flattenShapeCycle2: FlattenShapeSubset[][] = [];
   flattenShapeCycle.forEach((cycle) => {
@@ -374,24 +374,30 @@ const findConnectedLinesInSketch = (sketch: SketchType) => {
         if (shape instanceof Segment) {
           const segment = shape as Segment;
           //console.log('segment', segment);
-          if (endPoint && segment.start.equalTo(endPoint)) {
-            newCycle.push(segment);
+          if (endPoint && (segment.start.equalTo(endPoint) || segment.end.equalTo(endPoint))) {
             idxSet.add(i);
-            endPoint = segment.end;
+            if (segment.start.equalTo(endPoint)) {
+              newCycle.push(segment);
+              endPoint = segment.end;
+            } else {
+              // we need to reverse the segment
+              newCycle.push(segment.reverse());
+              endPoint = segment.start;
+            }
             shapeFound = true;
             break;
           }
         } else if (shape instanceof Arc) {
           const arc = shape as Arc;
           //console.log('arc', arc, 'start', arc.start, 'end', arc.end);
-          // Some weirdness with start/end of arcs - sometimes start match, sometimes end
-          // maybe there is still an issue with arc generation
           if (endPoint && (arc.start.equalTo(endPoint) || arc.end.equalTo(endPoint))) {
-            newCycle.push(arc);
             idxSet.add(i);
             if (arc.start.equalTo(endPoint)) {
+              newCycle.push(arc);
               endPoint = arc.end;
             } else {
+              // we need to reverse the arc
+              newCycle.push(arc.reverse());
               endPoint = arc.start;
             }
             shapeFound = true;

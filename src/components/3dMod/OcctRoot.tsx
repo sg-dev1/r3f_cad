@@ -53,9 +53,9 @@ const OcctRoot = () => {
         sketchShapes[5].isHidden = !sketchShapes[5].isHidden;
       }
     } else if (keyMap['Digit7'] === true) {
-    }
-    if (sketchShapes.length > 6) {
-      sketchShapes[6].isHidden = !sketchShapes[6].isHidden;
+      if (sketchShapes.length > 6) {
+        sketchShapes[6].isHidden = !sketchShapes[6].isHidden;
+      }
     }
   }, [keyMap]);
 

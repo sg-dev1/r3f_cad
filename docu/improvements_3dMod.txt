@@ -3,7 +3,6 @@ Priority of improvements (my ranking)
   - B007
   - B002 -> edit sketch
   - B008
-  - B010
   - B005  
   - B004
   - B003
@@ -67,6 +66,9 @@ List of Improvements
     - Additionally offsets in all directions are needed (per default it is located at [0,0,0])
     - for future also an arbitrary plane may be selected (e.g. need for rotations etc.)
 
+
+Done Improvements
+
 (B010) Improvement of algo3d routines
     - issues when line segments (arcs?) are facing into the wrong direction
       --> they need to be reversed at the end of findConnectedLinesInSketch()
@@ -74,9 +76,6 @@ List of Improvements
     - not all cycles are found in complex situations
     - need to find a way to improve it
     - there are still some issues (e.g. generation of Arcs)
-
-
-Done Improvements
 
 (B009) Bug in algo3d.ts - findConnectedLinesInSketch:
     - if there are multiple unconnected parts in the sketch
