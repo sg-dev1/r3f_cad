@@ -1,8 +1,7 @@
 Priority of improvements (my ranking)
-  - B007
   - B002 -> edit sketch
-  - B008
-  - B005  
+  - B008  // arbitrary plane awareness
+  - B007
   - B004
   - B003
   - B001  // updates as needed
@@ -11,31 +10,35 @@ Priority of improvements (my ranking)
 List of Improvements
 
 (B001) Basic main view with camera control --> MainView.tsx
+    - add 3d gizmo (cube) showing which plane etc. is visible
 
 (B002) Integration of Sketcher tool 
     - create new sketch                 // done
     - update existing one -> set active one to the selected sketch and open Sketcher tool
+      (simple solution: add edit button in SketchTable.tsx)
     - navigation between Sketcher and 3dMod tools
 
-(B003) List with sketches and geometries
+(B003) Tree view with sketches and geometries
     - we already have list with sketches --> for basic navigation
-    - need to also have objects in sketch in the list, e.g. use a tree view:
+    - need to also have objects in sketch in the list --> e.g. use a tree view:
         - <Sketch>
            - Object1
            - Object2
            ...
         (where Object1 can be a face etc.)
+        - <3DPart>
+           - <3DSubpart1>
+           - <3DSubpart2>
+           ... (Sketches etc.)
 
 (B004) Datamodel update sketchSlice.ts --> Document with sketches and geometry
     - need a way to store (3d) geometry
-
-(B005) Mapping of sketches to 3D View (and basic workflow)
-    - All closed lines should be interpreted as faces
-    - On each face (or multiple) an Extrude is possible to create a 3D object
-    --> see B007
+    - need to build as we go one (must hold parameters of extrudes, boolean operations etc.)
 
 (B007) Display Sketch in 3D View
     - All closed surfaces shall be individually selectable --> to apply an operation (like extrude)
+    - Highlighting is already implemented, selection for the operation is then the 
+      next step
     - Workflow: 
        1) Create Sketch
        2) Go back to 3D Modeller and Sketch is displayed
@@ -51,6 +54,11 @@ List of Improvements
 
 
 Done Improvements
+
+(B005) Mapping of sketches to 3D View (and basic workflow)
+    - All closed lines should be interpreted as faces
+    - On each face (or multiple) an Extrude is possible to create a 3D object
+    --> see B007
 
 (B007-A) Improve the visualization
     - SketchCycleObjectNg: Add display of lines as in original SketchCycleObject
