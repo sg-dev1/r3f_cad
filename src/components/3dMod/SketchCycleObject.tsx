@@ -90,7 +90,7 @@ const SketchCycleObject = ({ sketchCycle, bitbybit }: { sketchCycle: SketchCycle
 
   return (
     <>
-      {segmentShape !== null && (
+      {/* {segmentShape !== null && (
         <Shape
           args={[segmentShape]}
           onPointerOver={() => setSegmentHovered(true)}
@@ -98,7 +98,7 @@ const SketchCycleObject = ({ sketchCycle, bitbybit }: { sketchCycle: SketchCycle
         >
           <meshBasicMaterial color={obtainShapeColor()} side={THREE.DoubleSide} />
         </Shape>
-      )}
+      )} */}
       {segments.length > 0 && (
         <Segments
           limit={1000}
@@ -112,7 +112,7 @@ const SketchCycleObject = ({ sketchCycle, bitbybit }: { sketchCycle: SketchCycle
         </Segments>
       )}
 
-      {circleShape !== null && (
+      {/* {circleShape !== null && (
         <Shape
           args={[circleShape]}
           onPointerOver={() => setCircleHovered(true)}
@@ -120,15 +120,15 @@ const SketchCycleObject = ({ sketchCycle, bitbybit }: { sketchCycle: SketchCycle
         >
           <meshBasicMaterial color={obtainShapeColor()} side={THREE.DoubleSide} />
         </Shape>
-      )}
+      )} */}
       {circlePointsArray.length > 0 &&
         circlePointsArray.map((points, index) => <Line key={index} points={points} color={'blue'} />)}
 
-      {arcShape !== null && (
+      {/* {arcShape !== null && (
         <Shape args={[arcShape]} onPointerOver={() => setArcHovered(true)} onPointerOut={() => setArcHovered(false)}>
           <meshBasicMaterial color={obtainShapeColor()} side={THREE.DoubleSide} />
         </Shape>
-      )}
+      )} */}
       {arcsPointsArray.length > 0 &&
         arcsPointsArray.map((points, index) => <Line key={index} points={points} color="blue" />)}
     </>

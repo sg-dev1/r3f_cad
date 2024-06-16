@@ -2,7 +2,7 @@ import { useAppSelector } from '@/app/hooks';
 import { selectSketchToExtrude } from '@/app/slices/modellingToolStateSlice';
 import { BitByBitOCCT, OccStateEnum } from '@bitbybit-dev/occt-worker';
 import { useThree } from '@react-three/fiber';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { STLExporter } from 'three/examples/jsm/Addons.js';
 import { Inputs } from '@bitbybit-dev/occt';
@@ -11,6 +11,7 @@ import { selectSketchs } from '@/app/slices/sketchSlice';
 import { SketchCycleType, findCyclesInSketchAndConvertToOcct } from '@/utils/algo3d';
 import SketchCycleObject from './SketchCycleObject';
 import useKeyboard from '@/utils/useKeyboard';
+import SketchCycleObjectNg from './SketchCycleObjectNg';
 
 const OcctRoot = () => {
   const [bitbybit, setBitbybit] = useState<BitByBitOCCT>();
@@ -55,6 +56,14 @@ const OcctRoot = () => {
     } else if (keyMap['Digit7'] === true) {
       if (sketchShapes.length > 6) {
         sketchShapes[6].isHidden = !sketchShapes[6].isHidden;
+      }
+    } else if (keyMap['Digit8'] === true) {
+      if (sketchShapes.length > 7) {
+        sketchShapes[7].isHidden = !sketchShapes[7].isHidden;
+      }
+    } else if (keyMap['Digit9'] === true) {
+      if (sketchShapes.length > 8) {
+        sketchShapes[8].isHidden = !sketchShapes[8].isHidden;
       }
     }
   }, [keyMap]);
@@ -135,7 +144,10 @@ const OcctRoot = () => {
     <>
       {bitbybit &&
         sketchShapes.map((sketchCycle) => (
-          <SketchCycleObject key={sketchCycle.face.hash} sketchCycle={sketchCycle} bitbybit={bitbybit} />
+          <React.Fragment key={sketchCycle.face.hash}>
+            <SketchCycleObject sketchCycle={sketchCycle} bitbybit={bitbybit} />
+            <SketchCycleObjectNg sketchCycle={sketchCycle} />
+          </React.Fragment>
         ))}
     </>
   );
