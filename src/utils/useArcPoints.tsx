@@ -1,8 +1,9 @@
 import { ArcInlinePointType } from '@/app/types/ArcType';
+import { Point3DInlineType } from '@/app/types/Point3DType';
 import { useMemo } from 'react';
 import * as THREE from 'three';
 
-const useArcPoints = ({ arc }: { arc: ArcInlinePointType }) => {
+export const useArcPoints = ({ arc }: { arc: ArcInlinePointType }) => {
   const points = useMemo(() => {
     const points = [];
     const geometry = new THREE.BufferGeometry().setFromPoints(
@@ -20,12 +21,7 @@ const useArcPoints = ({ arc }: { arc: ArcInlinePointType }) => {
     let positions = geometry.attributes.position;
     for (let i = 0; i < positions.count; i++) {
       let p = new THREE.Vector3().fromBufferAttribute(positions, i);
-      /*
-      points.push(p.x);
-      points.push(p.y);
-      points.push(p.z);
-      */
-      points.push(p);
+      points.push([p.x, p.y, p.z] as Point3DInlineType);
     }
     return points;
   }, [arc]);

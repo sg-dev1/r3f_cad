@@ -1,5 +1,4 @@
 Priority of improvements (my ranking)
-  - B007-A
   - B007
   - B002 -> edit sketch
   - B008
@@ -44,7 +43,17 @@ List of Improvements
            e.g. right click on single Face (multiple Face selection) -> Extrude
        4) 3D Body is created
     - A history of these operations shall be stored (e.g. also to go back and forth in time)
+
+(B008) Add attachment to Sketches, e.g. where they are located in 3D space
+    - For a sketch also the Plane should be selectable (X, Y, or Z)
+    - Additionally offsets in all directions are needed (per default it is located at [0,0,0])
+    - for future also an arbitrary plane may be selected (e.g. need for rotations etc.)
+
+
+Done Improvements
+
 (B007-A) Improve the visualization
+    - SketchCycleObjectNg: Add display of lines as in original SketchCycleObject
     - Fix display of arcs -> if an arc is part of a (line-)segment outside of shape
       is also shown to be part of the face
     - SketchCycleObject need to be refactored to not handle segments / arcs 
@@ -60,14 +69,6 @@ List of Improvements
     - Improve colors, highlighting etc. of displayed Sketches     [done]
     - Add visualization of circles                                [done]
     - Show/ Hide of sketches displayed (future topic)             [done, simple solution]
-
-(B008) Add attachment to Sketches, e.g. where they are located in 3D space
-    - For a sketch also the Plane should be selectable (X, Y, or Z)
-    - Additionally offsets in all directions are needed (per default it is located at [0,0,0])
-    - for future also an arbitrary plane may be selected (e.g. need for rotations etc.)
-
-
-Done Improvements
 
 (B010) Improvement of algo3d routines
     - issues when line segments (arcs?) are facing into the wrong direction

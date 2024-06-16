@@ -2,14 +2,9 @@ import { useAppSelector } from '@/app/hooks';
 import { selectSketchToExtrude } from '@/app/slices/modellingToolStateSlice';
 import { BitByBitOCCT, OccStateEnum } from '@bitbybit-dev/occt-worker';
 import { useThree } from '@react-three/fiber';
-import React, { useEffect, useRef, useState } from 'react';
-import * as THREE from 'three';
-import { STLExporter } from 'three/examples/jsm/Addons.js';
-import { Inputs } from '@bitbybit-dev/occt';
-import { addShapeToScene } from './occt_visualize';
+import React, { useEffect, useState } from 'react';
 import { selectSketchs } from '@/app/slices/sketchSlice';
 import { SketchCycleType, findCyclesInSketchAndConvertToOcct } from '@/utils/algo3d';
-import SketchCycleObject from './SketchCycleObject';
 import useKeyboard from '@/utils/useKeyboard';
 import SketchCycleObjectNg from './SketchCycleObjectNg';
 
@@ -138,14 +133,14 @@ const OcctRoot = () => {
     });
   };
 
-  console.log('[OcctRoot] sketchShapes', sketchShapes);
+  //console.log('[OcctRoot] sketchShapes', sketchShapes);
 
   return (
     <>
       {bitbybit &&
         sketchShapes.map((sketchCycle) => (
           <React.Fragment key={sketchCycle.face.hash}>
-            <SketchCycleObject sketchCycle={sketchCycle} bitbybit={bitbybit} />
+            {/* <SketchCycleObject sketchCycle={sketchCycle} bitbybit={bitbybit} /> */}
             <SketchCycleObjectNg sketchCycle={sketchCycle} />
           </React.Fragment>
         ))}
