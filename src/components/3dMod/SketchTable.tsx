@@ -1,7 +1,7 @@
 import { useAppDispatch, useAppSelector } from '@/app/hooks';
-import { deleteSketch, selectSketchs } from '@/app/slices/sketchSlice';
-import { DeleteOutlined } from '@ant-design/icons';
-import { Popconfirm, Table } from 'antd';
+import { deleteSketch, selectSketchs, setActiveSketch } from '@/app/slices/sketchSlice';
+import { DeleteOutlined, EditOutlined } from '@ant-design/icons';
+import { Button, Flex, Popconfirm, Table } from 'antd';
 import { ColumnsType } from 'antd/es/table';
 import React, { useEffect, useState } from 'react';
 
@@ -32,7 +32,7 @@ const SketchTable = () => {
       title: 'Id',
       dataIndex: 'id',
       key: 'id',
-      //width: '15%',
+      width: '15%',
       //sorter: (a, b) => a.id - b.id,
       //sortOrder: sortedInfo.columnKey === 'changedByUser' ? sortedInfo.order : null,
       //ellipsis: true,
@@ -41,7 +41,7 @@ const SketchTable = () => {
       title: 'Name',
       dataIndex: 'name',
       key: 'name',
-      //width: '15%',
+      width: '75%',
       //sorter: (a, b) => a.id - b.id,
       //sortOrder: sortedInfo.columnKey === 'changedByUser' ? sortedInfo.order : null,
       //ellipsis: true,
@@ -53,13 +53,23 @@ const SketchTable = () => {
       width: '10%',
       render: (_, record) => {
         return (
-          <Popconfirm title="Sure to delete?" onConfirm={() => handleDelete(record as DataType)}>
-            <DeleteOutlined />
-          </Popconfirm>
+          <Flex>
+            <Button type="text" onClick={() => handleUpdate(record as DataType)}>
+              <EditOutlined />
+            </Button>
+            <Popconfirm title="Sure to delete?" onConfirm={() => handleDelete(record as DataType)}>
+              <DeleteOutlined />
+            </Popconfirm>
+          </Flex>
         );
       },
     },
   ];
+
+  const handleUpdate = (record: DataType) => {
+    console.log('update', record);
+    dispatch(setActiveSketch(record.id));
+  };
 
   const handleDelete = (record: DataType) => {
     console.log('delete', record);
@@ -73,9 +83,9 @@ const SketchTable = () => {
 
   return (
     <Table
-      style={{ height: '50%', overflow: 'auto' }}
+      style={{ height: '100%', overflow: 'auto' }}
       pagination={false}
-      scroll={{ y: '35vh' }}
+      //scroll={{ y: '35vh' }}
       columns={columns}
       dataSource={tableData}
       title={() => <b>Sketchs</b>}

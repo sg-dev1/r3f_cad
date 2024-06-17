@@ -1,5 +1,4 @@
 Priority of improvements (my ranking)
-  - B002 -> edit sketch
   - B008  // arbitrary plane awareness
   - B007
   - B004
@@ -11,12 +10,6 @@ List of Improvements
 
 (B001) Basic main view with camera control --> MainView.tsx
     - add 3d gizmo (cube) showing which plane etc. is visible
-
-(B002) Integration of Sketcher tool 
-    - create new sketch                 // done
-    - update existing one -> set active one to the selected sketch and open Sketcher tool
-      (simple solution: add edit button in SketchTable.tsx)
-    - navigation between Sketcher and 3dMod tools
 
 (B003) Tree view with sketches and geometries
     - we already have list with sketches --> for basic navigation
@@ -54,6 +47,12 @@ List of Improvements
 
 
 Done Improvements
+
+(B002) Integration of Sketcher tool 
+    - create new sketch                 // done
+    - update existing one -> set active one to the selected sketch and open Sketcher tool
+      (simple solution: add edit button in SketchTable.tsx)
+    - navigation between Sketcher and 3dMod tools
 
 (B005) Mapping of sketches to 3D View (and basic workflow)
     - All closed lines should be interpreted as faces
