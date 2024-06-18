@@ -2,9 +2,8 @@
 
 import React from 'react';
 import { Button, Layout } from 'antd';
-import { createSketch, selectActiveSketchId } from '@/app/slices/sketchSlice';
-import { useAppDispatch, useAppSelector } from '@/app/hooks';
-import OcctWorkerTest from './OcctWorkerTest';
+import { createSketch } from '@/app/slices/sketchSlice';
+import { useAppDispatch } from '@/app/hooks';
 import SketchTable from './SketchTable';
 import OcctRoot from './OcctRoot';
 import { Canvas } from '@react-three/fiber';
@@ -68,15 +67,6 @@ const MainView = () => {
           </Content>
         </Layout>
       </Layout>
-
-      {/* <Canvas camera={{ fov, aspect, near, far }} className="mainview">
-        <CameraControls minDistance={1.2} maxDistance={4} ref={cameraControlsRef} />
-        <ambientLight intensity={2} />
-        <mesh>
-          <boxGeometry />
-          <meshStandardMaterial color={0xff0000} />
-        </mesh>
-      </Canvas> */}
     </>
   );
 };

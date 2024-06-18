@@ -472,6 +472,7 @@ const dfs_cycle = (graph: number[][], u: number, p: number, color: number[], par
 export interface SketchCycleType {
   cycle: CadTool3DShapeSubset[];
   face: Inputs.OCCT.TopoDSFacePointer;
+  sketch: SketchType;
   isHidden: boolean;
 }
 
@@ -567,7 +568,7 @@ export const findCyclesInSketchAndConvertToOcct = async (sketch: SketchType, bit
     //const isClosedFace = await bitbybit.occt.shapes.shape.isClosed({ shape: face });
     //console.log('face isClosed', isClosedFace); // returns false
 
-    result.push({ cycle: cycleIn3D, face: face, isHidden: false });
+    result.push({ cycle: cycleIn3D, face: face, sketch: sketch, isHidden: false });
 
     // cleanup - don't do this else we get an "Encountered Null Face!" error
     //await bitbybit.occt.deleteShapes({ shapes: [...edges, wire] });

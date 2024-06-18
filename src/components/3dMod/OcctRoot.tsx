@@ -139,10 +139,7 @@ const OcctRoot = () => {
     <>
       {bitbybit &&
         sketchShapes.map((sketchCycle) => (
-          <React.Fragment key={sketchCycle.face.hash}>
-            {/* <SketchCycleObject sketchCycle={sketchCycle} bitbybit={bitbybit} /> */}
-            <SketchCycleObjectNg sketchCycle={sketchCycle} />
-          </React.Fragment>
+          <SketchCycleObjectNg key={sketchCycle.face.hash} sketchCycle={sketchCycle} />
         ))}
     </>
   );

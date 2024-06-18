@@ -1,3 +1,4 @@
+import { Point3DInlineType } from '@/app/types/Point3DType';
 import * as THREE from 'three';
 
 export const XY_PLANE = new THREE.Plane(new THREE.Vector3(0, 0, 1), 0);
@@ -11,10 +12,14 @@ export const SKETCH_PLANE_MAP: { [key: string]: THREE.Plane } = {
 };
 
 export const getPointU = (plane: string, point: THREE.Vector3Like) => {
+  return getPointU2(plane, [point.x, point.y, point.z]);
+};
+
+export const getPointU2 = (plane: string, point: Point3DInlineType) => {
   if ('xy' === plane || 'xz' === plane) {
-    return point.x;
+    return point[0];
   } else if ('yz' === plane) {
-    return point.y;
+    return point[1];
   } else {
     console.error('[getPointU] Invalid plane given: ' + plane);
     return 0;
@@ -22,10 +27,14 @@ export const getPointU = (plane: string, point: THREE.Vector3Like) => {
 };
 
 export const getPointV = (plane: string, point: THREE.Vector3Like) => {
+  return getPointV2(plane, [point.x, point.y, point.z]);
+};
+
+export const getPointV2 = (plane: string, point: Point3DInlineType) => {
   if ('xy' === plane) {
-    return point.y;
+    return point[1];
   } else if ('xz' === plane || 'yz' === plane) {
-    return point.z;
+    return point[2];
   } else {
     console.error('[getPointV] Invalid plane given: ' + plane);
     return 0;

@@ -41,9 +41,24 @@ List of Improvements
     - A history of these operations shall be stored (e.g. also to go back and forth in time)
 
 (B008) Add attachment to Sketches, e.g. where they are located in 3D space
-    - For a sketch also the Plane should be selectable (X, Y, or Z)
-    - Additionally offsets in all directions are needed (per default it is located at [0,0,0])
-    - for future also an arbitrary plane may be selected (e.g. need for rotations etc.)
+    - Plane representation:
+        * ("xy" | "xz" | "yz" | normal_vector, offset), e.g.
+          sketch.plane
+          sketch.plane_offset
+    1) For a sketch also the Plane should be selectable (X, Y, or Z)
+        * Should be the most easiest to implement
+        * already implemented using functions from threejs_planes.ts
+          (SketchCycleObjectNg.tsx need to use functions from threejs_planes.ts)
+    2) Additionally offsets in all directions are needed (per default it is located at [0,0,0])
+        * Need to be considered for sure:
+           - SketchCycleObjectNg.tsx to draw the faces in the right space in 3D
+        * Maybe need to be considered:
+           - Sketcher tool  // e.g. if we allow rotations
+        * No need to consider:
+           - algo3d algorithms --> they work in 2D (an offset in 3D is not considered)
+    3) for future also an arbitrary plane may be selected (e.g. need for rotations etc.)
+        * Need to be considered everywhere:
+           SketchCycleObjectNg.tsx, Sketcher tool, algo3d algorithms
 
 
 Done Improvements

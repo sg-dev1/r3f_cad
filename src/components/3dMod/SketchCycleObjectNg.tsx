@@ -4,6 +4,7 @@ import { Line3DInlinePointType } from '@/app/types/Line3DType';
 import { Point3DInlineType } from '@/app/types/Point3DType';
 import { SHAPE3D_TYPE } from '@/app/types/ShapeType';
 import { SketchCycleType } from '@/utils/algo3d';
+import { getPointU2, getPointV2 } from '@/utils/threejs_planes';
 import useArcPoints from '@/utils/useArcPoints';
 import useCirclePoints from '@/utils/useCirclePoints';
 import { Line } from '@react-three/drei';
@@ -29,8 +30,6 @@ const SketchCycleObjectNg = ({ sketchCycle }: SketchCycleObjectNgProps) => {
   const [shapeGeom, setShapeGeom] = useState<THREE.ShapeGeometry | null>(null);
   const [shapePoints, setShapePoints] = useState<Point3DInlineType[]>([]);
 
-  // TODO this implementation currently only works for xy plane, needs to be
-  // adapted for arbitrary plane
   const drawShape = () => {
     if (sketchCycle.cycle.length > 0) {
       // https://threejs.org/docs/index.html?q=shape#api/en/extras/core/Shape
@@ -47,16 +46,21 @@ const SketchCycleObjectNg = ({ sketchCycle }: SketchCycleObjectNgProps) => {
         }
         // CIRCLE is handled differently (see below)
 
-        // TODO it need to be accounted for the plane
         if (firstPoint !== null) {
           points.push(firstPoint);
-          threeShape.moveTo(firstPoint[0], firstPoint[1]);
+          threeShape.moveTo(
+            getPointU2(sketchCycle.sketch.plane, firstPoint),
+            getPointV2(sketchCycle.sketch.plane, firstPoint)
+          );
           //console.log('moveto', firstPoint);
           let arcIdx = 0;
           sketchCycle.cycle.forEach((shape) => {
             if (shape.t === SHAPE3D_TYPE.LINE) {
               const lineSegment = shape as Line3DInlinePointType;
-              threeShape.lineTo(lineSegment.end[0], lineSegment.end[1]);
+              threeShape.lineTo(
+                getPointU2(sketchCycle.sketch.plane, lineSegment.end),
+                getPointV2(sketchCycle.sketch.plane, lineSegment.end)
+              );
               points.push(lineSegment.end);
               //console.log('lineto', lineSegment.end);
             } else if (shape.t === SHAPE3D_TYPE.ARC) {
@@ -117,6 +121,7 @@ const SketchCycleObjectNg = ({ sketchCycle }: SketchCycleObjectNgProps) => {
     }
   };
 
+  // TODO we may need to set position/ rotation on mesh to get it plane aware
   return (
     <>
       {shapeGeom && (
