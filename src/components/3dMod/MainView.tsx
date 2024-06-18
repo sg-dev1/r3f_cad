@@ -7,7 +7,7 @@ import { useAppDispatch } from '@/app/hooks';
 import SketchTable from './SketchTable';
 import OcctRoot from './OcctRoot';
 import { Canvas } from '@react-three/fiber';
-import { OrbitControls } from '@react-three/drei';
+import { GizmoHelper, GizmoViewport, Grid, OrbitControls } from '@react-three/drei';
 
 const { Header, Content, Sider } = Layout;
 
@@ -63,6 +63,27 @@ const MainView = () => {
               {/* Constains test component adding test object using Occt */}
               {/* <OcctWorkerTest /> */}
               <OcctRoot />
+
+              <GizmoHelper
+                alignment="bottom-right" // widget alignment within scene
+                margin={[80, 80]} // widget margins (X, Y)
+                //onUpdate={/* called during camera animation  */}
+                //onTarget={/* return current camera target (e.g. from orbit controls) to center animation */}
+                //renderPriority={10}
+              >
+                <GizmoViewport axisColors={['red', 'green', 'blue']} labelColor="black" />
+                {/* <GizmoViewcube /> */}
+              </GizmoHelper>
+
+              {/* Enable the grid for debugging for now */}
+              <Grid
+                args={[100, 100]}
+                cellSize={10} // make it same as sectionSize so there are no cells in between
+                //cellColor={'#6f6f6f'}
+                sectionSize={10}
+                sectionColor={'blue'}
+                infiniteGrid
+              />
             </Canvas>
           </Content>
         </Layout>

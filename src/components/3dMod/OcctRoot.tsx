@@ -112,16 +112,19 @@ const OcctRoot = () => {
     await bitbybit.init(occt);
     //console.log('bitbybit.init(occt) finished');
 
+    /*
     const animation = (time: number) => {
       gl.render(scene, camera);
       //controls.update();
     };
+    */
 
     bitbybit.occtWorkerManager.occWorkerState$.subscribe(async (s) => {
       if (s.state === OccStateEnum.initialised) {
         // Launch the function converting Sketches to be visualized in 3D
         await createSketchShapes(bitbybit);
-        gl.setAnimationLoop(animation);
+        // disabled the animation loop because it make f.e. the GizmoHelper disappear
+        //gl.setAnimationLoop(animation);
         console.log('Occt init completed');
 
         // TODO here some static things to display may be created
