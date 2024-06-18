@@ -41,6 +41,48 @@ export const getPointV2 = (plane: string, point: Point3DInlineType) => {
   }
 };
 
+// TODO fixme - these seem to work for the three standard planes
+export const getRotationForPlane = (plane: string): [number, number, number] => {
+  //console.log('getRotationForPlane', plane);
+  if (plane === 'xy') {
+    return [0, 0, 0];
+  } else if (plane === 'xz') {
+    return [Math.PI / 2, 0, 0];
+  } else if (plane === 'yz') {
+    return [0, Math.PI / 2, 0];
+  } else {
+    console.error('[getRotationForPlane] Invalid plane given: ' + plane);
+    return [0, 0, 0];
+  }
+};
+
+// TODO fixme - not sure if these are right ...
+export const getRotationForPlaneAsQuaternion = (plane: string): THREE.Quaternion => {
+  const quaternion = new THREE.Quaternion();
+  if (plane === 'xy') {
+  } else if (plane === 'xz') {
+    quaternion.setFromAxisAngle(new THREE.Vector3(1, 0, 0), -Math.PI / 2);
+  } else if (plane === 'yz') {
+    quaternion.setFromAxisAngle(new THREE.Vector3(0, 1, 0), Math.PI / 2);
+  } else {
+    console.error('[getRotationForPlane] Invalid plane given: ' + plane);
+  }
+  return quaternion;
+};
+
+export const getCameraPositionForPlane = (plane: string): [number, number, number] => {
+  if (plane === 'xy') {
+    return [0, 0, 100];
+  } else if (plane === 'xz') {
+    return [0, 100, 0];
+  } else if (plane === 'yz') {
+    return [100, 0, 0];
+  } else {
+    console.error('[getRotationForPlane] Invalid plane given: ' + plane);
+    return [0, 0, 0];
+  }
+};
+
 export const convert2DPointTo3D = (plane: string, u: number, v: number): [number, number, number] => {
   if ('xy' === plane) {
     return [u, v, 0];

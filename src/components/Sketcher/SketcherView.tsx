@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Canvas } from '@react-three/fiber';
-import { OrbitControls } from '@react-three/drei';
+import { GizmoHelper, GizmoViewport, OrbitControls } from '@react-three/drei';
 import GeometryTool, { GeometryToolRefType } from './GeometryTool';
 import { Button, Layout } from 'antd';
 import { useAppDispatch, useAppSelector } from '@/app/hooks';
@@ -14,6 +14,7 @@ import {
   selectLastDof,
   selectLastSolverFailedConstraints,
   selectLastSolverResultCode,
+  selectSketchCurrentPlane,
 } from '@/app/slices/sketchSlice';
 import {
   ToolState,
@@ -30,6 +31,7 @@ import {
 import ConstraintTable from './ConstraintTable';
 import EntitiesTable from './EntitiesTable';
 import useKeyboard from '@/utils/useKeyboard';
+import { getCameraPositionForPlane, getRotationForPlane } from '@/utils/threejs_planes';
 
 const { Header, Content, Sider } = Layout;
 
@@ -47,6 +49,7 @@ const SketcherView = () => {
   const sketchLengthConstraintLineId = useAppSelector(selectLengthConstraintLineId);
   const sketchSelectedConstraintId = useAppSelector(selectSelectedConstraintId);
   const toolState = useAppSelector(selectToolState);
+  const sketchCurrentPlane = useAppSelector(selectSketchCurrentPlane);
 
   // keyboard events
   const keyMap = useKeyboard();
@@ -281,7 +284,11 @@ const SketcherView = () => {
             <Canvas
               orthographic
               //camera={{ zoom: 1, position: [0, 0, 200], top: 200, bottom: -200, left: 200, right: -200, near: 1, far: 2000 }}
-              camera={{ zoom: 2 }}
+              camera={{
+                zoom: 2,
+                position: getCameraPositionForPlane(sketchCurrentPlane),
+                rotation: getRotationForPlane(sketchCurrentPlane),
+              }}
               onClick={(e) => geometryToolRef.current?.onClick(e)}
               onPointerMove={(e) => geometryToolRef.current?.onPointerMove(e)}
             >
@@ -292,6 +299,17 @@ const SketcherView = () => {
               <pointLight intensity={0.75} position={[500, 500, 1000]} />
 
               <GeometryTool ref={geometryToolRef} />
+
+              <GizmoHelper
+                alignment="bottom-right" // widget alignment within scene
+                margin={[80, 80]} // widget margins (X, Y)
+                //onUpdate={/* called during camera animation  */}
+                //onTarget={/* return current camera target (e.g. from orbit controls) to center animation */}
+                //renderPriority={10}
+              >
+                <GizmoViewport axisColors={['red', 'green', 'blue']} labelColor="black" />
+                {/* <GizmoViewcube /> */}
+              </GizmoHelper>
 
               {/* If the camera is used like that it behaves a bit strange - scene gets rerendered when it is resized.
                   This lead to the issue where lines on the screen are not shown in correct aspect ratio. */}

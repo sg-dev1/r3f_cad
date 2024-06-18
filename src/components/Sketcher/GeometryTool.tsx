@@ -132,6 +132,7 @@ const GeometryTool = forwardRef<any, any>(({}: GeometryToolProps, ref) => {
       event.clientY,
       event.target as HTMLElement
     );
+    //console.log('circleToolOnClick', intersect);
     if (intersect) {
       if (circleMidPoint === null) {
         setCircleMidPoint(intersect);

@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Button, Layout } from 'antd';
 import { createSketch } from '@/app/slices/sketchSlice';
 import { useAppDispatch } from '@/app/hooks';
@@ -8,6 +8,7 @@ import SketchTable from './SketchTable';
 import OcctRoot from './OcctRoot';
 import { Canvas } from '@react-three/fiber';
 import { GizmoHelper, GizmoViewport, Grid, OrbitControls } from '@react-three/drei';
+import ThreeAxisPlanes from './ThreeAxisPlanes';
 
 const { Header, Content, Sider } = Layout;
 
@@ -16,15 +17,25 @@ const MainView = () => {
   const dispatch = useAppDispatch();
   // const cameraControlsRef = useRef<CameraControls>(null);
 
+  const [threeAxisPlanesVisible, setThreeAxisPlanesVisible] = useState<boolean>(false);
+
   const fov = 70;
   const aspect = 2; // the canvas default
   const near = 0.1;
   const far = 1000;
 
   const onCreateNewSketch = () => {
-    // TODO when creating sketch on plane different than XY is implemented
-    // the sketchCurrentPlane needs to be updated
-    dispatch(createSketch('xy'));
+    // In this way it is possible to select the plane for where to draw the sketch
+    // TODO still some issues with drawing - need to get rotations right
+    setThreeAxisPlanesVisible(true);
+  };
+
+  const onPlaneClicked = (plane: 'xy' | 'xz' | 'yz') => {
+    if (threeAxisPlanesVisible) {
+      console.log('clicked plane', plane);
+      dispatch(createSketch(plane));
+      setThreeAxisPlanesVisible(false);
+    }
   };
 
   return (
@@ -53,8 +64,8 @@ const MainView = () => {
 
           <Content style={{ marginLeft: 500, padding: '10px 24px 24px', backgroundColor: 'slategray' }}>
             <Canvas
-              //camera={{ zoom: 2 }}
-              camera={{ fov, aspect, near, far, position: [30, 50, 50] }}
+              //camera={{ zoom: 200 }}
+              camera={{ fov, aspect, near, far, position: [200, 50, 200] }}
             >
               {/* <CameraControls minDistance={1.2} maxDistance={4} ref={cameraControlsRef} /> */}
               <OrbitControls makeDefault enableDamping={true} dampingFactor={0.1} />
@@ -82,8 +93,10 @@ const MainView = () => {
                 //cellColor={'#6f6f6f'}
                 sectionSize={10}
                 sectionColor={'blue'}
-                infiniteGrid
+                //infiniteGrid
               />
+
+              <ThreeAxisPlanes isVisible={threeAxisPlanesVisible} onPlaneClicked={onPlaneClicked} />
             </Canvas>
           </Content>
         </Layout>

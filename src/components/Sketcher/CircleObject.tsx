@@ -17,7 +17,13 @@ import {
 } from '@/app/slices/sketchToolStateSlice';
 import { SlvsConstraints } from '@/app/types/Constraints';
 import { GeometryType } from '@/app/types/EntityType';
-import { getPlaneAwareSketchPosition, getPointU, getPointV } from '@/utils/threejs_planes';
+import {
+  getPlaneAwareSketchPosition,
+  getPointU,
+  getPointV,
+  getRotationForPlane,
+  getRotationForPlaneAsQuaternion,
+} from '@/utils/threejs_planes';
 import { calcIntersectionWithPlaneFromRect } from '@/utils/threejs_utils';
 import { Html, Line } from '@react-three/drei';
 import { useThree } from '@react-three/fiber';
@@ -98,6 +104,14 @@ const CircleObject = ({
         0
       ).getPoints(128)
     );
+    /*
+    const rotation = getRotationForPlane(sketchCurrentPlane);
+    geometry.rotateX(rotation[0]);
+    geometry.rotateY(rotation[1]);
+    geometry.rotateZ(rotation[2]);
+    */
+    const quaternion = getRotationForPlaneAsQuaternion(sketchCurrentPlane);
+    geometry.applyQuaternion(quaternion);
     let positions = geometry.attributes.position;
     for (let i = 0; i < positions.count; i++) {
       let p = new THREE.Vector3().fromBufferAttribute(positions, i);
