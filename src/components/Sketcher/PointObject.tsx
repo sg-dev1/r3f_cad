@@ -9,6 +9,7 @@ import { useThree } from '@react-three/fiber';
 import { useDrag } from '@use-gesture/react';
 import { useEffect, useState } from 'react';
 import TextObject from './TextObject';
+import { getRotationForPlaneAsQuaternion } from '@/utils/threejs_planes';
 
 const PointObject = ({
   id,
@@ -83,6 +84,7 @@ const PointObject = ({
       {midPointConstraints.length > 0 && (
         <TextObject
           position={[position[0], position[1] - 10, position[2]]}
+          quaternion={getRotationForPlaneAsQuaternion(sketchCurrentPlane)}
           baseFontWeight={500}
           label={'>.<'}
           constraintId={midPointConstraints[0].id}
@@ -92,6 +94,7 @@ const PointObject = ({
       {pointOnObjectConstraints.length > 0 && (
         <TextObject
           position={[position[0], position[1] - 10, position[2]]}
+          quaternion={getRotationForPlaneAsQuaternion(sketchCurrentPlane)}
           baseFontWeight={500}
           label={'(.)'}
           constraintId={pointOnObjectConstraints[0].id}

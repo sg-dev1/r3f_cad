@@ -6,10 +6,11 @@ import * as THREE from 'three';
 export const useCirclePoints = ({ circle }: { circle: CircleInlinePointType }) => {
   const points = useMemo(() => {
     const points = [];
+    //console.log('useCirclePoints', circle);
     const geometry = new THREE.BufferGeometry().setFromPoints(
       new THREE.EllipseCurve(
-        circle.mid_pt[0],
-        circle.mid_pt[1],
+        circle.midPt2d[0],
+        circle.midPt2d[1],
         circle.radius,
         circle.radius,
         0,
@@ -18,6 +19,7 @@ export const useCirclePoints = ({ circle }: { circle: CircleInlinePointType }) =
         0
       ).getPoints(128)
     );
+
     let positions = geometry.attributes.position;
     for (let i = 0; i < positions.count; i++) {
       let p = new THREE.Vector3().fromBufferAttribute(positions, i);

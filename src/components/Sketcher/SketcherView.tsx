@@ -31,7 +31,7 @@ import {
 import ConstraintTable from './ConstraintTable';
 import EntitiesTable from './EntitiesTable';
 import useKeyboard from '@/utils/useKeyboard';
-import { getCameraPositionForPlane, getRotationForPlane } from '@/utils/threejs_planes';
+import { getCameraPositionForPlane } from '@/utils/threejs_planes';
 
 const { Header, Content, Sider } = Layout;
 
@@ -287,7 +287,8 @@ const SketcherView = () => {
               camera={{
                 zoom: 2,
                 position: getCameraPositionForPlane(sketchCurrentPlane),
-                rotation: getRotationForPlane(sketchCurrentPlane),
+                // it seems that for the camera no rotation is needed ...
+                //quaternion: getRotationForPlaneAsQuaternion(sketchCurrentPlane),
               }}
               onClick={(e) => geometryToolRef.current?.onClick(e)}
               onPointerMove={(e) => geometryToolRef.current?.onPointerMove(e)}

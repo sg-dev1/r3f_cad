@@ -7,16 +7,19 @@ import {
   setSelectedConstraintId,
 } from '@/app/slices/sketchToolStateSlice';
 import { useAppDispatch, useAppSelector } from '@/app/hooks';
+import * as THREE from 'three';
 
 // lineId ... only needed for edit function of length constraint (of line)
 const TextObject = ({
   position,
+  quaternion,
   label,
   baseFontWeight,
   lineId,
   constraintId,
 }: {
   position: Vector3Tuple;
+  quaternion: THREE.Quaternion;
   label: string;
   baseFontWeight: number;
   lineId?: number;
@@ -47,6 +50,7 @@ const TextObject = ({
   return (
     <Text
       position={position}
+      quaternion={quaternion}
       color={getColor()}
       anchorX="center"
       anchorY="middle"

@@ -1,7 +1,7 @@
 import { useAppSelector } from '@/app/hooks';
 import { selectLines, selectPointsMap, selectSketchCurrentPlane } from '@/app/slices/sketchSlice';
 import { ConstraintType } from '@/app/types/Constraints';
-import { getPlaneAwareSketchPosition } from '@/utils/threejs_planes';
+import { getPlaneAwareSketchPosition, getRotationForPlaneAsQuaternion } from '@/utils/threejs_planes';
 import React from 'react';
 import TextObject from './TextObject';
 import { selectSelectedConstraintId } from '@/app/slices/sketchToolStateSlice';
@@ -48,6 +48,7 @@ const AngleConstraintObject = ({ angleConstraint }: { angleConstraint: Constrain
       />
       <TextObject
         position={getPlaneAwareSketchPosition(sketchCurrentPlane, textPos, 0, 10)}
+        quaternion={getRotationForPlaneAsQuaternion(sketchCurrentPlane)}
         baseFontWeight={500}
         label={String(angleConstraint.v[0]) + '°'}
         constraintId={angleConstraint.id}

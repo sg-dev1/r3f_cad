@@ -21,7 +21,6 @@ import {
   getPlaneAwareSketchPosition,
   getPointU,
   getPointV,
-  getRotationForPlane,
   getRotationForPlaneAsQuaternion,
 } from '@/utils/threejs_planes';
 import { calcIntersectionWithPlaneFromRect } from '@/utils/threejs_utils';
@@ -104,14 +103,11 @@ const CircleObject = ({
         0
       ).getPoints(128)
     );
-    /*
-    const rotation = getRotationForPlane(sketchCurrentPlane);
-    geometry.rotateX(rotation[0]);
-    geometry.rotateY(rotation[1]);
-    geometry.rotateZ(rotation[2]);
-    */
+
+    // could also apply the quaternion to the Line object
     const quaternion = getRotationForPlaneAsQuaternion(sketchCurrentPlane);
     geometry.applyQuaternion(quaternion);
+
     let positions = geometry.attributes.position;
     for (let i = 0; i < positions.count; i++) {
       let p = new THREE.Vector3().fromBufferAttribute(positions, i);
@@ -201,6 +197,7 @@ const CircleObject = ({
       {diamConstraints.length > 0 && (
         <TextObject
           position={getPlaneAwareSketchPosition(sketchCurrentPlane, [points[0].x, points[0].y, points[0].z], 11, 0)}
+          quaternion={getRotationForPlaneAsQuaternion(sketchCurrentPlane)}
           baseFontWeight={500}
           label={String(diamConstraints[0].v[0])}
           constraintId={diamConstraints[0].id}
@@ -211,6 +208,7 @@ const CircleObject = ({
       {equalConstraints.length > 0 && (
         <TextObject
           position={getPlaneAwareSketchPosition(sketchCurrentPlane, [points[0].x, points[0].y, points[0].z], -6, 0)}
+          quaternion={getRotationForPlaneAsQuaternion(sketchCurrentPlane)}
           baseFontWeight={500}
           label={'='}
           constraintId={equalConstraints[0].id}

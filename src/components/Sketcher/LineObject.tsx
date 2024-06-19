@@ -27,7 +27,7 @@ import { useThree } from '@react-three/fiber';
 import { useDrag } from '@use-gesture/react';
 import { useEffect, useState } from 'react';
 import TextObject from './TextObject';
-import { getPlaneAwareSketchPosition } from '@/utils/threejs_planes';
+import { getPlaneAwareSketchPosition, getRotationForPlaneAsQuaternion } from '@/utils/threejs_planes';
 import React from 'react';
 import AngleConstraintObject from './AngleConstraintObject';
 
@@ -173,6 +173,7 @@ const LineObject = ({
             -5,
             5
           )}
+          quaternion={getRotationForPlaneAsQuaternion(sketchCurrentPlane)}
           baseFontWeight={1000}
           label={'|'}
           constraintId={verticalConstraints[0].id}
@@ -188,6 +189,7 @@ const LineObject = ({
             3,
             15
           )}
+          quaternion={getRotationForPlaneAsQuaternion(sketchCurrentPlane)}
           baseFontWeight={1000}
           label={'_'}
           constraintId={horizontalConstraints[0].id}
@@ -204,6 +206,7 @@ const LineObject = ({
             13,
             15
           )}
+          quaternion={getRotationForPlaneAsQuaternion(sketchCurrentPlane)}
           baseFontWeight={500}
           label={'||'}
           constraintId={parallelConstraints[0].id}
@@ -219,6 +222,7 @@ const LineObject = ({
             10,
             15
           )}
+          quaternion={getRotationForPlaneAsQuaternion(sketchCurrentPlane)}
           baseFontWeight={500}
           label={'_|_'}
           constraintId={perpendicularConstraints[0].id}
@@ -233,6 +237,7 @@ const LineObject = ({
             -5,
             -10
           )}
+          quaternion={getRotationForPlaneAsQuaternion(sketchCurrentPlane)}
           baseFontWeight={1000}
           label={'='}
           constraintId={equalConstraints[0].id}
@@ -301,6 +306,7 @@ const LineObject = ({
             15,
             -12
           )}
+          quaternion={getRotationForPlaneAsQuaternion(sketchCurrentPlane)}
           baseFontWeight={500}
           label={String(lengthConstraints[0].v[0])}
           constraintId={lengthConstraints[0].id}

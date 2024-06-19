@@ -4,7 +4,7 @@ import { Line3DInlinePointType } from '@/app/types/Line3DType';
 import { Point3DInlineType } from '@/app/types/Point3DType';
 import { SHAPE3D_TYPE } from '@/app/types/ShapeType';
 import { SketchCycleType } from '@/utils/algo3d';
-import { getPointU2, getPointV2 } from '@/utils/threejs_planes';
+import { getPointU2, getPointV2, getRotationForPlaneAsQuaternion } from '@/utils/threejs_planes';
 import useArcPoints from '@/utils/useArcPoints';
 import useCirclePoints from '@/utils/useCirclePoints';
 import { Line } from '@react-three/drei';
@@ -104,6 +104,9 @@ const SketchCycleObjectNg = ({ sketchCycle }: SketchCycleObjectNgProps) => {
       }
 
       const geometry = new THREE.ShapeGeometry(threeShape);
+      const quaternion = getRotationForPlaneAsQuaternion(sketchCycle.sketch.plane);
+      geometry.applyQuaternion(quaternion);
+
       setShapeGeom(geometry);
       setShapePoints(points);
     }
@@ -129,7 +132,13 @@ const SketchCycleObjectNg = ({ sketchCycle }: SketchCycleObjectNgProps) => {
           <meshBasicMaterial color={obtainShapeColor()} side={THREE.DoubleSide} />
         </mesh>
       )}
-      {shapePoints.length > 0 && <Line points={shapePoints} color="blue" />}
+      {shapePoints.length > 0 && (
+        <Line
+          points={shapePoints}
+          quaternion={getRotationForPlaneAsQuaternion(sketchCycle.sketch.plane)}
+          color="blue"
+        />
+      )}
     </>
   );
 };
