@@ -96,6 +96,56 @@ export const getCameraPositionForPlane = (plane: string): [number, number, numbe
   }
 };
 
+export const getXAxisPointsForPlane = (plane: string): [number, number, number][] => {
+  if (plane === 'xy') {
+    return [
+      [-1000, 0, 0],
+      [1000, 0, 0],
+    ];
+  } else if (plane === 'xz') {
+    return [
+      [-1000, 0, 0],
+      [1000, 0, 0],
+    ];
+  } else if (plane === 'yz') {
+    return [
+      [0, 0, -1000],
+      [0, 0, 1000],
+    ];
+  } else {
+    console.error('[getRotationForPlane] Invalid plane given: ' + plane);
+    return [
+      [0, 0, 0],
+      [0, 0, 0],
+    ];
+  }
+};
+
+export const getYAxisPointsForPlane = (plane: string): [number, number, number][] => {
+  if (plane === 'xy') {
+    return [
+      [0, -1000, 0],
+      [0, 1000, 0],
+    ];
+  } else if (plane === 'xz') {
+    return [
+      [0, 0, -1000],
+      [0, 0, 1000],
+    ];
+  } else if (plane === 'yz') {
+    return [
+      [0, -1000, 0],
+      [0, 1000, 0],
+    ];
+  } else {
+    console.error('[getRotationForPlane] Invalid plane given: ' + plane);
+    return [
+      [0, 0, 0],
+      [0, 0, 0],
+    ];
+  }
+};
+
 /*
 export const getCameraPositionForPlaneVec3 = (plane: string): THREE.Vector3Tuple => {
   const camPos = getCameraPositionForPlane(plane);

@@ -21,10 +21,12 @@ const SketchCycleObjectNg = ({ sketchCycle }: SketchCycleObjectNgProps) => {
     return <></>;
   }
 
+  const quaternion = getRotationForPlaneAsQuaternion(sketchCycle.sketch.plane);
+
   const arcs = sketchCycle.cycle.filter((shape) => shape.t === SHAPE3D_TYPE.ARC) as ArcInlinePointType[];
   const circles = sketchCycle.cycle.filter((shape) => shape.t === SHAPE3D_TYPE.CIRCLE) as CircleInlinePointType[];
-  const arcsPointsArray = arcs.map((arc) => useArcPoints({ arc: arc }));
-  const circlePointsArray = circles.map((circle) => useCirclePoints({ circle: circle }));
+  const arcsPointsArray = arcs.map((arc) => useArcPoints({ arc: arc, quaternion: quaternion }));
+  const circlePointsArray = circles.map((circle) => useCirclePoints({ circle: circle, quaternion: quaternion }));
 
   const [hovered, setHovered] = useState<boolean>(false);
   const [shapeGeom, setShapeGeom] = useState<THREE.ShapeGeometry | null>(null);
@@ -104,7 +106,6 @@ const SketchCycleObjectNg = ({ sketchCycle }: SketchCycleObjectNgProps) => {
       }
 
       const geometry = new THREE.ShapeGeometry(threeShape);
-      const quaternion = getRotationForPlaneAsQuaternion(sketchCycle.sketch.plane);
       geometry.applyQuaternion(quaternion);
 
       setShapeGeom(geometry);
@@ -133,11 +134,8 @@ const SketchCycleObjectNg = ({ sketchCycle }: SketchCycleObjectNgProps) => {
         </mesh>
       )}
       {shapePoints.length > 0 && (
-        <Line
-          points={shapePoints}
-          quaternion={getRotationForPlaneAsQuaternion(sketchCycle.sketch.plane)}
-          color="blue"
-        />
+        // Do not rotate line since all points already have the correct coordinates
+        <Line points={shapePoints} color="blue" />
       )}
     </>
   );

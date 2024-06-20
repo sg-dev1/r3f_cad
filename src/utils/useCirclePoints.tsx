@@ -3,7 +3,13 @@ import { Point3DInlineType } from '@/app/types/Point3DType';
 import { useMemo } from 'react';
 import * as THREE from 'three';
 
-export const useCirclePoints = ({ circle }: { circle: CircleInlinePointType }) => {
+export const useCirclePoints = ({
+  circle,
+  quaternion,
+}: {
+  circle: CircleInlinePointType;
+  quaternion?: THREE.Quaternion;
+}) => {
   const points = useMemo(() => {
     const points = [];
     //console.log('useCirclePoints', circle);
@@ -19,6 +25,10 @@ export const useCirclePoints = ({ circle }: { circle: CircleInlinePointType }) =
         0
       ).getPoints(128)
     );
+
+    if (quaternion) {
+      geometry.applyQuaternion(quaternion);
+    }
 
     let positions = geometry.attributes.position;
     for (let i = 0; i < positions.count; i++) {

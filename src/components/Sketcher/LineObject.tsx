@@ -303,7 +303,7 @@ const LineObject = ({
           position={getPlaneAwareSketchPosition(
             sketchCurrentPlane,
             [(start[0] + end[0]) / 2, (start[1] + end[1]) / 2, (start[2] + end[2]) / 2],
-            15,
+            25,
             -12
           )}
           quaternion={getRotationForPlaneAsQuaternion(sketchCurrentPlane)}

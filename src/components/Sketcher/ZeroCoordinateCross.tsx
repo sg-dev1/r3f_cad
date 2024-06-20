@@ -1,4 +1,7 @@
+import { useAppSelector } from '@/app/hooks';
+import { selectSketchCurrentPlane } from '@/app/slices/sketchSlice';
 import { GeometryType } from '@/app/types/EntityType';
+import { getXAxisPointsForPlane, getYAxisPointsForPlane } from '@/utils/threejs_planes';
 import { Line, Point, Points } from '@react-three/drei';
 import React, { useState } from 'react';
 
@@ -11,6 +14,8 @@ const ZeroCoordinateCross = ({
   onGeometryPointerOver: (type: GeometryType, id: number) => void;
   onGeometryPointerOut: (type: GeometryType, id: number) => void;
 }) => {
+  const sketchCurrentPlane = useAppSelector(selectSketchCurrentPlane);
+
   const [originHovered, setOriginHovered] = useState(false);
   const [xAxisHovered, setXAxisHovered] = useState(false);
   const [yAxisHovered, setYAxisHovered] = useState(false);
@@ -18,10 +23,7 @@ const ZeroCoordinateCross = ({
   return (
     <>
       <Line
-        points={[
-          [0, -1000, 0],
-          [0, 1000, 0],
-        ]} // array of points
+        points={getYAxisPointsForPlane(sketchCurrentPlane)} // array of points
         color={'gray'}
         lineWidth={xAxisHovered ? 3 : 1.5} // default is 1
         segments
@@ -31,10 +33,7 @@ const ZeroCoordinateCross = ({
         //onClick={(e) => onGeometryClick(GeometryType.LINE, e.eventObject.userData.id)}
       />
       <Line
-        points={[
-          [-1000, 0, 0],
-          [1000, 0, 0],
-        ]} // array of points
+        points={getXAxisPointsForPlane(sketchCurrentPlane)} // array of points
         color={'gray'}
         lineWidth={yAxisHovered ? 3 : 1.5} // default is 1
         segments

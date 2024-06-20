@@ -1,15 +1,13 @@
 Priority of improvements (my ranking)
-  - B008  // arbitrary plane awareness
   - B007
+  - B008  // arbitrary plane awareness
+  - B010  [improvement]
+  - B011  [data persistence, debug]
   - B004
   - B003
-  - B001  // updates as needed
 
 
 List of Improvements
-
-(B001) Basic main view with camera control --> MainView.tsx
-    - add 3d gizmo (cube) showing which plane etc. is visible
 
 (B003) Tree view with sketches and geometries
     - we already have list with sketches --> for basic navigation
@@ -26,9 +24,11 @@ List of Improvements
 
 (B004) Datamodel update sketchSlice.ts --> Document with sketches and geometry
     - need a way to store (3d) geometry
-    - need to build as we go one (must hold parameters of extrudes, boolean operations etc.)
+    - need to build as we go on (must hold parameters of extrudes, boolean operations etc.)
+    - for 3D geometry maybe add a new slice (e.g. geom3DSlice.ts) to hold the information
+      (similar to sketchSlice)
 
-(B007) Display Sketch in 3D View
+(B007) Display Sketch in 3D View + Extrude operation
     - All closed surfaces shall be individually selectable --> to apply an operation (like extrude)
     - Highlighting is already implemented, selection for the operation is then the 
       next step
@@ -41,27 +41,52 @@ List of Improvements
     - A history of these operations shall be stored (e.g. also to go back and forth in time)
 
 (B008) Add attachment to Sketches, e.g. where they are located in 3D space
-    - Plane representation:
+    - (target) Plane representation (currently as string - update when needed):
         * ("xy" | "xz" | "yz" | normal_vector, offset), e.g.
           sketch.plane
           sketch.plane_offset
-    1) For a sketch also the Plane should be selectable (X, Y, or Z)
-        * Should be the most easiest to implement
-        * already implemented using functions from threejs_planes.ts
-          (SketchCycleObjectNg.tsx need to use functions from threejs_planes.ts)
-    2) Additionally offsets in all directions are needed (per default it is located at [0,0,0])
+(B008-2)
+      Additionally offsets in all directions are needed (per default it is located at [0,0,0])
         * Need to be considered for sure:
            - SketchCycleObjectNg.tsx to draw the faces in the right space in 3D
         * Maybe need to be considered:
            - Sketcher tool  // e.g. if we allow rotations
         * No need to consider:
            - algo3d algorithms --> they work in 2D (an offset in 3D is not considered)
-    3) for future also an arbitrary plane may be selected (e.g. need for rotations etc.)
+(B008-3)
+      For future also an arbitrary plane may be selected (e.g. need for rotations etc.)
         * Need to be considered everywhere:
            SketchCycleObjectNg.tsx, Sketcher tool, algo3d algorithms
+        * Also needs to be considered in solver backend which only supports the
+          three standard planes
+        * Quaternion should represent rotation from one (normal) vector to other
+          - e.g. [0,0,1] (default of XY_PLANE) to normal vector of target plane
+          - calc performed as in https://stackoverflow.com/questions/1171849/finding-quaternion-representing-the-rotation-from-one-vector-to-another
+          - maybe can directly use Quaternion..setFromUnitVectors()
+            https://threejs.org/docs/index.html#api/en/math/Quaternion
+            (normal vectors need to be normalized!)
+          - Could try this out for XZ_PLANE and YZ_PLANE
+            (do I get values as in getRotationForPlaneAsQuaternion() found out empirically?)
+          (these rotations should be around origin, an offset may need to be considered separately,
+           e.g. need to use the position)
 
+(B010) Algorithm finding cycles is not 100% reliable
+     - not finding all possible cycles, some are omitted
+
+(B011) Debug tool s.t. a current state of application can be saved and later on restored
+     (has something to do with serialization - not necesarrily connected to 3dMod tool)
+     - need to serialize state of app anyways
 
 Done Improvements
+
+(B008-1) Support of standard planes XY, XZ, and YZ to draw a sketch on
+    For a sketch also the Plane should be selectable (X, Y, or Z)
+      * Should be the most easiest to implement
+      * already implemented using functions from threejs_planes.ts
+        (SketchCycleObjectNg.tsx need to use functions from threejs_planes.ts)
+
+(B001) Basic main view with camera control --> MainView.tsx
+    - add 3d gizmo (cube) showing which plane etc. is visible
 
 (B002) Integration of Sketcher tool 
     - create new sketch                 // done

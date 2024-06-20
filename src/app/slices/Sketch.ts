@@ -169,7 +169,8 @@ export const sketchUpdateEntities = (sketch: SketchType, workplane: string, enti
       } else if ('xz' === workplane) {
         _updatePoint(sketch, { ...sketch.pointsMap[element.id], x: element.v[0], z: element.v[1] });
       } else if ('yz' === workplane) {
-        _updatePoint(sketch, { ...sketch.pointsMap[element.id], y: element.v[0], z: element.v[1] });
+        // beware of correct y (= v) and z (= u) since y goes up in three.js
+        _updatePoint(sketch, { ...sketch.pointsMap[element.id], y: element.v[1], z: element.v[0] });
       } else {
         console.error('Invalid workplane ' + workplane + ' received.');
       }
