@@ -1,3 +1,5 @@
+import { useAppDispatch } from '@/app/hooks';
+import { setSketchToExtrude } from '@/app/slices/modellingToolStateSlice';
 import { ArcInlinePointType } from '@/app/types/ArcType';
 import { CircleInlinePointType } from '@/app/types/CircleType';
 import { Line3DInlinePointType } from '@/app/types/Line3DType';
@@ -22,6 +24,7 @@ const SketchCycleObjectNg = ({ sketchCycle }: SketchCycleObjectNgProps) => {
   }
 
   const quaternion = getRotationForPlaneAsQuaternion(sketchCycle.sketch.plane);
+  const dispatch = useAppDispatch();
 
   const arcs = sketchCycle.cycle.filter((shape) => shape.t === SHAPE3D_TYPE.ARC) as ArcInlinePointType[];
   const circles = sketchCycle.cycle.filter((shape) => shape.t === SHAPE3D_TYPE.CIRCLE) as CircleInlinePointType[];
@@ -129,7 +132,12 @@ const SketchCycleObjectNg = ({ sketchCycle }: SketchCycleObjectNgProps) => {
   return (
     <>
       {shapeGeom && (
-        <mesh geometry={shapeGeom} onPointerOver={() => setHovered(true)} onPointerOut={() => setHovered(false)}>
+        <mesh
+          geometry={shapeGeom}
+          onPointerOver={() => setHovered(true)}
+          onPointerOut={() => setHovered(false)}
+          onClick={() => dispatch(setSketchToExtrude([sketchCycle.sketch.id, sketchCycle.index]))}
+        >
           <meshBasicMaterial color={obtainShapeColor()} side={THREE.DoubleSide} />
         </mesh>
       )}

@@ -2,11 +2,11 @@ import { createSlice } from '@reduxjs/toolkit';
 import { RootState } from '../store';
 
 export interface ModellingToolState {
-  sketchToExtrude: number;
+  sketchToExtrude: [number, number];
 }
 
 const initialState: ModellingToolState = {
-  sketchToExtrude: -1,
+  sketchToExtrude: [-1, -1],
 };
 
 export const modellingToolSlice = createSlice({

@@ -1,5 +1,5 @@
-import { useAppSelector } from '@/app/hooks';
-import { selectSketchToExtrude } from '@/app/slices/modellingToolStateSlice';
+import { useAppDispatch, useAppSelector } from '@/app/hooks';
+import { selectSketchToExtrude, setSketchToExtrude } from '@/app/slices/modellingToolStateSlice';
 import { BitByBitOCCT, OccStateEnum } from '@bitbybit-dev/occt-worker';
 import { useThree } from '@react-three/fiber';
 import React, { useEffect, useState } from 'react';
@@ -7,20 +7,34 @@ import { selectSketchs } from '@/app/slices/sketchSlice';
 import { SketchCycleType, findCyclesInSketchAndConvertToOcct } from '@/utils/algo3d';
 import useKeyboard from '@/utils/useKeyboard';
 import SketchCycleObjectNg from './SketchCycleObjectNg';
+import R3fHtmlInput from '../Utils/R3fHtmlInput';
+import { Inputs } from '@bitbybit-dev/occt';
+import { getNormalVectorForPlane } from '@/utils/threejs_planes';
+import { SketchType } from '@/app/slices/Sketch';
+import { STLExporter } from 'three/examples/jsm/Addons.js';
+import * as THREE from 'three';
 
 const OcctRoot = () => {
   const [bitbybit, setBitbybit] = useState<BitByBitOCCT>();
 
   const { scene, gl, camera } = useThree();
 
+  const dispatch = useAppDispatch();
   const sketchs = useAppSelector(selectSketchs);
-  const sketchToExtrude = useAppSelector(selectSketchToExtrude);
-
+  const [sketchToExtrude, cycleIndex] = useAppSelector(selectSketchToExtrude);
   const [sketchShapes, setSketchShapes] = useState<SketchCycleType[]>([]);
+  const shapeToExtrude = sketchShapes.filter(
+    (shape) => shape.sketch.id === sketchToExtrude && shape.index === cycleIndex
+  );
 
   // keyboard events
   const keyMap = useKeyboard();
   useEffect(() => {
+    if (shapeToExtrude.length > 0) {
+      // do nothing while entering values for extrude
+      return;
+    }
+
     //console.log(keyMap);
     // quick and dirty hack to enable/disable shapes
     // mainly for debug  purpose
@@ -138,12 +152,92 @@ const OcctRoot = () => {
 
   //console.log('[OcctRoot] sketchShapes', sketchShapes);
 
+  // just for debug
+  if (shapeToExtrude.length > 0) {
+    console.log('shapeToExtrude', shapeToExtrude);
+  }
+
+  const extrudeSketch = async (face: Inputs.OCCT.TopoDSFacePointer, sketch: SketchType, length: number) => {
+    if (!bitbybit) {
+      return;
+    }
+
+    const directionVectNumbers = getNormalVectorForPlane(sketch.plane);
+    const directionVect = new THREE.Vector3(directionVectNumbers[0], directionVectNumbers[1], directionVectNumbers[2]);
+    directionVect.setLength(length);
+
+    const extrude = await bitbybit.occt.operations.extrude({
+      shape: face,
+      direction: [directionVect.x, directionVect.y, directionVect.z],
+    });
+    console.log(extrude);
+
+    await downloadStep(extrude);
+  };
+
+  const downloadStep = async (shape: Inputs.OCCT.TopoDSShapePointer) => {
+    if (!bitbybit) {
+      return;
+    }
+
+    await bitbybit.occt.io.saveShapeSTEP({
+      shape: shape,
+      fileName: 'shape.stp',
+      adjustYtoZ: false,
+      tryDownload: true,
+    });
+  };
+
+  const downloadSTL = () => {
+    // Need to use STLExporter from three.js
+    // --> for that the obj needs to be rendered in the scene
+    if (scene) {
+      var exporter = new STLExporter();
+      var str = exporter.parse(scene);
+      var blob = new Blob([str], { type: 'text/plain' });
+      var link = document.createElement('a');
+      link.style.display = 'none';
+      document.body.appendChild(link);
+      link.href = URL.createObjectURL(blob);
+      link.download = 'Scene.stl';
+      link.click();
+    }
+  };
+
   return (
     <>
       {bitbybit &&
-        sketchShapes.map((sketchCycle) => (
+        sketchShapes.map((sketchCycle, index) => (
           <SketchCycleObjectNg key={sketchCycle.face.hash} sketchCycle={sketchCycle} />
         ))}
+
+      {bitbybit && shapeToExtrude.length > 0 && (
+        <R3fHtmlInput
+          position={[0, 0, 0]}
+          inputProps={{
+            type: 'number',
+            size: 5,
+            onKeyDown: async (e) => {
+              if (e.key === 'Enter') {
+                const input = e.target as HTMLInputElement;
+                //console.log('onKeyDown', e, input.value);
+                const value = parseFloat(input.value);
+                if (isNaN(value)) {
+                  console.error('Value was Nan. Cannot add constraint');
+                  input.value = '';
+                  return;
+                }
+
+                // do the work
+                console.log('extruding sketch by', value);
+                await extrudeSketch(shapeToExtrude[0].face, shapeToExtrude[0].sketch, value);
+
+                dispatch(setSketchToExtrude([-1, -1]));
+              }
+            },
+          }}
+        />
+      )}
     </>
   );
 };

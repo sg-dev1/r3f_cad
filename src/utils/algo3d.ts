@@ -474,6 +474,7 @@ export interface SketchCycleType {
   face: Inputs.OCCT.TopoDSFacePointer;
   sketch: SketchType;
   isHidden: boolean;
+  index: number;
 }
 
 export const findCyclesInSketchAndConvertToOcct = async (sketch: SketchType, bitbybit: BitByBitOCCT) => {
@@ -482,6 +483,7 @@ export const findCyclesInSketchAndConvertToOcct = async (sketch: SketchType, bit
   //console.log('cyclesInSketch', cyclesInSketch);
 
   const result: SketchCycleType[] = [];
+  let cycleIndex = 0;
   for (const cycle of cyclesInSketch) {
     // 1) Convert shapes to edges
     const edges = (await Promise.all(
@@ -568,11 +570,13 @@ export const findCyclesInSketchAndConvertToOcct = async (sketch: SketchType, bit
     //const isClosedFace = await bitbybit.occt.shapes.shape.isClosed({ shape: face });
     //console.log('face isClosed', isClosedFace); // returns false
 
-    result.push({ cycle: cycleIn3D, face: face, sketch: sketch, isHidden: false });
+    result.push({ cycle: cycleIn3D, face: face, sketch: sketch, isHidden: false, index: cycleIndex });
 
     // cleanup - don't do this else we get an "Encountered Null Face!" error
     //await bitbybit.occt.deleteShapes({ shapes: [...edges, wire] });
     //await bitbybit.occt.deleteShapes({ shapes: [...edges] });
+
+    cycleIndex++;
   }
 
   return result;

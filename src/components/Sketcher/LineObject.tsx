@@ -30,6 +30,7 @@ import TextObject from './TextObject';
 import { getPlaneAwareSketchPosition, getRotationForPlaneAsQuaternion } from '@/utils/threejs_planes';
 import React from 'react';
 import AngleConstraintObject from './AngleConstraintObject';
+import R3fHtmlInput from '../Utils/R3fHtmlInput';
 
 //   update the data in the redux store as well
 const LineObject = ({
@@ -245,21 +246,18 @@ const LineObject = ({
       )}
 
       {/* Number input for length constraint */}
-      {sketchLengthConstraintLineId === id ? (
-        <Html
+      {sketchLengthConstraintLineId === id && (
+        <R3fHtmlInput
           position={getPlaneAwareSketchPosition(
             sketchCurrentPlane,
             [(start[0] + end[0]) / 2, (start[1] + end[1]) / 2, (start[2] + end[2]) / 2],
             -3,
             -2
           )}
-        >
-          <input
-            type="number"
-            placeholder=""
-            size={5}
-            autoFocus
-            onKeyDown={(e) => {
+          inputProps={{
+            type: 'number',
+            size: 5,
+            onKeyDown: (e) => {
               if (e.key === 'Enter') {
                 const input = e.target as HTMLInputElement;
                 //console.log('onKeyDown', e, input.value);
@@ -290,11 +288,9 @@ const LineObject = ({
 
                 dispatch(setLengthConstraintLineId(-1));
               }
-            }}
-          />
-        </Html>
-      ) : (
-        ''
+            },
+          }}
+        />
       )}
 
       {/* Display a length constraint */}
@@ -315,20 +311,17 @@ const LineObject = ({
       )}
 
       {sketchAngleConstraintLineIds[1] === id && (
-        <Html
+        <R3fHtmlInput
           position={getPlaneAwareSketchPosition(
             sketchCurrentPlane,
             [(start[0] + end[0]) / 2, (start[1] + end[1]) / 2, (start[2] + end[2]) / 2],
             -3,
             -2
           )}
-        >
-          <input
-            type="number"
-            placeholder=""
-            size={5}
-            autoFocus
-            onKeyDown={(e) => {
+          inputProps={{
+            type: 'number',
+            size: 5,
+            onKeyDown: (e) => {
               if (e.key === 'Enter') {
                 const input = e.target as HTMLInputElement;
                 //console.log('onKeyDown', e, input.value);
@@ -365,9 +358,9 @@ const LineObject = ({
 
                 dispatch(setAngleConstraintLineIds([-1, -1]));
               }
-            }}
-          />
-        </Html>
+            },
+          }}
+        />
       )}
 
       {angleConstraints.map((angleConstraint) => {
