@@ -1,7 +1,7 @@
-Priority of improvements (my ranking)
-  - B007
-  - B008  // arbitrary plane awareness
+Priority of improvements (my ranking)  
   - B010  [improvement]
+  - B012  
+  - B008  // arbitrary plane awareness
   - B011  [data persistence, debug]
   - B004
   - B003
@@ -27,18 +27,6 @@ List of Improvements
     - need to build as we go on (must hold parameters of extrudes, boolean operations etc.)
     - for 3D geometry maybe add a new slice (e.g. geom3DSlice.ts) to hold the information
       (similar to sketchSlice)
-
-(B007) Display Sketch in 3D View + Extrude operation
-    - All closed surfaces shall be individually selectable --> to apply an operation (like extrude)
-    - Highlighting is already implemented, selection for the operation is then the 
-      next step
-    - Workflow: 
-       1) Create Sketch
-       2) Go back to 3D Modeller and Sketch is displayed
-       3) Select one/ multiple faces an apply operation (e.g. Extrude --> give a length)
-           e.g. right click on single Face (multiple Face selection) -> Extrude
-       4) 3D Body is created
-    - A history of these operations shall be stored (e.g. also to go back and forth in time)
 
 (B008) Add attachment to Sketches, e.g. where they are located in 3D space
     - (target) Plane representation (currently as string - update when needed):
@@ -77,7 +65,25 @@ List of Improvements
      (has something to do with serialization - not necesarrily connected to 3dMod tool)
      - need to serialize state of app anyways
 
+(B012) Creating and display of 3D objects
+     - as follow up for B007
+     - support of more operations (e.g. union, intersect etc.)
+     - improvement of display --> also visualize the edges
+
+
 Done Improvements
+
+(B007) Display Sketch in 3D View + Extrude operation
+    - All closed surfaces shall be individually selectable --> to apply an operation (like extrude)
+    - Highlighting is already implemented, selection for the operation is then the 
+      next step
+    - Workflow: 
+       1) Create Sketch
+       2) Go back to 3D Modeller and Sketch is displayed
+       3) Select one/ multiple faces an apply operation (e.g. Extrude --> give a length)
+           e.g. right click on single Face (multiple Face selection) -> Extrude
+       4) 3D Body is created
+    - A history of these operations shall be stored (e.g. also to go back and forth in time)
 
 (B008-1) Support of standard planes XY, XZ, and YZ to draw a sketch on
     For a sketch also the Plane should be selectable (X, Y, or Z)

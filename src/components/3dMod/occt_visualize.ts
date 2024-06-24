@@ -2,7 +2,11 @@ import { BitByBitOCCT } from '@bitbybit-dev/occt-worker';
 import { Inputs } from '@bitbybit-dev/occt';
 import { BufferAttribute, BufferGeometry, Group, Mesh, MeshNormalMaterial, Scene } from 'three';
 
-const visualize = async (bitbybitOcct: BitByBitOCCT, shape: Inputs.OCCT.TopoDSShapePointer, precision: number) => {
+export const occtShapeToBufferGeoms = async (
+  bitbybitOcct: BitByBitOCCT,
+  shape: Inputs.OCCT.TopoDSShapePointer,
+  precision: number
+) => {
   const geometries: BufferGeometry[] = [];
   const res: Inputs.OCCT.DecomposedMeshDto = await bitbybitOcct.occt.shapeToMesh({
     shape,
@@ -11,6 +15,7 @@ const visualize = async (bitbybitOcct: BitByBitOCCT, shape: Inputs.OCCT.TopoDSSh
   });
   //console.log('[addShapeToScene] res=', res);
   let meshData = res.faceList.map((face) => {
+    //console.log(face);
     return {
       positions: face.vertex_coord,
       normals: face.normal_coord,
@@ -26,9 +31,12 @@ const visualize = async (bitbybitOcct: BitByBitOCCT, shape: Inputs.OCCT.TopoDSSh
     geometries.push(geometry);
   });
 
+  //console.log(geometries);
+
   return geometries;
 };
 
+/*
 export const faceToMeshData = async (bitbybitOcct: BitByBitOCCT, face: Inputs.OCCT.TopoDSFacePointer) => {
   const res: Inputs.OCCT.DecomposedMeshDto = await bitbybitOcct.occt.shapeToMesh({
     shape: face,
@@ -54,6 +62,7 @@ export const faceToMeshData = async (bitbybitOcct: BitByBitOCCT, face: Inputs.OC
     };
   }
 };
+*/
 
 export const addShapeToScene = async (
   bitbybitOcct: BitByBitOCCT,
@@ -63,7 +72,7 @@ export const addShapeToScene = async (
 ): Promise<Group | null> => {
   //console.log('[addShapeToScene] shape=', shape);
   const material = new MeshNormalMaterial();
-  let geometries = await visualize(bitbybitOcct, shape, precision);
+  let geometries = await occtShapeToBufferGeoms(bitbybitOcct, shape, precision);
 
   if (geometries.length === 0) {
     console.warn('Geometries length is 0. Cannot visualize shape.');

@@ -2,6 +2,7 @@ import { configureStore } from '@reduxjs/toolkit';
 import sketchReducer from './slices/sketchSlice';
 import sketchToolReducer from './slices/sketchToolStateSlice';
 import modellingReducer from './slices/modellingToolStateSlice';
+import geom3dReducer from './slices/geom3dSlice';
 // ...
 
 export const store = configureStore({
@@ -9,6 +10,7 @@ export const store = configureStore({
     sketchs: sketchReducer,
     sketchTool: sketchToolReducer,
     modellingTool: modellingReducer,
+    geom3d: geom3dReducer,
   },
 });
 

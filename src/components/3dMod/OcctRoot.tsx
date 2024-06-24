@@ -13,16 +13,21 @@ import { getNormalVectorForPlane } from '@/utils/threejs_planes';
 import { SketchType } from '@/app/slices/Sketch';
 import { STLExporter } from 'three/examples/jsm/Addons.js';
 import * as THREE from 'three';
+import TopoDSVisualizer from './TopoDSVisualizer';
+import { createGeom3d, select3dGeometries } from '@/app/slices/geom3dSlice';
 
 const OcctRoot = () => {
   const [bitbybit, setBitbybit] = useState<BitByBitOCCT>();
 
-  const { scene, gl, camera } = useThree();
+  //const { scene } = useThree();
 
   const dispatch = useAppDispatch();
   const sketchs = useAppSelector(selectSketchs);
-  const [sketchToExtrude, cycleIndex] = useAppSelector(selectSketchToExtrude);
   const [sketchShapes, setSketchShapes] = useState<SketchCycleType[]>([]);
+  const geometries3d = useAppSelector(select3dGeometries);
+  const [shapes3d, setShapes3d] = useState<Inputs.OCCT.TopoDSShapePointer[]>([]);
+
+  const [sketchToExtrude, cycleIndex] = useAppSelector(selectSketchToExtrude);
   const shapeToExtrude = sketchShapes.filter(
     (shape) => shape.sketch.id === sketchToExtrude && shape.index === cycleIndex
   );
@@ -87,6 +92,19 @@ const OcctRoot = () => {
     createSketchShapes(bitbybit);
   }, [sketchs]);
 
+  useEffect(() => {
+    createGeom3dShapes(bitbybit);
+  }, [sketchShapes, geometries3d]);
+
+  /* This is only needed if adding a new 3d feature
+     should be handled separately
+  useEffect(() => {
+    //
+  }, [geometries3d]);
+  */
+
+  // ---
+
   const createSketchShapes = async (bitbybit?: BitByBitOCCT) => {
     if (!bitbybit) {
       return;
@@ -116,6 +134,34 @@ const OcctRoot = () => {
     //console.log('shapes', shapes);
 
     setSketchShapes(shapes);
+  };
+
+  const createGeom3dShapes = async (bitbybit?: BitByBitOCCT) => {
+    if (!bitbybit) {
+      return;
+    }
+
+    const finalShapes: Inputs.OCCT.TopoDSShapePointer[] = [];
+    for (const geom of geometries3d) {
+      const sketchShape = sketchShapes.filter(
+        // only support one modelling operation
+        (shape) =>
+          shape.sketch.id === geom.modellingOperations[0].sketchRef[0] &&
+          shape.index === geom.modellingOperations[0].sketchRef[1]
+      );
+      const length = geom.modellingOperations[0].distance;
+      console.log('[createGeom3dShapes]', sketchShape);
+      if (sketchShape.length > 0) {
+        const finalShape = await extrudeSketch(sketchShape[0].face, sketchShape[0].sketch, length, false);
+        if (finalShape) {
+          finalShapes.push(finalShape);
+        }
+      } else {
+        console.warn('Sketchshape was undefined for geom ', geom);
+      }
+    }
+
+    setShapes3d(finalShapes);
   };
 
   const init = async () => {
@@ -153,11 +199,18 @@ const OcctRoot = () => {
   //console.log('[OcctRoot] sketchShapes', sketchShapes);
 
   // just for debug
+  /*
   if (shapeToExtrude.length > 0) {
     console.log('shapeToExtrude', shapeToExtrude);
   }
+  */
 
-  const extrudeSketch = async (face: Inputs.OCCT.TopoDSFacePointer, sketch: SketchType, length: number) => {
+  const extrudeSketch = async (
+    face: Inputs.OCCT.TopoDSFacePointer,
+    sketch: SketchType,
+    length: number,
+    addToScene: boolean
+  ) => {
     if (!bitbybit) {
       return;
     }
@@ -170,9 +223,20 @@ const OcctRoot = () => {
       shape: face,
       direction: [directionVect.x, directionVect.y, directionVect.z],
     });
-    console.log(extrude);
 
-    await downloadStep(extrude);
+    /*
+    const extrudeFace = await bitbybit.occt.shapes.face.getFace({ shape: extrude, index: 0 });
+    const shell = await bitbybit.occt.shapes.shell.sewFaces({ shapes: [extrudeFace, face], tolerance: 1e-7 });
+    const thick = await bitbybit.occt.operations.makeThickSolidSimple({ shape: shell, offset: -0.01 });
+    */
+    //console.log(extrude);
+
+    if (addToScene) {
+      setShapes3d([...shapes3d, extrude]);
+    }
+
+    //await downloadStep(extrude);
+    return extrude;
   };
 
   const downloadStep = async (shape: Inputs.OCCT.TopoDSShapePointer) => {
@@ -188,6 +252,7 @@ const OcctRoot = () => {
     });
   };
 
+  /*
   const downloadSTL = () => {
     // Need to use STLExporter from three.js
     // --> for that the obj needs to be rendered in the scene
@@ -203,13 +268,12 @@ const OcctRoot = () => {
       link.click();
     }
   };
+  */
 
   return (
     <>
       {bitbybit &&
-        sketchShapes.map((sketchCycle, index) => (
-          <SketchCycleObjectNg key={sketchCycle.face.hash} sketchCycle={sketchCycle} />
-        ))}
+        sketchShapes.map((sketchCycle, index) => <SketchCycleObjectNg key={index} sketchCycle={sketchCycle} />)}
 
       {bitbybit && shapeToExtrude.length > 0 && (
         <R3fHtmlInput
@@ -228,9 +292,9 @@ const OcctRoot = () => {
                   return;
                 }
 
-                // do the work
-                console.log('extruding sketch by', value);
-                await extrudeSketch(shapeToExtrude[0].face, shapeToExtrude[0].sketch, value);
+                // Store the value of the extrude (e.g. the 3d model data) in redux,
+                // visualization is done separately
+                dispatch(createGeom3d({ sketchRef: [sketchToExtrude, cycleIndex], distance: value }));
 
                 dispatch(setSketchToExtrude([-1, -1]));
               }
@@ -238,6 +302,9 @@ const OcctRoot = () => {
           }}
         />
       )}
+
+      {bitbybit &&
+        shapes3d.map((shape, index) => <TopoDSVisualizer key={index} bitbybitOcct={bitbybit} shape={shape} />)}
     </>
   );
 };
