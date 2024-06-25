@@ -289,6 +289,8 @@ const OcctRoot = () => {
                 if (isNaN(value)) {
                   console.error('Value was Nan. Cannot add constraint');
                   input.value = '';
+                  // make the input field disappear
+                  dispatch(setSketchToExtrude([-1, -1]));
                   return;
                 }
 

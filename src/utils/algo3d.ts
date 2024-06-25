@@ -341,7 +341,7 @@ const findConnectedLinesInSketch = (sketch: SketchType) => {
   // The shape drawing needs the points to be sorted so one line segment / arc follows the other
   const flattenShapeCycle2: FlattenShapeSubset[][] = [];
   flattenShapeCycle.forEach((cycle) => {
-    if (cycle.length === 1 || cycle.length === 2) {
+    if (cycle.length === 1) {
       // trivial case, do not have to run the algorithm
       flattenShapeCycle2.push(cycle);
       return;
@@ -396,6 +396,7 @@ const findConnectedLinesInSketch = (sketch: SketchType) => {
               newCycle.push(arc);
               endPoint = arc.end;
             } else {
+              //console.log('need to reverse arc', arc);
               // we need to reverse the arc
               newCycle.push(arc.reverse());
               endPoint = arc.start;

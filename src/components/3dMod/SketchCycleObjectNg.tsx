@@ -3,7 +3,7 @@ import { setSketchToExtrude } from '@/app/slices/modellingToolStateSlice';
 import { ArcInlinePointType } from '@/app/types/ArcType';
 import { CircleInlinePointType } from '@/app/types/CircleType';
 import { Line3DInlinePointType } from '@/app/types/Line3DType';
-import { Point3DInlineType } from '@/app/types/Point3DType';
+import { Point3DInlineType, point3DInlineEquals } from '@/app/types/Point3DType';
 import { SHAPE3D_TYPE } from '@/app/types/ShapeType';
 import { SketchCycleType } from '@/utils/algo3d';
 import { getPointU2, getPointV2, getRotationForPlaneAsQuaternion } from '@/utils/threejs_planes';
@@ -86,6 +86,8 @@ const SketchCycleObjectNg = ({ sketchCycle }: SketchCycleObjectNgProps) => {
               console.warn('Should not get here. Type t ' + shape.t + ' not supported');
             }
           });
+        } else {
+          console.warn('firstPoint was null.');
         }
       } else {
         // CIRCLE
