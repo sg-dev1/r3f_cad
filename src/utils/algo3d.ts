@@ -1,5 +1,5 @@
 import { SketchType } from '@/app/slices/Sketch';
-import { Arc, Circle, Point, Segment } from '@flatten-js/core';
+import { Arc, Circle, Point, Segment, Vector } from '@flatten-js/core';
 import { convert2DPointTo3D, getNormalVectorForPlane, getPointU, getPointV } from './threejs_planes';
 import { BitByBitOCCT } from '@bitbybit-dev/occt-worker';
 import { Inputs } from '@bitbybit-dev/occt';
@@ -8,7 +8,9 @@ import { Line3DInlinePointType } from '@/app/types/Line3DType';
 import { ArcInlinePointType } from '@/app/types/ArcType';
 import { SHAPE3D_TYPE } from '@/app/types/ShapeType';
 
+type FlattenPointsMapType = { [key: number]: Point };
 type FlattenShapeSubset = Segment | Circle | Arc;
+type FlattenShapeStruct = { id: number; shape: FlattenShapeSubset };
 type CadTool3DShapeSubset = Line3DInlinePointType | CircleInlinePointType | ArcInlinePointType;
 
 const findConnectedLinesInSketch = (sketch: SketchType) => {
@@ -16,14 +18,12 @@ const findConnectedLinesInSketch = (sketch: SketchType) => {
   // <Step 1> - find all intersection points of shapes in the Sketch
   //
   // Convert points and sketch shapes (Lines, Circles) into flatten shapes
-  type FlattenPointsMapType = { [key: number]: Point };
   const flattenPointsMap: FlattenPointsMapType = {};
   sketch.points.forEach((point) => {
     //console.log('point', point);
     flattenPointsMap[point.id] = new Point(getPointU(sketch.plane, point), getPointV(sketch.plane, point));
   });
 
-  type FlattenShapeStruct = { id: number; shape: FlattenShapeSubset };
   const flattenShapes: FlattenShapeStruct[] = sketch.lines.map((line) => ({
     id: line.id,
     shape: new Segment(flattenPointsMap[line.p1_id], flattenPointsMap[line.p2_id]),
@@ -186,7 +186,6 @@ const findConnectedLinesInSketch = (sketch: SketchType) => {
   //
   // <Step 2> - get all cycles in the Sketch
   //
-  const flattenShapeCycle: FlattenShapeSubset[][] = [];
   // 1) Generate pointsMap
   currentId = 1; // node 0 is used as "dummy start node", therefore use 1
   const pointsMap: FlattenPointsMapType = {};
@@ -224,7 +223,388 @@ const findConnectedLinesInSketch = (sketch: SketchType) => {
   //console.log('pointsMap', pointsMap);
   //console.log('pointStringMap', pointStringMap);
 
-  const N = currentId; // number of points + 1 (first one is not used by algorithm)
+  return extract_regions(flattenPointToString, pointStringMap, pointsMap, finalShapes);
+
+  // keep the old implementation for now ...
+  //const N = currentId; // number of points + 1 (first one is not used by algorithm)
+  //console.log('Number of points:' + N);
+  //return find_cycles_simple(flattenPointToString, pointStringMap, finalShapes, N);
+};
+
+// https://sci.bban.top/pdf/10.1016/0167-8655%252893%252990104-l.pdf
+const extract_regions = (
+  flattenPointToString: (point: Point) => string,
+  pointStringMap: Map<string, number>,
+  pointsMap: FlattenPointsMapType,
+  finalShapes: FlattenShapeStruct[]
+) => {
+  type FlattenShapeSubsetNoCircle = Segment | Arc;
+  const flattenShapeCycle: FlattenShapeSubset[][] = [];
+
+  //
+  // Phase zero: Build graph with list of undirected edges of arbitrary order
+  //
+  const getIdOfPoint = (point: Point) => {
+    const strRep = flattenPointToString(point);
+    const id = pointStringMap.get(strRep);
+    if (id !== undefined) {
+      return id;
+    } else {
+      return -1;
+    }
+  };
+  const getPointForId = (id: number) => {
+    if (id in pointsMap) {
+      return pointsMap[id];
+    } else {
+      return null;
+    }
+  };
+  const edgeCoordsToString = (c1: number, c2: number) => {
+    return c1 + ',' + c2;
+  };
+  const graph: [number, number][] = [];
+  const shapeMap: { [key: string]: FlattenShapeSubsetNoCircle } = {};
+  let shapesInGraph = 0;
+  finalShapes.forEach((shapeStruct) => {
+    if (shapeStruct.shape instanceof Segment) {
+      const segment = shapeStruct.shape as Segment;
+      const startPointId = getIdOfPoint(segment.ps);
+      const endPointId = getIdOfPoint(segment.pe);
+      graph.push([startPointId, endPointId]);
+      shapeMap[edgeCoordsToString(startPointId, endPointId)] = segment;
+      shapesInGraph++;
+    } else if (shapeStruct.shape instanceof Circle) {
+      // for circle just store it into the result variable (it is already a cycle with single element)
+      flattenShapeCycle.push([shapeStruct.shape]);
+    } else if (shapeStruct.shape instanceof Arc) {
+      const arc = shapeStruct.shape as Arc;
+      const startPointId = getIdOfPoint(arc.start);
+      const endPointId = getIdOfPoint(arc.end);
+      const middle = arc.middle();
+      const middlePointId = getIdOfPoint(middle);
+      graph.push([startPointId, middlePointId]);
+      shapeMap[edgeCoordsToString(startPointId, middlePointId)] = arc;
+      graph.push([middlePointId, endPointId]);
+      shapeMap[edgeCoordsToString(middlePointId, endPointId)] = arc;
+      shapesInGraph++;
+    }
+  });
+
+  // early exit
+  if (shapesInGraph === 0) {
+    console.info('No segment/ arc shapes in the graph. Extract regions algorithm need not be run.');
+    return flattenShapeCycle;
+  }
+
+  console.log('ZERO: graph', graph);
+
+  //
+  // Phase one: finding all the wedges
+  //
+  // Step 1 (duplicate each undirected edge)
+  const graph2: [number, number][] = [];
+  const edgeMap: { [key: string]: Segment } = {};
+  graph.forEach(([v1, v2]) => {
+    const shapeCoordStr = edgeCoordsToString(v1, v2);
+    const shape = shapeMap[shapeCoordStr];
+    graph2.push([v1, v2]);
+    graph2.push([v2, v1]);
+    const reverseShapeCoordStr = edgeCoordsToString(v2, v1);
+    if (shape instanceof Segment) {
+      edgeMap[shapeCoordStr] = shape;
+      edgeMap[reverseShapeCoordStr] = shape.reverse();
+    } else {
+      // Arc
+      const p1 = getPointForId(v1);
+      const p2 = getPointForId(v2);
+      if (p1 !== null && p2 !== null) {
+        edgeMap[shapeCoordStr] = new Segment(p1, p2);
+        edgeMap[reverseShapeCoordStr] = new Segment(p2, p1);
+      } else {
+        console.warn('P1 or p2 for ids ', v1, ' or ', v2, ' was null.', p1, p2);
+      }
+    }
+  });
+
+  console.log('---PHASE 1---');
+  console.log('graph2', graph2);
+
+  // Step 2 (add angle theta)
+  const graphWithAngle: [number, number, number][] = [];
+  graph2.forEach(([v1, v2]) => {
+    const edge = edgeMap[edgeCoordsToString(v1, v2)];
+    const start = edge.start;
+    const endBase = new Point(start.x + 10, start.y); // horizontal on the right of v1
+    //     v2
+    //    /
+    //  v1 ---- base
+    const baseVector = new Vector(start, endBase);
+    const edgeVector = new Vector(start, edge.end);
+    const theta = baseVector.angleTo(edgeVector);
+    //console.log('--step2--', v1, v2, theta);
+    graphWithAngle.push([v1, v2, theta]);
+  });
+
+  // sorting is done in place, therefore this print shows the same as below
+  //console.log('--step2--', graphWithAngle);
+
+  // Step 3 (sort list graphWithAngle ascending with v1 as primary and theta as seconardy key)
+  const cmpFn = (a: [number, number, number], b: [number, number, number]) => {
+    if (a[0] > b[0]) {
+      return 1;
+    } else if (b[0] > a[0]) {
+      return -1;
+    } else {
+      // check 2ndary key
+      if (a[2] > b[2]) {
+        return 1;
+      } else if (b[2] > a[2]) {
+        return -1;
+      } else {
+        return 0;
+      }
+    }
+  };
+  graphWithAngle.sort(cmpFn);
+  console.log('--step3-- (after sort)', graphWithAngle);
+
+  // Step 4 (scan groups in sorted list to build wedges)
+  const wedges: [number, number, number][] = [];
+  const [entry0, ...graphWithAngleRest] = graphWithAngle;
+  let group = entry0[0];
+  let prevElem = entry0;
+  let firstElem = entry0;
+  graphWithAngleRest.forEach(([v1, v2, theta]) => {
+    //console.log('v1', v1, 'v2', v2, 'theta', theta);
+    if (v1 === group) {
+      const wedge: [number, number, number] = [v2, v1, prevElem[1]];
+      //console.log('group is v1', group, wedge);
+      wedges.push(wedge);
+    } else {
+      // new group
+      const wedge: [number, number, number] = [firstElem[1], firstElem[0], prevElem[1]];
+      wedges.push(wedge);
+      group = v1;
+      firstElem = [v1, v2, theta];
+      //console.log('next group, last wedge', wedge);
+    }
+    prevElem = [v1, v2, theta];
+  });
+
+  // add the very last element
+  const wedge: [number, number, number] = [firstElem[1], firstElem[0], prevElem[1]];
+  wedges.push(wedge);
+
+  // sorting is done in place, therefore this print shows the same as below
+  //console.log('--step4--- (wedges)', wedges);
+
+  //
+  // Phase two: grouping the wedges into regions
+  //
+  // Step 1: sort the wedge list
+  const cmpFn2 = (a: [number, number, number], b: [number, number, number]) => {
+    if (a[0] > b[0]) {
+      return 1;
+    } else if (b[0] > a[0]) {
+      return -1;
+    } else {
+      // check 2ndary key
+      if (a[1] > b[1]) {
+        return 1;
+      } else if (b[1] > a[1]) {
+        return -1;
+      } else {
+        return 0;
+      }
+    }
+  };
+  wedges.sort(cmpFn2);
+  console.log('---PHASE 2---');
+  console.log('--step1--- (sorted wedges)', wedges);
+
+  // Step 2: mark all wedges as unused
+  const used = Array(wedges.length).fill(0);
+
+  // Step 3: Find next unused wedge
+  //const [firstWedge, ...otherWedges] = wedges;
+  const allRegions: [number, number, number][][] = [];
+  let nextUnusedWedge = 0;
+
+  while (nextUnusedWedge !== -1) {
+    let prev = wedges[nextUnusedWedge];
+    let first = wedges[nextUnusedWedge];
+    const regionList = [prev];
+    used[nextUnusedWedge] = 1;
+
+    do {
+      // Step 4: binary search
+      const idx = binary_search(wedges, prev[1], prev[2]);
+      if (idx === -1) {
+        // this should never happen
+        console.error('binary_search returned -1 for', prev[1], prev[2], ' This should not happend.');
+        break;
+      }
+      regionList.push(wedges[idx]);
+      prev = wedges[idx];
+      used[idx] = 1;
+      //console.log('--idx', idx);
+      // Step 5: contiguous check
+    } while (!(prev[1] === first[0] && prev[2] === first[1]));
+
+    allRegions.push(regionList);
+    // find next unused wedge
+    nextUnusedWedge = used.findIndex((value) => value === 0);
+    //console.log('--nextUnusedWedge', nextUnusedWedge);
+  }
+
+  console.log('allRegions', allRegions);
+
+  //
+  // Finally: convert result to FlattenShapeSubset[][]
+  //
+  allRegions.forEach((region) => {
+    const shapeSet = new Set<FlattenShapeSubsetNoCircle>();
+    const [firstRegionEntry, ...restOfRegion] = region;
+    let prevPointId = firstRegionEntry[1];
+    const edges: [number, number][] = [];
+    restOfRegion.forEach(([v1, v2, v3]) => {
+      edges.push([prevPointId, v2]);
+      prevPointId = v2;
+    });
+    edges.push([prevPointId, firstRegionEntry[1]]);
+
+    edges.forEach(([v1, v2]) => {
+      let shape = shapeMap[edgeCoordsToString(v1, v2)];
+      if (shape === undefined) {
+        shape = shapeMap[edgeCoordsToString(v2, v1)];
+      }
+      //console.log(v1, v2, shape);
+      shapeSet.add(shape);
+    });
+
+    flattenShapeCycle.push(Array.from(shapeSet));
+  });
+
+  console.log('--- flattenShapeCycle', flattenShapeCycle);
+  /*
+  flattenShapeCycle.forEach((cycle) => {
+    console.log('New cycle:');
+    cycle.forEach((shape) => {
+      if (shape instanceof Segment) {
+        const seg = shape as Segment;
+        console.log('\tSegment(', seg.start, ',' + seg.end, ')');
+      } else if (shape instanceof Arc) {
+        const arc = shape as Arc;
+        console.log('\tArc(', arc.start, ',', arc.end, ')');
+      } else {
+        const circle = shape as Circle;
+        console.log('\tCircle: ', circle);
+      }
+    });
+  });
+  */
+
+  // Need to reverse (?sort some of the Arcs/ Segments)
+  const flattenShapeCycle2: FlattenShapeSubset[][] = [];
+  flattenShapeCycle.forEach((cycle) => {
+    //console.log('-new cycle');
+    const [firstShape, ...cycleRest] = cycle;
+    if (firstShape instanceof Circle) {
+      flattenShapeCycle2.push([firstShape]);
+    } else {
+      const newCycle: FlattenShapeSubset[] = [firstShape];
+      //const firstStartPt = (firstShape as FlattenShapeSubsetNoCircle).start;
+      let prevPt = (firstShape as FlattenShapeSubsetNoCircle).end;
+      let prevIdx = 0;
+      cycleRest.forEach((shape) => {
+        const startPt = (shape as FlattenShapeSubsetNoCircle).start;
+        const endPt = (shape as FlattenShapeSubsetNoCircle).end;
+        if (!prevPt.equalTo(startPt)) {
+          if (!prevPt.equalTo(endPt)) {
+            //console.warn('Endpoints do not match. This leads to trouble.', prevPt, endPt, startPt);
+            //console.log('\tprev rev', prevIdx);
+            newCycle[prevIdx] = (newCycle[prevIdx] as FlattenShapeSubsetNoCircle).reverse();
+          }
+
+          // reverse needed
+          const newShape = (shape as FlattenShapeSubsetNoCircle).reverse();
+          newCycle.push(newShape);
+          prevPt = newShape.end;
+          //console.log('\t---- rev', newShape.start, newShape.end);
+        } else {
+          // use shape as is
+          newCycle.push(shape);
+          prevPt = endPt;
+          //console.log('\t--no rev', startPt, endPt);
+        }
+        prevIdx++;
+      });
+      flattenShapeCycle2.push(newCycle);
+    }
+  });
+
+  console.log('--- flattenShapeCycle2', flattenShapeCycle2);
+  /*
+  flattenShapeCycle2.forEach((cycle) => {
+    console.log('New cycle:');
+    cycle.forEach((shape) => {
+      if (shape instanceof Segment) {
+        const seg = shape as Segment;
+        console.log('\tSegment(', seg.start, ',' + seg.end, ')');
+      } else if (shape instanceof Arc) {
+        const arc = shape as Arc;
+        console.log('\tArc(', arc.start, ',', arc.end, ')');
+      } else {
+        const circle = shape as Circle;
+        console.log('\tCircle: ', circle);
+      }
+    });
+  });
+  */
+
+  // TODO one element containing the whole shape needs to be removed (maybe in the middle?)
+
+  return flattenShapeCycle2;
+};
+
+const binary_search = (arr: [number, number, number][], v1: number, v2: number) => {
+  let low = 0;
+  let high = arr.length;
+
+  while (low <= high) {
+    const mid = Math.floor((low + high) / 2);
+
+    if (arr[mid][0] === v1 && arr[mid][1] === v2) {
+      // return the index
+      return mid;
+    } else if (arr[mid][0] < v1) {
+      low = mid + 1; // discard left half
+    } else if (arr[mid][0] > v1) {
+      high = mid - 1; // discard right half
+    } else {
+      // 2ndary key
+      if (arr[mid][1] < v2) {
+        low = mid + 1; // discard left half
+      } else {
+        high = mid - 1; // discard right half
+      }
+    }
+  }
+
+  return -1; // not found
+};
+
+// Simple algorithm using dfs_cycle to find cycles in graph
+// Has the downside that it does not find all cycles...
+// Therefore it needs to be improved.
+const find_cycles_simple = (
+  flattenPointToString: (point: Point) => string,
+  pointStringMap: Map<string, number>,
+  finalShapes: FlattenShapeStruct[],
+  N: number
+) => {
+  const flattenShapeCycle: FlattenShapeSubset[][] = [];
   //console.log('Number of points:' + N);
 
   // 2) Build the graph (stored as array of adjacency lists)
