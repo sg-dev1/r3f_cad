@@ -853,6 +853,7 @@ const dfs_cycle = (graph: number[][], u: number, p: number, color: number[], par
 export interface SketchCycleType {
   cycle: CadTool3DShapeSubset[];
   face: Inputs.OCCT.TopoDSFacePointer;
+  faceArea: number;
   sketch: SketchType;
   isHidden: boolean;
   index: number;
@@ -948,10 +949,19 @@ export const findCyclesInSketchAndConvertToOcct = async (sketch: SketchType, bit
     // 3) Convert wires to faces
     const face = await bitbybit.occt.shapes.face.createFaceFromWire({ shape: wire, planar: true });
 
+    const faceArea = await bitbybit.occt.shapes.face.getFaceArea({ shape: face });
+
     //const isClosedFace = await bitbybit.occt.shapes.shape.isClosed({ shape: face });
     //console.log('face isClosed', isClosedFace); // returns false
 
-    result.push({ cycle: cycleIn3D, face: face, sketch: sketch, isHidden: false, index: cycleIndex });
+    result.push({
+      cycle: cycleIn3D,
+      face: face,
+      faceArea: faceArea,
+      sketch: sketch,
+      isHidden: false,
+      index: cycleIndex,
+    });
 
     // cleanup - don't do this else we get an "Encountered Null Face!" error
     //await bitbybit.occt.deleteShapes({ shapes: [...edges, wire] });
@@ -960,5 +970,15 @@ export const findCyclesInSketchAndConvertToOcct = async (sketch: SketchType, bit
     cycleIndex++;
   }
 
-  return result;
+  // remove element with max area
+  const maxIdx = result.reduce(
+    (maxIndex, elem, i, result) => (elem.faceArea > result[maxIndex].faceArea ? i : maxIndex),
+    0
+  );
+  const newResult = result.filter((_, index) => index !== maxIdx);
+  //console.log('newResult', newResult, 'result', result, 'maxIdx', maxIdx);
+  // cleanup in occt
+  await bitbybit.occt.deleteShapes({ shapes: [result[maxIdx].face] });
+
+  return newResult;
 };

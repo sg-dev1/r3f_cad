@@ -1,5 +1,6 @@
 Priority of improvements (my ranking)
 // MVP
+  - 026 [display bug]
   - 025 [backend, anoying bug]
   - 004 [data persistence]
 
@@ -66,6 +67,10 @@ List of Improvements
       - Keep changes from previous run
       - Compare it with this run
       --> if swapped points detected - discard the change
+
+(026) If drawing points too far away from the coordinate cross
+      they are only visible when zooming out quite far
+      - seems to be an issue with camera settings
 
 
 Done Improvements

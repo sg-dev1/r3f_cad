@@ -1,8 +1,8 @@
-Priority of improvements (my ranking)  
-  - B010  [improvement]
+Priority of improvements (my ranking)
   - B012  
   - B008  // arbitrary plane awareness
   - B011  [data persistence, debug]
+  - B013
   - B004
   - B003
 
@@ -58,9 +58,6 @@ List of Improvements
           (these rotations should be around origin, an offset may need to be considered separately,
            e.g. need to use the position)
 
-(B010) Algorithm finding cycles is not 100% reliable
-     - not finding all possible cycles, some are omitted
-
 (B011) Debug tool s.t. a current state of application can be saved and later on restored
      (has something to do with serialization - not necesarrily connected to 3dMod tool)
      - need to serialize state of app anyways
@@ -70,8 +67,20 @@ List of Improvements
      - support of more operations (e.g. union, intersect etc.)
      - improvement of display --> also visualize the edges
 
+(B013) Issue with current handling of bitbybit
+     -> should be created once upon first opening of page and then reused
+     -> currently it seems to aquire more and more memory --> memory leak
+     -> already triggered an memory issue after the application was running for a long time
+     Changes needed:
+       - Use an app global instance of bitbybit
+       - Properly delete shapes created using bitbybit.occt.deleteShapes()
+     - Is there a way to profile the memory usage of an Web Assembly?
+
 
 Done Improvements
+
+(B010) Algorithm finding cycles is not 100% reliable
+     - not finding all possible cycles, some are omitted
 
 (B007) Display Sketch in 3D View + Extrude operation
     - All closed surfaces shall be individually selectable --> to apply an operation (like extrude)

@@ -85,6 +85,8 @@ const OcctRoot = () => {
   // Note: Currently the init() needs to be re called when coming back from Sketcher
   // Most likely this is because this component needs to be mounted again
   useEffect(() => {
+    console.log('---bitbybit', bitbybit);
+    console.log('---sketchShapes', sketchShapes);
     init();
   }, []);
 
