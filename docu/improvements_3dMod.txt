@@ -1,9 +1,9 @@
 Priority of improvements (my ranking)
-  - B012  
+  - B012  // improvement, more features (3d geom tools)
   - B008  // arbitrary plane awareness
   - B011  [data persistence, debug]
   - B013
-  - B004
+  - B004  [data model] - updated by solving other tickets
   - B003
 
 

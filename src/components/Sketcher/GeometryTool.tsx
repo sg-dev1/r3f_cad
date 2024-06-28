@@ -580,7 +580,8 @@ const GeometryTool = forwardRef<any, any>(({}: GeometryToolProps, ref) => {
         );
       })}
 
-      <Points>
+      {/* https://discourse.threejs.org/t/parts-of-glb-object-disappear-in-certain-angles-and-zoom/21295/7 */}
+      <Points frustumCulled={false}>
         <pointsMaterial vertexColors size={8} />
         {sketchPoints.map((point) => {
           //console.log('id', point.id, 'point', point);

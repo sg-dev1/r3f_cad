@@ -1,11 +1,10 @@
 Priority of improvements (my ranking)
 // MVP
-  - 026 [display bug]
   - 025 [backend, anoying bug]
   - 004 [data persistence]
+  - 020 [UI improvement]
 
 // Later
-  - 020 [UI improvement]
   - 009 [UI improvement]
   - 008 [settings]
   - 022 [functionality - constraints]
@@ -68,12 +67,12 @@ List of Improvements
       - Compare it with this run
       --> if swapped points detected - discard the change
 
+
+Done Improvements
+
 (026) If drawing points too far away from the coordinate cross
       they are only visible when zooming out quite far
       - seems to be an issue with camera settings
-
-
-Done Improvements
 
 (001) Improvements of labels drawn on sketch (mainly includes Constraints)
     - Symbols for horizontal, vertical constraint

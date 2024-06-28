@@ -286,6 +286,8 @@ const SketcherView = () => {
               //camera={{ zoom: 1, position: [0, 0, 200], top: 200, bottom: -200, left: 200, right: -200, near: 1, far: 2000 }}
               camera={{
                 zoom: 2,
+                near: 0.01,
+                far: 1000,
                 position: getCameraPositionForPlane(sketchCurrentPlane),
                 // it seems that for the camera no rotation is needed ...
                 //quaternion: getRotationForPlaneAsQuaternion(sketchCurrentPlane),
