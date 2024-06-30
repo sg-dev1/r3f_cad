@@ -1,3 +1,4 @@
+/** This library contains default theme configuration for antd. */
 import type { ThemeConfig } from 'antd';
 //import localFont from 'next/font/local';
 

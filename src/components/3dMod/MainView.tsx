@@ -1,3 +1,4 @@
+/** This component contains the main view for the 3D modelling tool. */
 'use client';
 
 import React, { useState } from 'react';

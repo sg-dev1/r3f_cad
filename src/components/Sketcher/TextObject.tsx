@@ -1,3 +1,4 @@
+/** This component contains the drawing functionality for text objects in the sketcher tool. */
 import React, { useState } from 'react';
 import { Text } from '@react-three/drei';
 import { Vector3Tuple } from 'three';

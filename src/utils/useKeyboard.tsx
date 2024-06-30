@@ -1,4 +1,7 @@
-// https://sbcode.net/react-three-fiber/custom-hooks/
+/** This hook contains functionality handle keyboard events in three.js.
+ *
+ * https://sbcode.net/react-three-fiber/custom-hooks/
+ */
 import { useEffect, useState } from 'react';
 
 type KeyMapType = {

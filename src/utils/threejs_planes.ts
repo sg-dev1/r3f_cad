@@ -1,3 +1,4 @@
+/** This library contains helper functionality to work with three.js planes. */
 import { Point3DInlineType } from '@/app/types/Point3DType';
 import * as THREE from 'three';
 

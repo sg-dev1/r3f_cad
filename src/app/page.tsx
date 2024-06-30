@@ -1,3 +1,4 @@
+/** This component contains main page of the application. */
 'use client';
 
 import { ConfigProvider } from 'antd';

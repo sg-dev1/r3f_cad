@@ -1,3 +1,4 @@
+/** This component is needed for styling of antd components. */
 'use client';
 
 import React from 'react';

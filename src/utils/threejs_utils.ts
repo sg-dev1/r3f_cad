@@ -1,3 +1,4 @@
+/** This library contains helper functionality for three.js. */
 import * as THREE from 'three';
 import { SKETCH_PLANE_MAP } from './threejs_planes';
 

@@ -1,3 +1,4 @@
+/** This library contains the types used to represent arcs in the application. */
 import { Point3DInlineType } from './Point3DType';
 import { SHAPE3D_TYPE } from './ShapeType';
 

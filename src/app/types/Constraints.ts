@@ -1,14 +1,18 @@
+/** This library contains the types to represent constraints in the application. */
 export interface ConstraintType {
   id: number; // integer id unique among constraints
   t: SlvsConstraints; // constraint type
   v: ConstraintValueType;
 }
 
-// Constraint value, format: [<valA>, <ptA>, <ptB>, <entityA>, <entityB>]
-//  - <ptA>, <ptB>, <entityA>, <entityB> are integer
-//  - <ptA>, <ptB> may also be the string literal "zero"
+/**
+ * Constraint value, format: [<valA>, <ptA>, <ptB>, <entityA>, <entityB>]
+ *   - <ptA>, <ptB>, <entityA>, <entityB> are integer
+ *   - <ptA>, <ptB> may also be the string literal "zero"
+ */
 export type ConstraintValueType = (number | 'zero')[];
 
+/** This enum represents all constraints available in solvespace. */
 export enum SlvsConstraints {
   SLVS_C_POINTS_COINCIDENT = 100000,
   SLVS_C_PT_PT_DISTANCE = 100001,

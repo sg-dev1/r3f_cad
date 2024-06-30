@@ -1,3 +1,4 @@
+/** This library contains the types used to represent points in the application. */
 import { floatNumbersEqual } from '@/utils/utils';
 import { Vector3Like } from 'three';
 

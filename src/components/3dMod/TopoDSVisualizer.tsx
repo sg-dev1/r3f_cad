@@ -1,3 +1,4 @@
+/** This component contains the main geometry drawing functionality of occt 3D geometry. */
 import React, { useEffect, useState } from 'react';
 import { BitByBitOCCT } from '@bitbybit-dev/occt-worker';
 import { Inputs } from '@bitbybit-dev/occt';

@@ -1,3 +1,5 @@
+/** This library contains the type and logic for handling 3D geometry built by modelling operations.
+ */
 export interface Geom3dType {
   id: number;
   name: string;

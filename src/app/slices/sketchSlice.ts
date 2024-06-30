@@ -1,3 +1,4 @@
+/** This redux slice holds state for handling sketches. */
 import { createAsyncThunk, createSlice, PayloadAction } from '@reduxjs/toolkit';
 import type { RootState } from '../../app/store';
 import { Point3DType } from '../types/Point3DType';

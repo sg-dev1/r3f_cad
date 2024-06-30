@@ -1,3 +1,4 @@
+/** This component contains a list of all sketches presented to the user in the 3D modelling tool. */
 import { useAppDispatch, useAppSelector } from '@/app/hooks';
 import { deleteSketch, selectSketchs, setActiveSketch } from '@/app/slices/sketchSlice';
 import { DeleteOutlined, EditOutlined } from '@ant-design/icons';

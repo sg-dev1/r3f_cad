@@ -1,3 +1,4 @@
+/** This hook contains functionality to get points for a 2D circle in 3D space. */
 import { CircleInlinePointType } from '@/app/types/CircleType';
 import { Point3DInlineType } from '@/app/types/Point3DType';
 import { useMemo } from 'react';

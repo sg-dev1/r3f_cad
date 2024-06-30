@@ -1,3 +1,4 @@
+/** This library contains utility functionality for logging. */
 var log = console.log;
 
 const custom_log = function () {

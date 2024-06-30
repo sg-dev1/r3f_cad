@@ -1,7 +1,6 @@
-//
-// Test component based on code found at
-// https://github.com/bitbybit-dev/app-examples/tree/main/react/bitbybit-threejs/src
-//
+/** Test component based on code found at
+ *  https://github.com/bitbybit-dev/app-examples/tree/main/react/bitbybit-threejs/src
+ */
 'use client';
 import React, { useEffect, useRef, useState } from 'react';
 import log from '../../utils/log_utils';

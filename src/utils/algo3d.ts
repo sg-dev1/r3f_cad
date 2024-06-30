@@ -1,3 +1,4 @@
+/** This library contains functionality to find all distinct circles in a sketch. */
 import { SketchType } from '@/app/slices/Sketch';
 import { Arc, Circle, Point, Segment, Vector } from '@flatten-js/core';
 import { convert2DPointTo3D, getNormalVectorForPlane, getPointU, getPointV } from './threejs_planes';

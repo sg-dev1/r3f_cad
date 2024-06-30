@@ -1,3 +1,4 @@
+/** This hook contains functionality to get points for a 2D arc in 3D space. */
 import { ArcInlinePointType } from '@/app/types/ArcType';
 import { Point3DInlineType } from '@/app/types/Point3DType';
 import { useMemo } from 'react';

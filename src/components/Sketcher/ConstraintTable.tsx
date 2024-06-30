@@ -1,8 +1,4 @@
-//
-// Future TODOs:
-//  - If new constraints are supported the way to (1) display it, (2) edit it needs to be updated
-//  - Per default the whole v (Values) array is shown - parts of it are not relevant for a particular constraint
-//
+/** This component contains the list of all constraints in a sketch in the sketcher tool. */
 import { useAppDispatch, useAppSelector } from '@/app/hooks';
 import {
   deleteConstraint,
@@ -19,6 +15,12 @@ import React, { useContext, useEffect, useRef, useState } from 'react';
 import '../../app/globals.css';
 import { DeleteOutlined } from '@ant-design/icons';
 import { selectSelectedConstraintId, setSelectedConstraintId } from '@/app/slices/sketchToolStateSlice';
+
+//
+// Future TODOs:
+//  - If new constraints are supported the way to (1) display it, (2) edit it needs to be updated
+//  - Per default the whole v (Values) array is shown - parts of it are not relevant for a particular constraint
+//
 
 // ---
 // Base on Editable Cells example

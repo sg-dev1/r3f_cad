@@ -1,3 +1,4 @@
+/** This library contains the setup logic for the redux store. */
 import { configureStore } from '@reduxjs/toolkit';
 import sketchReducer from './slices/sketchSlice';
 import sketchToolReducer from './slices/sketchToolStateSlice';

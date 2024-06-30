@@ -1,3 +1,8 @@
+/** This library contains the type and logic for handling sketches.
+ *
+ *  Main logic for sketches consists of CRUD operations for entities (points, lines, circles)
+ *  and constraints.
+ */
 import { CircleType } from '../types/CircleType';
 import { ConstraintType, SlvsConstraints } from '../types/Constraints';
 import { GeometryType, geometryTypeToString } from '../types/EntityType';

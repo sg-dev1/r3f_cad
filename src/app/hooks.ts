@@ -1,3 +1,4 @@
+/** This library contains hooks used with redux. */
 import { useDispatch, useSelector } from 'react-redux';
 import type { AppDispatch, RootState } from './store';
 

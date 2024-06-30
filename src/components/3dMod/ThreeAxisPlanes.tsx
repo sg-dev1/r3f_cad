@@ -1,3 +1,4 @@
+/** This component contains the drawing and interaction logic with all three standard planes in 3D space. */
 import { Plane, Point, Points } from '@react-three/drei';
 import React, { useState } from 'react';
 import * as THREE from 'three';

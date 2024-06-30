@@ -1,4 +1,6 @@
 //
+// @deprecated: do not use
+//
 // This is just a test component to test opencascade.js functionality,
 // mainly if it is installed correctly and a test object can be created and displayed correctly.
 //

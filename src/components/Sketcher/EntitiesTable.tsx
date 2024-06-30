@@ -1,3 +1,4 @@
+/** This component contains the list of all entities in a sketch in the sketcher tool. */
 import { useAppDispatch, useAppSelector } from '@/app/hooks';
 import { selectLines, selectPoints, removeEntity, selectCircles } from '@/app/slices/sketchSlice';
 import { selectSelectedEntityId, setSelectedEntityId } from '@/app/slices/sketchToolStateSlice';

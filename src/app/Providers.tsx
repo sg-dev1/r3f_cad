@@ -1,5 +1,8 @@
-// Setting up the redux store needs to live in its own component with a "use client" on top
-// Cannot add this directly to the (root) layout.tsx because there "use client" may not be used
+/** This component contains the provider for the redux store.
+ *
+ * Setting up the redux store needs to live in its own component with a "use client" on top
+ * Cannot add this directly to the (root) layout.tsx because there "use client" may not be used
+ */
 'use client';
 
 /* Core */

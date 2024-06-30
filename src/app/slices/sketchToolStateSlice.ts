@@ -1,3 +1,4 @@
+/** This redux slice holds state information for the sketcher tool. */
 import { createSlice } from '@reduxjs/toolkit';
 import { RootState } from '../store';
 

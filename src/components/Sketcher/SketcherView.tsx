@@ -1,3 +1,4 @@
+/** This component contains the main view for the sketcher tool. */
 'use client';
 
 import React, { useState, useEffect } from 'react';

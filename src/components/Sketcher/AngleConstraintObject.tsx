@@ -1,3 +1,4 @@
+/** This component contains the drawing functionality for angle constraints in the sketcher tool. */
 import { useAppSelector } from '@/app/hooks';
 import { selectLines, selectPointsMap, selectSketchCurrentPlane } from '@/app/slices/sketchSlice';
 import { ConstraintType } from '@/app/types/Constraints';

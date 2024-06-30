@@ -1,3 +1,4 @@
+/** This component is a utility wrapper around drei's Html input. */
 import { Html } from '@react-three/drei';
 import React from 'react';
 

@@ -1,3 +1,4 @@
+/** This component contains the main geometry drawing and interaction functionality for the sketcher tool. */
 import React, { useState, forwardRef, useImperativeHandle, useEffect } from 'react';
 import { useThree } from '@react-three/fiber';
 import { Line, Points } from '@react-three/drei';

@@ -1,3 +1,4 @@
+/** This component contains the drawing and interaction functionality for the zero coordinate cross in the sketcher tool. */
 import { useAppSelector } from '@/app/hooks';
 import { selectSketchCurrentPlane } from '@/app/slices/sketchSlice';
 import { GeometryType } from '@/app/types/EntityType';

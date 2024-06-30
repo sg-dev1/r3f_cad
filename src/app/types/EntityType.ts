@@ -1,3 +1,4 @@
+/** This library contains the types to represent sketch entities generically. */
 export enum GeometryType {
   POINT = 0,
   LINE = 1,

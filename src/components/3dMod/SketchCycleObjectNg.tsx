@@ -1,3 +1,4 @@
+/** This component contains the drawing functionality for 2D sketches in 3D space. */
 import { useAppDispatch } from '@/app/hooks';
 import { setSketchToExtrude } from '@/app/slices/modellingToolStateSlice';
 import { ArcInlinePointType } from '@/app/types/ArcType';
@@ -18,6 +19,10 @@ export interface SketchCycleObjectNgProps {
 }
 
 const SketchCycleObjectNg = ({ sketchCycle }: SketchCycleObjectNgProps) => {
+  useEffect(() => {
+    drawShape();
+  }, [sketchCycle]);
+
   // if hidden we don't have to do anything
   if (sketchCycle.isHidden) {
     return <></>;
@@ -118,10 +123,6 @@ const SketchCycleObjectNg = ({ sketchCycle }: SketchCycleObjectNgProps) => {
     }
   };
 
-  useEffect(() => {
-    drawShape();
-  }, [sketchCycle]);
-
   const obtainShapeColor = () => {
     if (hovered) {
       return 'yellow';
@@ -130,7 +131,6 @@ const SketchCycleObjectNg = ({ sketchCycle }: SketchCycleObjectNgProps) => {
     }
   };
 
-  // TODO we may need to set position/ rotation on mesh to get it plane aware
   return (
     <>
       {shapeGeom && (

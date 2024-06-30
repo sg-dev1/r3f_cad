@@ -1,3 +1,4 @@
+/** This component contains the drawing and interaction functionality for line objects in the sketcher tool. */
 import { useAppDispatch, useAppSelector } from '@/app/hooks';
 import {
   addConstraint,

@@ -1,3 +1,4 @@
+/** This component is the root for (bitbybit) occt. Main entry point for 3D modelling operations. */
 import { useAppDispatch, useAppSelector } from '@/app/hooks';
 import { selectSketchToExtrude, setSketchToExtrude } from '@/app/slices/modellingToolStateSlice';
 import { BitByBitOCCT, OccStateEnum } from '@bitbybit-dev/occt-worker';

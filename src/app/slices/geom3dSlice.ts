@@ -1,3 +1,4 @@
+/** This redux slice holds state information for 3D geometry created by different modelling operations. */
 import { createSlice } from '@reduxjs/toolkit';
 import { RootState } from '../store';
 import { Geom3dType, ModellingOperation, ModellingOperationType } from './geom3d';

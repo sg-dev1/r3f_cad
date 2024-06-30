@@ -1,3 +1,4 @@
+/** This library contains the types for the communication with the solvespace python backend. */
 import { SlvsConstraints, ConstraintValueType } from './Constraints';
 
 export interface SolverEntityType {

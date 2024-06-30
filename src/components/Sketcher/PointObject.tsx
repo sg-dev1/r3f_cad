@@ -1,3 +1,4 @@
+/** This component contains the drawing and interaction functionality for point objects in the sketcher tool. */
 import { useAppDispatch, useAppSelector } from '@/app/hooks';
 import { selectConstraints, selectLastDof, selectSketchCurrentPlane, updatePoint } from '@/app/slices/sketchSlice';
 import { ToolState, selectSelectedEntityId, selectToolState } from '@/app/slices/sketchToolStateSlice';
