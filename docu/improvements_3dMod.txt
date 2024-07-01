@@ -1,4 +1,5 @@
 Priority of improvements (my ranking)
+  - B014  // bug in algo3d
   - B012  // improvement, more features (3d geom tools)
   - B008  // arbitrary plane awareness
   - B011  [data persistence, debug]
@@ -75,6 +76,8 @@ List of Improvements
        - Use an app global instance of bitbybit
        - Properly delete shapes created using bitbybit.occt.deleteShapes()
      - Is there a way to profile the memory usage of an Web Assembly?
+
+(B014) Bug in algo3d: need to remove cycle with largest area for each group of connected cycles
 
 
 Done Improvements

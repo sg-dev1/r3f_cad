@@ -7,13 +7,17 @@ import SketcherView from '../components/Sketcher/SketcherView';
 import { useAppSelector } from './hooks';
 import { selectActiveSketchId } from './slices/sketchSlice';
 import MainView from '@/components/3dMod/MainView';
+import { PersistGate } from 'redux-persist/integration/react';
+import { persistor } from './store';
 
 export default function RootLayout() {
   const activeSketchId = useAppSelector(selectActiveSketchId);
 
   return (
-    <ConfigProvider theme={theme}>
-      <div>{activeSketchId !== -1 ? <SketcherView /> : <MainView />}</div>
-    </ConfigProvider>
+    <PersistGate loading={null} persistor={persistor}>
+      <ConfigProvider theme={theme}>
+        <div>{activeSketchId !== -1 ? <SketcherView /> : <MainView />}</div>
+      </ConfigProvider>
+    </PersistGate>
   );
 }

@@ -298,7 +298,7 @@ const extract_regions = (
     return flattenShapeCycle;
   }
 
-  console.log('ZERO: graph', graph);
+  //console.log('ZERO: graph', graph);
 
   //
   // Phase one: finding all the wedges
@@ -328,8 +328,8 @@ const extract_regions = (
     }
   });
 
-  console.log('---PHASE 1---');
-  console.log('graph2', graph2);
+  //console.log('---PHASE 1---');
+  //console.log('graph2', graph2);
 
   // Step 2 (add angle theta)
   const graphWithAngle: [number, number, number][] = [];
@@ -368,7 +368,7 @@ const extract_regions = (
     }
   };
   graphWithAngle.sort(cmpFn);
-  console.log('--step3-- (after sort)', graphWithAngle);
+  //console.log('--step3-- (after sort)', graphWithAngle);
 
   // Step 4 (scan groups in sorted list to build wedges)
   const wedges: [number, number, number][] = [];
@@ -421,8 +421,8 @@ const extract_regions = (
     }
   };
   wedges.sort(cmpFn2);
-  console.log('---PHASE 2---');
-  console.log('--step1--- (sorted wedges)', wedges);
+  //console.log('---PHASE 2---');
+  //console.log('--step1--- (sorted wedges)', wedges);
 
   // Step 2: mark all wedges as unused
   const used = Array(wedges.length).fill(0);
@@ -459,7 +459,7 @@ const extract_regions = (
     //console.log('--nextUnusedWedge', nextUnusedWedge);
   }
 
-  console.log('allRegions', allRegions);
+  //console.log('allRegions', allRegions);
 
   //
   // Finally: convert result to FlattenShapeSubset[][]
@@ -487,7 +487,7 @@ const extract_regions = (
     flattenShapeCycle.push(Array.from(shapeSet));
   });
 
-  console.log('--- flattenShapeCycle', flattenShapeCycle);
+  //console.log('--- flattenShapeCycle', flattenShapeCycle);
   /*
   flattenShapeCycle.forEach((cycle) => {
     console.log('New cycle:');
@@ -545,7 +545,7 @@ const extract_regions = (
     }
   });
 
-  console.log('--- flattenShapeCycle2', flattenShapeCycle2);
+  //console.log('--- flattenShapeCycle2', flattenShapeCycle2);
   /*
   flattenShapeCycle2.forEach((cycle) => {
     console.log('New cycle:');
@@ -563,8 +563,6 @@ const extract_regions = (
     });
   });
   */
-
-  // TODO one element containing the whole shape needs to be removed (maybe in the middle?)
 
   return flattenShapeCycle2;
 };
@@ -863,7 +861,7 @@ export interface SketchCycleType {
 export const findCyclesInSketchAndConvertToOcct = async (sketch: SketchType, bitbybit: BitByBitOCCT) => {
   const cyclesInSketch = findConnectedLinesInSketch(sketch);
 
-  //console.log('cyclesInSketch', cyclesInSketch);
+  console.log('--- cyclesInSketch', cyclesInSketch);
 
   const result: SketchCycleType[] = [];
   let cycleIndex = 0;
@@ -976,8 +974,20 @@ export const findCyclesInSketchAndConvertToOcct = async (sketch: SketchType, bit
     (maxIndex, elem, i, result) => (elem.faceArea > result[maxIndex].faceArea ? i : maxIndex),
     0
   );
-  const newResult = result.filter((_, index) => index !== maxIdx);
-  //console.log('newResult', newResult, 'result', result, 'maxIdx', maxIdx);
+  // TODO - this maybe not always works ... need a better strategy
+  //  - f.e. does not work if have multiple non connected sketch cycles
+  //  - TODO need to get connected cycles an remove there the max element
+  //    - step 1: remove all cycles  (item.cycle has 1 element that is a cycle)  --> there we keep all
+  //    - step 2: - need to find connected cycles among remaining (~> kind of clustering)
+  //                - intersect all shapes of one cycle with all shapes of the other
+  //                  - if at least one intersection is found --> they are connected
+  //                - need flatten shapes for that with its intersect() method
+  //                - can build the "clusters" on the go as processing the for loop above
+  //                  - e.g. at first no clusters
+  //                  - then cluster1 with first element etc. (not adding circles to clusters - cannot be connected with anything else)
+  //              - for each cluster remove the element with the largest area
+  const newResult = result.filter((item, index) => item.cycle[0].t === SHAPE3D_TYPE.CIRCLE || index !== maxIdx);
+  console.log('newResult', newResult, 'result', result, 'maxIdx', maxIdx);
   // cleanup in occt
   await bitbybit.occt.deleteShapes({ shapes: [result[maxIdx].face] });
 
