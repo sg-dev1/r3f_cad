@@ -74,6 +74,8 @@ List of Improvements
      -> already triggered an memory issue after the application was running for a long time
      Changes needed:
        - Use an app global instance of bitbybit
+         e.g. use solution with createContext() / useContext() like
+         https://github.com/vercel/next.js/discussions/14601#discussioncomment-44198
        - Properly delete shapes created using bitbybit.occt.deleteShapes()
      - Is there a way to profile the memory usage of an Web Assembly?
 

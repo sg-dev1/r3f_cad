@@ -4,6 +4,23 @@
 @tailwind components;
 @tailwind utilities;
 */
+@import 'material-symbols/outlined.css';
+
+body .material-symbols-outlined {
+  font-size: 20px;
+}
+
+body .material-symbols-outlined.iconSmall {
+  font-size: 16px;
+}
+
+body .material-symbols-outlined.iconLarge {
+  font-size: 24px;
+}
+
+.constraintTool {
+  color: red;
+}
 
 * {
   margin: 0;

@@ -5,7 +5,7 @@ import React, { useState, useEffect } from 'react';
 import { Canvas } from '@react-three/fiber';
 import { GizmoHelper, GizmoViewport, OrbitControls } from '@react-three/drei';
 import GeometryTool, { GeometryToolRefType } from './GeometryTool';
-import { Button, Layout } from 'antd';
+import { Button, Layout, Tooltip } from 'antd';
 import { useAppDispatch, useAppSelector } from '@/app/hooks';
 import {
   deleteConstraintById,
@@ -153,109 +153,155 @@ const SketcherView = () => {
     <>
       <Layout>
         <Header style={{ display: 'flex', alignItems: 'center', height: '7vh' }}>
-          <Button type="primary" className="primary-button" onClick={() => dispatch(setToolState(ToolState.LINE_TOOL))}>
-            Line
-            {/* <LineOutlined /> */}
-          </Button>
-          <Button
-            type="primary"
-            className="primary-button"
-            onClick={() => dispatch(setToolState(ToolState.POINT_TOOL))}
-          >
-            Point
-          </Button>
-          <Button
-            type="primary"
-            className="primary-button"
-            onClick={() => dispatch(setToolState(ToolState.CIRCLE_TOOL))}
-          >
-            Circle
-          </Button>
-          <Button
-            type="primary"
-            className="primary-button"
-            onClick={() => dispatch(setToolState(ToolState.CONSTRAINT_COINCIDENCE))}
-          >
-            Coincidence
-          </Button>
-          <Button
-            type="primary"
-            className="primary-button"
-            onClick={() => dispatch(setToolState(ToolState.CONSTRAINT_HORIZONTAL))}
-          >
-            Horizontal
-            {/* <LineOutlined style={{ color: 'red' }} /> */}
-          </Button>
-          <Button
-            type="primary"
-            className="primary-button"
-            onClick={() => dispatch(setToolState(ToolState.CONSTRAINT_VERTICAL))}
-          >
-            Vertical
-          </Button>
-          <Button
-            type="primary"
-            className="primary-button"
-            onClick={() => dispatch(setToolState(ToolState.CONSTRAINT_LENGTH))}
-          >
-            Length
-          </Button>
-          <Button
-            type="primary"
-            className="primary-button"
-            onClick={() => dispatch(setToolState(ToolState.CONSTRAINT_DIAMETER))}
-          >
-            Diameter
-          </Button>
-          <Button
-            type="primary"
-            className="primary-button"
-            onClick={() => dispatch(setToolState(ToolState.CONSTRAINT_PARALLEL))}
-          >
-            Parallel
-          </Button>
-          <Button
-            type="primary"
-            className="primary-button"
-            onClick={() => dispatch(setToolState(ToolState.CONSTRAINT_EQUAL))}
-          >
-            Equal
-          </Button>
-          <Button
-            type="primary"
-            className="primary-button"
-            onClick={() => dispatch(setToolState(ToolState.CONSTRAINT_MID_POINT))}
-          >
-            Mid Point
-          </Button>
-          <Button
-            type="primary"
-            className="primary-button"
-            onClick={() => dispatch(setToolState(ToolState.CONSTRAINT_PERPENDICULAR))}
-          >
-            Perpendicular
-          </Button>
-          <Button
-            type="primary"
-            className="primary-button"
-            onClick={() => dispatch(setToolState(ToolState.CONSTRAINT_POINT_ON_OBJECT))}
-          >
-            Point on Object
-          </Button>
-          <Button
-            type="primary"
-            className="primary-button"
-            onClick={() => dispatch(setToolState(ToolState.CONSTRAINT_ANGLE))}
-          >
-            Angle
-          </Button>
-          <Button
-            type="primary"
-            className="primary-button"
-            onClick={() => dispatch(setToolState(ToolState.CURSOR_TOOL))}
-          >
-            Cursor
-          </Button>
+          <Tooltip title="Line drawing tool">
+            <Button
+              type="primary"
+              className="primary-button"
+              onClick={() => dispatch(setToolState(ToolState.LINE_TOOL))}
+            >
+              <span className="material-symbols-outlined iconSmall">timeline</span>
+            </Button>
+          </Tooltip>
+
+          <Tooltip title="Point drawing tool">
+            <Button
+              type="primary"
+              className="primary-button"
+              onClick={() => dispatch(setToolState(ToolState.POINT_TOOL))}
+            >
+              <span className="material-symbols-outlined iconSmall">wifi_1_bar</span>
+            </Button>
+          </Tooltip>
+
+          <Tooltip title="Circle drawing tool">
+            <Button
+              type="primary"
+              className="primary-button"
+              onClick={() => dispatch(setToolState(ToolState.CIRCLE_TOOL))}
+            >
+              <span className="material-symbols-outlined iconSmall">adjust</span>
+            </Button>
+          </Tooltip>
+
+          <Tooltip title="Coincidence constraint tool">
+            <Button
+              type="primary"
+              className="primary-button"
+              onClick={() => dispatch(setToolState(ToolState.CONSTRAINT_COINCIDENCE))}
+            >
+              <span className="material-symbols-outlined iconSmall constraintTool">wifi_2_bar</span>
+            </Button>
+          </Tooltip>
+
+          <Tooltip title="Horizontal constraint tool">
+            <Button
+              type="primary"
+              className="primary-button"
+              onClick={() => dispatch(setToolState(ToolState.CONSTRAINT_HORIZONTAL))}
+            >
+              <span className="material-symbols-outlined iconSmall constraintTool">horizontal_rule</span>
+            </Button>
+          </Tooltip>
+
+          <Tooltip title="Vertical constraint tool">
+            <Button
+              type="primary"
+              className="primary-button"
+              onClick={() => dispatch(setToolState(ToolState.CONSTRAINT_VERTICAL))}
+            >
+              <span className="material-symbols-outlined iconSmall constraintTool">border_vertical</span>
+            </Button>
+          </Tooltip>
+
+          <Tooltip title="Length constraint tool">
+            <Button
+              type="primary"
+              className="primary-button"
+              onClick={() => dispatch(setToolState(ToolState.CONSTRAINT_LENGTH))}
+            >
+              <span className="material-symbols-outlined iconSmall constraintTool">straighten</span>
+            </Button>
+          </Tooltip>
+
+          <Tooltip title="Diameter constraint tool">
+            <Button
+              type="primary"
+              className="primary-button"
+              onClick={() => dispatch(setToolState(ToolState.CONSTRAINT_DIAMETER))}
+            >
+              <span className="material-symbols-outlined iconSmall constraintTool">hide_source</span>
+            </Button>
+          </Tooltip>
+
+          <Tooltip title="Parallel constraint tool">
+            <Button
+              type="primary"
+              className="primary-button"
+              onClick={() => dispatch(setToolState(ToolState.CONSTRAINT_PARALLEL))}
+            >
+              <span className="material-symbols-outlined iconSmall constraintTool">process_chart</span>
+            </Button>
+          </Tooltip>
+
+          <Tooltip title="Equal constraint tool">
+            <Button
+              type="primary"
+              className="primary-button"
+              onClick={() => dispatch(setToolState(ToolState.CONSTRAINT_EQUAL))}
+            >
+              <span className="material-symbols-outlined iconSmall constraintTool">equal</span>
+            </Button>
+          </Tooltip>
+
+          <Tooltip title=" Mid Point constraint tool">
+            <Button
+              type="primary"
+              className="primary-button"
+              onClick={() => dispatch(setToolState(ToolState.CONSTRAINT_MID_POINT))}
+            >
+              <span className="material-symbols-outlined iconSmall constraintTool">recenter</span>
+            </Button>
+          </Tooltip>
+
+          <Tooltip title="Perpendicular constraint tool">
+            <Button
+              type="primary"
+              className="primary-button"
+              onClick={() => dispatch(setToolState(ToolState.CONSTRAINT_PERPENDICULAR))}
+            >
+              <span className="material-symbols-outlined iconSmall constraintTool">align_flex_end</span>
+            </Button>
+          </Tooltip>
+
+          <Tooltip title="Point on Object constraint tool">
+            <Button
+              type="primary"
+              className="primary-button"
+              onClick={() => dispatch(setToolState(ToolState.CONSTRAINT_POINT_ON_OBJECT))}
+            >
+              <span className="material-symbols-outlined iconSmall constraintTool">app_badging</span>
+            </Button>
+          </Tooltip>
+
+          <Tooltip title="Angle constraint tool">
+            <Button
+              type="primary"
+              className="primary-button"
+              onClick={() => dispatch(setToolState(ToolState.CONSTRAINT_ANGLE))}
+            >
+              <span className="material-symbols-outlined iconSmall constraintTool">signal_cellular_0_bar</span>
+            </Button>
+          </Tooltip>
+
+          <Tooltip title="Cursor tool">
+            <Button
+              type="primary"
+              className="primary-button"
+              onClick={() => dispatch(setToolState(ToolState.CURSOR_TOOL))}
+            >
+              <span className="material-symbols-outlined iconSmall">highlight_mouse_cursor</span>
+            </Button>
+          </Tooltip>
 
           <div className={sketchLastSolverResultCode === 0 ? 'white-text' : 'red-text'}>
             {stateIndicator} | {solverResult}
@@ -275,7 +321,7 @@ const SketcherView = () => {
             }}
           >
             <Button type="primary" className="primary-button" onClick={() => dispatch(resetActiveSketch())}>
-              Back to 3D Modeller
+              <span className="material-symbols-outlined iconLarge">arrow_back</span>
             </Button>
 
             <ConstraintTable />

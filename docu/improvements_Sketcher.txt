@@ -1,6 +1,5 @@
 Priority of improvements (my ranking)
 // MVP
-  - 020 [UI improvement]
   - 025 [backend, anoying bug]
 
 // Later
@@ -34,11 +33,6 @@ List of Improvements
 
 (017) Create a tool to generate a rectangle (with proper constraints)
 
-(020) Improve the top button bar
-    - E.g. visually separate what are constraint tools and what are geometry tools
-    - Currently the status indicator is not always visible (too few space)
-    --> will need a redesign of layout, <Header> seems to not support multiple lines ....
-
 (022) Add symmetry (to line, horizontal, vertical) constraint
       Add tangent constraint (SLVS_C_ARC_LINE_TANGENT, SLVS_C_CURVE_CURVE_TANGENT --> do these also support circles?)
 
@@ -63,6 +57,11 @@ List of Improvements
 
 
 Done Improvements
+
+(020) Improve the top button bar
+    - E.g. visually separate what are constraint tools and what are geometry tools
+    - Currently the status indicator is not always visible (too few space)
+    --> will need a redesign of layout, <Header> seems to not support multiple lines ....
 
 (004) integration of redux persist
     - Examine possiblilities how to save redux state (e.g. to local storage etc.)
