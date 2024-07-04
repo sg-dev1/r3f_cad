@@ -22,7 +22,7 @@ const MainView = () => {
 
   const fov = 70;
   const aspect = 2; // the canvas default
-  const near = 0.1;
+  const near = 0.01;
   const far = 1000;
 
   const onCreateNewSketch = () => {

@@ -15,21 +15,9 @@ import { STLExporter } from 'three/examples/jsm/Addons.js';
 import * as THREE from 'three';
 import TopoDSVisualizer from './TopoDSVisualizer';
 import { createGeom3d, select3dGeometries } from '@/app/slices/geom3dSlice';
-import { useGlobalBitByBit } from '@/app/global_bitbybit_provider';
 
 const OcctRoot = () => {
   const [bitbybit, setBitbybit] = useState<BitByBitOCCT>();
-
-  // Note: This is currently only for testing a global instance
-  // Not yet in use - caused occt computation errors
-  // Maybe the sketchShapes (and probably also the shapes3D) need to be global as well?
-  const globalBitByBit = useGlobalBitByBit();
-  // for debug
-  useEffect(() => {
-    console.log('---globalBitByBit', globalBitByBit);
-  }, [globalBitByBit]);
-
-  // ---
 
   const dispatch = useAppDispatch();
   const sketchs = useAppSelector(selectSketchs);
@@ -99,7 +87,10 @@ const OcctRoot = () => {
   useEffect(() => {
     console.log('---bitbybit', bitbybit);
     console.log('---sketchShapes', sketchShapes);
-    init();
+    const occt = init();
+
+    // we need to terminate the worker thread else there are more and more threads
+    return () => occt.terminate();
   }, []);
 
   /* This does not have any real effect therefore disabled,
@@ -183,12 +174,12 @@ const OcctRoot = () => {
     setShapes3d(finalShapes);
   };
 
-  const init = async () => {
+  const init = () => {
     //console.log('Started init()');
     let bitbybit = new BitByBitOCCT();
     setBitbybit(bitbybit);
     const occt = new Worker(new URL('./occ.worker', import.meta.url), { name: 'OCC', type: 'module' });
-    await bitbybit.init(occt);
+    bitbybit.init(occt);
     //console.log('bitbybit.init(occt) finished');
 
     /*
@@ -209,6 +200,8 @@ const OcctRoot = () => {
       } else if (s.state === OccStateEnum.loaded) {
       }
     });
+
+    return occt;
   };
 
   // ---

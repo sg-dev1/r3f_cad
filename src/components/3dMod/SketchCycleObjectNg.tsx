@@ -161,6 +161,7 @@ const SketchCycleObjectNg = ({ sketchCycle }: SketchCycleObjectNgProps) => {
     <>
       {shapeGeom && (
         <mesh
+          frustumCulled={false}
           geometry={shapeGeom}
           onPointerOver={() => setHovered(true)}
           onPointerOut={() => setHovered(false)}

@@ -1,5 +1,6 @@
 Priority of improvements (my ranking)
-  - B013  // bitbybit handling
+  - B017
+  - B016
   - B012  // improvement, more features (3d geom tools)
   - B008  // arbitrary plane awareness
   - B011  [data persistence, debug]
@@ -67,6 +68,13 @@ List of Improvements
      - support of more operations (e.g. union, intersect etc.)
      - improvement of display --> also visualize the edges
 
+(B016) Implement hiding of 3D Geometry - needs an object explorer
+
+(B017) Bug in delete sketch (no longer working)
+
+
+On Hold
+
 (B013) Issue with current handling of bitbybit
      -> should be created once upon first opening of page and then reused
      -> currently it seems to aquire more and more memory --> memory leak
@@ -85,7 +93,6 @@ List of Improvements
            - hiding of 3d geometry not yet implemented (see B016)
            - 3d geometry also survices a page reload --> it gets generated again
 
-(B016) Implement hiding of 3D Geometry - needs an object explorer
 
 Done Improvements
 

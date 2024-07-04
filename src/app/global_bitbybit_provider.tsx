@@ -1,4 +1,10 @@
-/** This component is a global provider for (bitbybit) occt. To be retrieved using the useGlobalBitByBit() hook. */
+/**
+ * This component is a global provider for (bitbybit) occt.
+ * To be retrieved using the useGlobalBitByBit() hook.
+ *
+ * This causes issues with bitbybit - calculations fail, so it is not used for now
+ * (developed as part of B013)
+ * */
 import { BitByBitOCCT, OccStateEnum } from '@bitbybit-dev/occt-worker';
 import { createContext, useContext, useEffect, useRef, useState } from 'react';
 
