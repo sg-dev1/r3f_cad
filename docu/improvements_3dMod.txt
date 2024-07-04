@@ -1,9 +1,8 @@
 Priority of improvements (my ranking)
-  - B015
+  - B013  // bitbybit handling
   - B012  // improvement, more features (3d geom tools)
   - B008  // arbitrary plane awareness
   - B011  [data persistence, debug]
-  - B013
   - B004  [data model] - updated by solving other tickets
   - B003
 
@@ -79,12 +78,12 @@ List of Improvements
        - Properly delete shapes created using bitbybit.occt.deleteShapes()
      - Is there a way to profile the memory usage of an Web Assembly?
 
+
+Done Improvements
+
 (B015) Implement hiding of sketches in 3D modeller
      - Faces should be only visible for a single selected sketch
      - If it is not selected, but visible (not hidden) only the lines should be drawn
-
-
-Done Improvements
 
 (B014) Bug in algo3d: need to remove cycle with largest area for each group of connected cycles
 

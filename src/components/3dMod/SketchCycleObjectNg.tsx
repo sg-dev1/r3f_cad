@@ -6,13 +6,13 @@ import { ArcInlinePointType } from '@/app/types/ArcType';
 import { CircleInlinePointType } from '@/app/types/CircleType';
 import { GeometryType } from '@/app/types/EntityType';
 import { Line3DInlinePointType } from '@/app/types/Line3DType';
-import { Point3DInlineType, point3DInlineEquals } from '@/app/types/Point3DType';
+import { Point3DInlineType } from '@/app/types/Point3DType';
 import { SketchCycleType } from '@/utils/algo3d';
 import { getPointU2, getPointV2, getRotationForPlaneAsQuaternion } from '@/utils/threejs_planes';
 import useArcPoints from '@/utils/useArcPoints';
 import useCirclePoints from '@/utils/useCirclePoints';
 import { Line } from '@react-three/drei';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
 import * as THREE from 'three';
 
@@ -23,28 +23,19 @@ export interface SketchCycleObjectNgProps {
 const SketchCycleObjectNg = ({ sketchCycle }: SketchCycleObjectNgProps) => {
   const sketchIsVisible = useSelector((state: RootState) => state.sketchs.sketches[sketchCycle.sketch.id].isVisible);
   const selectedSketch = useAppSelector(selectSelectedSketch);
-  // TODO - only for the selected sketch the 2D shapes (with hover functionality) need to be drawn
-  //      - for all other sketches only the lines shall be drawn (to not clutter the display too much)
 
-  useEffect(() => {
-    // Note that both do not match, seems that sketchCycle.sketch.isVisible still has some old value (of last render?)
-    //console.log('--- useEffect sketchCycle', sketchCycle.sketch.isVisible, sketchIsVisible);
-    if (sketchIsVisible) {
-      drawShape();
-    } else {
-      // in case shape is not visible, nothing needs to be drawn
-      setShapeGeom(null);
-      setShapePoints([]);
-    }
-  }, [sketchCycle, sketchIsVisible]);
-
-  // TODO here some optimizations with use memo, precompute drawShape only once etc. could be applied
-
-  const quaternion = getRotationForPlaneAsQuaternion(sketchCycle.sketch.plane);
+  const quaternion = useMemo(() => getRotationForPlaneAsQuaternion(sketchCycle.sketch.plane), [sketchCycle]);
   const dispatch = useAppDispatch();
 
-  const arcs = sketchCycle.cycle.filter((shape) => shape.t === GeometryType.ARC) as ArcInlinePointType[];
-  const circles = sketchCycle.cycle.filter((shape) => shape.t === GeometryType.CIRCLE) as CircleInlinePointType[];
+  const arcs = useMemo(
+    () => sketchCycle.cycle.filter((shape) => shape.t === GeometryType.ARC) as ArcInlinePointType[],
+    [sketchCycle]
+  );
+  const circles = useMemo(
+    () => sketchCycle.cycle.filter((shape) => shape.t === GeometryType.CIRCLE) as CircleInlinePointType[],
+    [sketchCycle]
+  );
+  // Cannot use useMemo for both of these because cannot use a hook in a hook
   const arcsPointsArray = arcs.map((arc) => useArcPoints({ arc: arc, quaternion: quaternion }));
   const circlePointsArray = circles.map((circle) => useCirclePoints({ circle: circle, quaternion: quaternion }));
 
@@ -52,11 +43,30 @@ const SketchCycleObjectNg = ({ sketchCycle }: SketchCycleObjectNgProps) => {
   const [shapeGeom, setShapeGeom] = useState<THREE.ShapeGeometry | null>(null);
   const [shapePoints, setShapePoints] = useState<Point3DInlineType[]>([]);
 
-  const drawShape = () => {
+  // ---
+
+  useEffect(() => {
+    if (sketchIsVisible) {
+      if (selectedSketch === sketchCycle.sketch.id) {
+        setShapeGeom(shapeGeometryPrecomputed);
+      } else {
+        setShapeGeom(null);
+      }
+      setShapePoints(shapePointsPrecomputed);
+    } else {
+      // in case shape is not visible, nothing needs to be drawn
+      setShapeGeom(null);
+      setShapePoints([]);
+    }
+  }, [sketchIsVisible, selectedSketch]);
+
+  // ---
+
+  const drawShape = (): [THREE.ShapeGeometry | null, Point3DInlineType[]] => {
+    const points: Point3DInlineType[] = [];
     if (sketchCycle.cycle.length > 0) {
       // https://threejs.org/docs/index.html?q=shape#api/en/extras/core/Shape
       const threeShape = new THREE.Shape();
-      const points: Point3DInlineType[] = [];
 
       if (sketchCycle.cycle.length > 1) {
         const firstShape = sketchCycle.cycle[0];
@@ -130,10 +140,12 @@ const SketchCycleObjectNg = ({ sketchCycle }: SketchCycleObjectNgProps) => {
       const geometry = new THREE.ShapeGeometry(threeShape);
       geometry.applyQuaternion(quaternion);
 
-      setShapeGeom(geometry);
-      setShapePoints(points);
+      return [geometry, points];
     }
+
+    return [null, points];
   };
+  const [shapeGeometryPrecomputed, shapePointsPrecomputed] = useMemo(() => drawShape(), [sketchCycle]);
 
   const obtainShapeColor = () => {
     if (hovered) {
@@ -142,6 +154,8 @@ const SketchCycleObjectNg = ({ sketchCycle }: SketchCycleObjectNgProps) => {
       return 'green';
     }
   };
+
+  // ---
 
   return (
     <>
