@@ -11,8 +11,20 @@ import { GeometryType } from '@/app/types/EntityType';
 
 type FlattenPointsMapType = { [key: number]: Point };
 type FlattenShapeSubset = Segment | Circle | Arc;
+type FlattenShapeSubsetNoCircle = Segment | Arc;
 type FlattenShapeStruct = { id: number; shape: FlattenShapeSubset };
 type CadTool3DShapeSubset = Line3DInlinePointType | CircleInlinePointType | ArcInlinePointType;
+
+/** Datatype returned by this library */
+export interface SketchCycleType {
+  cycle: CadTool3DShapeSubset[];
+  face: Inputs.OCCT.TopoDSFacePointer;
+  faceArea: number;
+  sketch: SketchType;
+  isHidden: boolean;
+  index: number;
+  flattenShapes: FlattenShapeSubset[];
+}
 
 const findConnectedLinesInSketch = (sketch: SketchType) => {
   //
@@ -239,7 +251,6 @@ const extract_regions = (
   pointsMap: FlattenPointsMapType,
   finalShapes: FlattenShapeStruct[]
 ) => {
-  type FlattenShapeSubsetNoCircle = Segment | Arc;
   const flattenShapeCycle: FlattenShapeSubset[][] = [];
 
   //
@@ -849,21 +860,17 @@ const dfs_cycle = (graph: number[][], u: number, p: number, color: number[], par
   color[u] = 2;
 };
 
-export interface SketchCycleType {
-  cycle: CadTool3DShapeSubset[];
-  face: Inputs.OCCT.TopoDSFacePointer;
-  faceArea: number;
-  sketch: SketchType;
-  isHidden: boolean;
-  index: number;
-}
+// -------------------------------------
 
+/** Finds all cycles in the given sketch and returns a list of SketchCycleType. */
 export const findCyclesInSketchAndConvertToOcct = async (sketch: SketchType, bitbybit: BitByBitOCCT) => {
   const cyclesInSketch = findConnectedLinesInSketch(sketch);
 
   console.log('--- cyclesInSketch', cyclesInSketch);
 
   const result: SketchCycleType[] = [];
+  const clusters: { [clusterIndex: number]: number[] } = {};
+  let nextClusterIndex = 0;
   let cycleIndex = 0;
   for (const cycle of cyclesInSketch) {
     // 1) Convert shapes to edges
@@ -960,6 +967,7 @@ export const findCyclesInSketchAndConvertToOcct = async (sketch: SketchType, bit
       sketch: sketch,
       isHidden: false,
       index: cycleIndex,
+      flattenShapes: cycle,
     });
 
     // cleanup - don't do this else we get an "Encountered Null Face!" error
@@ -967,29 +975,75 @@ export const findCyclesInSketchAndConvertToOcct = async (sketch: SketchType, bit
     //await bitbybit.occt.deleteShapes({ shapes: [...edges] });
 
     cycleIndex++;
+
+    if (cycle[0] instanceof Circle) {
+      // skip all cluster checks for Circles
+      continue;
+    }
+
+    let clusterIndex = -1;
+    for (const [key, cycleIds] of Object.entries(clusters)) {
+      // key is just the clusterid, value contains ids of all cycles
+      for (let i = 0; i < cycleIds.length; i++) {
+        const cycleToCompareShapes = result[cycleIds[i]].flattenShapes;
+        for (let j = 0; j < cycleToCompareShapes.length; j++) {
+          if (!(cycleToCompareShapes[j] instanceof Circle)) {
+            const toCompareShape = cycleToCompareShapes[j] as FlattenShapeSubsetNoCircle;
+            for (let k = 0; k < cycle.length; k++) {
+              // here it is clear that thisShape cannot be a cycle
+              const thisShape = cycle[k] as FlattenShapeSubsetNoCircle;
+              const intersect = toCompareShape.intersect(thisShape);
+              if (intersect.length > 0) {
+                clusterIndex = Number(key);
+                break;
+              }
+            }
+          }
+          if (clusterIndex !== -1) {
+            break;
+          }
+        }
+        if (clusterIndex !== -1) {
+          break;
+        }
+      }
+      if (clusterIndex !== -1) {
+        break;
+      }
+    }
+
+    // Note that cycleIndex was already incremented
+    if (clusterIndex !== -1) {
+      clusters[clusterIndex].push(cycleIndex - 1);
+    } else {
+      // create new cluster and add the element
+      clusters[nextClusterIndex] = [cycleIndex - 1];
+      nextClusterIndex++;
+    }
   }
 
-  // remove element with max area
-  const maxIdx = result.reduce(
-    (maxIndex, elem, i, result) => (elem.faceArea > result[maxIndex].faceArea ? i : maxIndex),
-    0
-  );
-  // TODO - this maybe not always works ... need a better strategy
-  //  - f.e. does not work if have multiple non connected sketch cycles
-  //  - TODO need to get connected cycles an remove there the max element
-  //    - step 1: remove all cycles  (item.cycle has 1 element that is a cycle)  --> there we keep all
-  //    - step 2: - need to find connected cycles among remaining (~> kind of clustering)
-  //                - intersect all shapes of one cycle with all shapes of the other
-  //                  - if at least one intersection is found --> they are connected
-  //                - need flatten shapes for that with its intersect() method
-  //                - can build the "clusters" on the go as processing the for loop above
-  //                  - e.g. at first no clusters
-  //                  - then cluster1 with first element etc. (not adding circles to clusters - cannot be connected with anything else)
-  //              - for each cluster remove the element with the largest area
-  const newResult = result.filter((item, index) => item.cycle[0].t === GeometryType.CIRCLE || index !== maxIdx);
-  console.log('newResult', newResult, 'result', result, 'maxIdx', maxIdx);
+  //console.log('---clusters', clusters);
+
+  // --- Remove from each cluster the element with the maximum area
+
+  const newResult: SketchCycleType[] = result.filter((cycle) => cycle.cycle[0].t === GeometryType.CIRCLE);
+  const facesToDelete: Inputs.OCCT.TopoDSFacePointer[] = [];
+  for (const [key, cycleIds] of Object.entries(clusters)) {
+    const sketchCycleInCluster = result.filter((cycle) => cycleIds.includes(cycle.index));
+    const maxIdx = sketchCycleInCluster.reduce(
+      (maxIndex, elem, i, result) => (elem.faceArea > sketchCycleInCluster[maxIndex].faceArea ? i : maxIndex),
+      0
+    );
+    const reducedSketchCycle = sketchCycleInCluster.filter((item, index) => index !== maxIdx);
+    newResult.push(...reducedSketchCycle);
+    facesToDelete.push(sketchCycleInCluster[maxIdx].face);
+  }
   // cleanup in occt
-  await bitbybit.occt.deleteShapes({ shapes: [result[maxIdx].face] });
+  await bitbybit.occt.deleteShapes({ shapes: facesToDelete });
+
+  console.log('newResult', newResult, 'result', result);
+
+  // ---
 
   return newResult;
 };
