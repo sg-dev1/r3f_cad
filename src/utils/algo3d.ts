@@ -865,7 +865,7 @@ const dfs_cycle = (graph: number[][], u: number, p: number, color: number[], par
 export const findCyclesInSketchAndConvertToOcct = async (sketch: SketchType, bitbybit: BitByBitOCCT) => {
   const cyclesInSketch = findConnectedLinesInSketch(sketch);
 
-  console.log('--- cyclesInSketch', cyclesInSketch);
+  //console.log('--- cyclesInSketch', cyclesInSketch);
 
   const result: SketchCycleType[] = [];
   const clusters: { [clusterIndex: number]: number[] } = {};
@@ -1039,7 +1039,7 @@ export const findCyclesInSketchAndConvertToOcct = async (sketch: SketchType, bit
   // cleanup in occt
   await bitbybit.occt.deleteShapes({ shapes: facesToDelete });
 
-  console.log('newResult', newResult, 'result', result);
+  //console.log('newResult', newResult, 'result', result);
 
   // ---
 

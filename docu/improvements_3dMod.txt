@@ -77,7 +77,15 @@ List of Improvements
          https://github.com/vercel/next.js/discussions/14601#discussioncomment-44198
        - Properly delete shapes created using bitbybit.occt.deleteShapes()
      - Is there a way to profile the memory usage of an Web Assembly?
+     - Also need to test the 3d geometry generation functionality (extrude)
+        - first tests were successful:
+           - click on part of sketch      --> number input appears
+           - Enter number and press enter --> 3d geometry appears
+           - also negative numbers for other direction work
+           - hiding of 3d geometry not yet implemented (see B016)
+           - 3d geometry also survices a page reload --> it gets generated again
 
+(B016) Implement hiding of 3D Geometry - needs an object explorer
 
 Done Improvements
 
