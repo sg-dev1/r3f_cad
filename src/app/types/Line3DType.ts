@@ -1,6 +1,6 @@
 /** This library contains the types used to represent lines in the application. */
+import { GeometryType } from './EntityType';
 import { Point3DInlineType } from './Point3DType';
-import { SHAPE3D_TYPE } from './ShapeType';
 
 export interface Line3DType {
   id: number;
@@ -13,7 +13,7 @@ export type Line3DMapType = {
 };
 
 export interface Line3DInlinePointType {
-  t: SHAPE3D_TYPE;
+  t: GeometryType;
   start: Point3DInlineType;
   end: Point3DInlineType;
 }

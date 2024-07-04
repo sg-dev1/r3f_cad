@@ -7,7 +7,7 @@ import { Inputs } from '@bitbybit-dev/occt';
 import { CircleInlinePointType } from '@/app/types/CircleType';
 import { Line3DInlinePointType } from '@/app/types/Line3DType';
 import { ArcInlinePointType } from '@/app/types/ArcType';
-import { SHAPE3D_TYPE } from '@/app/types/ShapeType';
+import { GeometryType } from '@/app/types/EntityType';
 
 type FlattenPointsMapType = { [key: number]: Point };
 type FlattenShapeSubset = Segment | Circle | Arc;
@@ -904,7 +904,7 @@ export const findCyclesInSketchAndConvertToOcct = async (sketch: SketchType, bit
       if (shape instanceof Segment) {
         const segment = shape as Segment;
         return {
-          t: SHAPE3D_TYPE.LINE,
+          t: GeometryType.LINE,
           start: convert2DPointTo3D(sketch.plane, segment.start.x, segment.start.y),
           end: convert2DPointTo3D(sketch.plane, segment.end.x, segment.end.y),
         } as Line3DInlinePointType;
@@ -914,7 +914,7 @@ export const findCyclesInSketchAndConvertToOcct = async (sketch: SketchType, bit
         const endPoint = arc.end;
         const middlePoint = arc.center;
         return {
-          t: SHAPE3D_TYPE.ARC,
+          t: GeometryType.ARC,
           start: convert2DPointTo3D(sketch.plane, startPoint.x, startPoint.y),
           mid_pt: convert2DPointTo3D(sketch.plane, middlePoint.x, middlePoint.y),
           end: convert2DPointTo3D(sketch.plane, endPoint.x, endPoint.y),
@@ -927,7 +927,7 @@ export const findCyclesInSketchAndConvertToOcct = async (sketch: SketchType, bit
       } else if (shape instanceof Circle) {
         const circle = shape as Circle;
         return {
-          t: SHAPE3D_TYPE.CIRCLE,
+          t: GeometryType.CIRCLE,
           mid_pt: convert2DPointTo3D(sketch.plane, circle.center.x, circle.center.y),
           radius: circle.r,
           midPt2d: [circle.center.x, circle.center.y],
@@ -986,7 +986,7 @@ export const findCyclesInSketchAndConvertToOcct = async (sketch: SketchType, bit
   //                  - e.g. at first no clusters
   //                  - then cluster1 with first element etc. (not adding circles to clusters - cannot be connected with anything else)
   //              - for each cluster remove the element with the largest area
-  const newResult = result.filter((item, index) => item.cycle[0].t === SHAPE3D_TYPE.CIRCLE || index !== maxIdx);
+  const newResult = result.filter((item, index) => item.cycle[0].t === GeometryType.CIRCLE || index !== maxIdx);
   console.log('newResult', newResult, 'result', result, 'maxIdx', maxIdx);
   // cleanup in occt
   await bitbybit.occt.deleteShapes({ shapes: [result[maxIdx].face] });

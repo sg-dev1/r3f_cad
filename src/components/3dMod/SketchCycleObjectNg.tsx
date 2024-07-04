@@ -3,9 +3,9 @@ import { useAppDispatch } from '@/app/hooks';
 import { setSketchToExtrude } from '@/app/slices/modellingToolStateSlice';
 import { ArcInlinePointType } from '@/app/types/ArcType';
 import { CircleInlinePointType } from '@/app/types/CircleType';
+import { GeometryType } from '@/app/types/EntityType';
 import { Line3DInlinePointType } from '@/app/types/Line3DType';
 import { Point3DInlineType, point3DInlineEquals } from '@/app/types/Point3DType';
-import { SHAPE3D_TYPE } from '@/app/types/ShapeType';
 import { SketchCycleType } from '@/utils/algo3d';
 import { getPointU2, getPointV2, getRotationForPlaneAsQuaternion } from '@/utils/threejs_planes';
 import useArcPoints from '@/utils/useArcPoints';
@@ -31,8 +31,8 @@ const SketchCycleObjectNg = ({ sketchCycle }: SketchCycleObjectNgProps) => {
   const quaternion = getRotationForPlaneAsQuaternion(sketchCycle.sketch.plane);
   const dispatch = useAppDispatch();
 
-  const arcs = sketchCycle.cycle.filter((shape) => shape.t === SHAPE3D_TYPE.ARC) as ArcInlinePointType[];
-  const circles = sketchCycle.cycle.filter((shape) => shape.t === SHAPE3D_TYPE.CIRCLE) as CircleInlinePointType[];
+  const arcs = sketchCycle.cycle.filter((shape) => shape.t === GeometryType.ARC) as ArcInlinePointType[];
+  const circles = sketchCycle.cycle.filter((shape) => shape.t === GeometryType.CIRCLE) as CircleInlinePointType[];
   const arcsPointsArray = arcs.map((arc) => useArcPoints({ arc: arc, quaternion: quaternion }));
   const circlePointsArray = circles.map((circle) => useCirclePoints({ circle: circle, quaternion: quaternion }));
 
@@ -49,9 +49,9 @@ const SketchCycleObjectNg = ({ sketchCycle }: SketchCycleObjectNgProps) => {
       if (sketchCycle.cycle.length > 1) {
         const firstShape = sketchCycle.cycle[0];
         let firstPoint: Point3DInlineType | null = null;
-        if (firstShape.t === SHAPE3D_TYPE.LINE) {
+        if (firstShape.t === GeometryType.LINE) {
           firstPoint = (firstShape as Line3DInlinePointType).start;
-        } else if (firstShape.t === SHAPE3D_TYPE.ARC) {
+        } else if (firstShape.t === GeometryType.ARC) {
           firstPoint = (firstShape as ArcInlinePointType).start;
         }
         // CIRCLE is handled differently (see below)
@@ -65,7 +65,7 @@ const SketchCycleObjectNg = ({ sketchCycle }: SketchCycleObjectNgProps) => {
           //console.log('moveto', firstPoint);
           let arcIdx = 0;
           sketchCycle.cycle.forEach((shape) => {
-            if (shape.t === SHAPE3D_TYPE.LINE) {
+            if (shape.t === GeometryType.LINE) {
               const lineSegment = shape as Line3DInlinePointType;
               threeShape.lineTo(
                 getPointU2(sketchCycle.sketch.plane, lineSegment.end),
@@ -73,7 +73,7 @@ const SketchCycleObjectNg = ({ sketchCycle }: SketchCycleObjectNgProps) => {
               );
               points.push(lineSegment.end);
               //console.log('lineto', lineSegment.end);
-            } else if (shape.t === SHAPE3D_TYPE.ARC) {
+            } else if (shape.t === GeometryType.ARC) {
               const arc = shape as ArcInlinePointType;
               //console.log('arc', arc);
               threeShape.absarc(
@@ -96,7 +96,7 @@ const SketchCycleObjectNg = ({ sketchCycle }: SketchCycleObjectNgProps) => {
         }
       } else {
         // CIRCLE
-        if (sketchCycle.cycle[0].t === SHAPE3D_TYPE.CIRCLE) {
+        if (sketchCycle.cycle[0].t === GeometryType.CIRCLE) {
           const circle = sketchCycle.cycle[0] as CircleInlinePointType;
           threeShape.moveTo(circle.midPt2d[0], circle.midPt2d[1]);
           threeShape.absellipse(
