@@ -1,7 +1,7 @@
 /** This component contains a list of all sketches presented to the user in the 3D modelling tool. */
 import { useAppDispatch, useAppSelector } from '@/app/hooks';
-import { deleteSketch, selectSketchs, setActiveSketch } from '@/app/slices/sketchSlice';
-import { DeleteOutlined, EditOutlined } from '@ant-design/icons';
+import { selectSelectedSketch, setSelectedSketch } from '@/app/slices/modellingToolStateSlice';
+import { deleteSketch, selectSketchs, setActiveSketch, setSketchVisibility } from '@/app/slices/sketchSlice';
 import { Button, Flex, Popconfirm, Table } from 'antd';
 import { ColumnsType } from 'antd/es/table';
 import React, { useEffect, useState } from 'react';
@@ -15,6 +15,7 @@ interface DataType {
 const SketchTable = () => {
   const [tableData, setTableData] = useState<DataType[]>([]);
   const sketches = useAppSelector(selectSketchs);
+  const selectedSketch = useAppSelector(selectSelectedSketch);
 
   const [selectedRowKey, setSelectedRowKey] = useState<string | null>(null);
   const dispatch = useAppDispatch();
@@ -27,6 +28,12 @@ const SketchTable = () => {
     }));
     setTableData(values);
   }, [sketches]);
+
+  useEffect(() => {
+    setSelectedRowKey(String(selectedSketch));
+  }, [selectedSketch]);
+
+  // ---
 
   const columns: ColumnsType<DataType> = [
     {
@@ -55,12 +62,24 @@ const SketchTable = () => {
       render: (_, record) => {
         return (
           <Flex>
-            <Button type="text" onClick={() => handleUpdate(record as DataType)}>
-              <EditOutlined />
+            <Button style={{ padding: '3px 5px' }} type="text" onClick={() => handleUpdate(record as DataType)}>
+              <span className="material-symbols-outlined">edit</span>
             </Button>
             <Popconfirm title="Sure to delete?" onConfirm={() => handleDelete(record as DataType)}>
-              <DeleteOutlined />
+              <span style={{ padding: '3px 5px' }} className="material-symbols-outlined">
+                delete
+              </span>
             </Popconfirm>
+            <Button
+              style={{ padding: '3px 5px' }}
+              type="text"
+              onClick={() => dispatch(setSketchVisibility({ id: record.id, visible: !sketches[record.id].isVisible }))}
+            >
+              <span className="material-symbols-outlined">
+                {sketches[record.id].isVisible ? 'visibility_off' : 'visibility'}
+                {/* visibility */}
+              </span>
+            </Button>
           </Flex>
         );
       },
@@ -79,7 +98,7 @@ const SketchTable = () => {
 
   const handleRowClick = (record: DataType) => {
     setSelectedRowKey(record.key);
-    //dispatch(setSelectedEntityId(record.id));
+    dispatch(setSelectedSketch(record.id));
   };
 
   return (

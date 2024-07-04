@@ -1,6 +1,7 @@
 /** This component contains the drawing functionality for 2D sketches in 3D space. */
-import { useAppDispatch } from '@/app/hooks';
-import { setSketchToExtrude } from '@/app/slices/modellingToolStateSlice';
+import { useAppDispatch, useAppSelector } from '@/app/hooks';
+import { selectSelectedSketch, setSketchToExtrude } from '@/app/slices/modellingToolStateSlice';
+import { RootState } from '@/app/store';
 import { ArcInlinePointType } from '@/app/types/ArcType';
 import { CircleInlinePointType } from '@/app/types/CircleType';
 import { GeometryType } from '@/app/types/EntityType';
@@ -12,6 +13,7 @@ import useArcPoints from '@/utils/useArcPoints';
 import useCirclePoints from '@/utils/useCirclePoints';
 import { Line } from '@react-three/drei';
 import React, { useEffect, useState } from 'react';
+import { useSelector } from 'react-redux';
 import * as THREE from 'three';
 
 export interface SketchCycleObjectNgProps {
@@ -19,14 +21,24 @@ export interface SketchCycleObjectNgProps {
 }
 
 const SketchCycleObjectNg = ({ sketchCycle }: SketchCycleObjectNgProps) => {
-  useEffect(() => {
-    drawShape();
-  }, [sketchCycle]);
+  const sketchIsVisible = useSelector((state: RootState) => state.sketchs.sketches[sketchCycle.sketch.id].isVisible);
+  const selectedSketch = useAppSelector(selectSelectedSketch);
+  // TODO - only for the selected sketch the 2D shapes (with hover functionality) need to be drawn
+  //      - for all other sketches only the lines shall be drawn (to not clutter the display too much)
 
-  // if hidden we don't have to do anything
-  if (sketchCycle.isHidden) {
-    return <></>;
-  }
+  useEffect(() => {
+    // Note that both do not match, seems that sketchCycle.sketch.isVisible still has some old value (of last render?)
+    //console.log('--- useEffect sketchCycle', sketchCycle.sketch.isVisible, sketchIsVisible);
+    if (sketchIsVisible) {
+      drawShape();
+    } else {
+      // in case shape is not visible, nothing needs to be drawn
+      setShapeGeom(null);
+      setShapePoints([]);
+    }
+  }, [sketchCycle, sketchIsVisible]);
+
+  // TODO here some optimizations with use memo, precompute drawShape only once etc. could be applied
 
   const quaternion = getRotationForPlaneAsQuaternion(sketchCycle.sketch.plane);
   const dispatch = useAppDispatch();

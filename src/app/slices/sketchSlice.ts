@@ -121,6 +121,13 @@ export const sketchSlice = createSlice({
     resetActiveSketch: (state: SketchState) => {
       state.activeSketchId = -1;
     },
+    setSketchVisibility: (state: SketchState, { payload: { id, visible } }) => {
+      if (!(id in state.sketches)) {
+        console.error('There is no sketch with id ' + id + '.');
+        return;
+      }
+      state.sketches[id].isVisible = visible;
+    },
     deleteSketch: (state: SketchState, { payload: id }) => {
       if (!(id in state.sketches)) {
         console.error('There is no sketch with id ' + id + '.');
@@ -202,6 +209,7 @@ export const {
   createSketch,
   setActiveSketch,
   resetActiveSketch,
+  setSketchVisibility,
   deleteSketch,
   addEntity,
   removeEntity,

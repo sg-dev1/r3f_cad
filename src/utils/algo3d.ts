@@ -21,7 +21,6 @@ export interface SketchCycleType {
   face: Inputs.OCCT.TopoDSFacePointer;
   faceArea: number;
   sketch: SketchType;
-  isHidden: boolean;
   index: number;
   flattenShapes: FlattenShapeSubset[];
 }
@@ -965,7 +964,6 @@ export const findCyclesInSketchAndConvertToOcct = async (sketch: SketchType, bit
       face: face,
       faceArea: faceArea,
       sketch: sketch,
-      isHidden: false,
       index: cycleIndex,
       flattenShapes: cycle,
     });

@@ -14,6 +14,7 @@ export interface SketchType {
   id: number;
   name: string;
   plane: string;
+  isVisible: boolean;
 
   entityIdCounter: number;
   points: Point3DType[];
@@ -32,6 +33,7 @@ export const emptySketch: SketchType = {
   id: -1,
   name: '',
   plane: '',
+  isVisible: true,
 
   entityIdCounter: 1,
   points: [],

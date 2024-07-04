@@ -4,10 +4,12 @@ import { RootState } from '../store';
 
 export interface ModellingToolState {
   sketchToExtrude: [number, number];
+  selectedSketch: number;
 }
 
 const initialState: ModellingToolState = {
   sketchToExtrude: [-1, -1],
+  selectedSketch: -1,
 };
 
 export const modellingToolSlice = createSlice({
@@ -18,11 +20,15 @@ export const modellingToolSlice = createSlice({
     setSketchToExtrude: (state, { payload }) => {
       state.sketchToExtrude = payload;
     },
+    setSelectedSketch: (state, { payload }) => {
+      state.selectedSketch = payload;
+    },
   },
 });
 
-export const { setSketchToExtrude } = modellingToolSlice.actions;
+export const { setSketchToExtrude, setSelectedSketch } = modellingToolSlice.actions;
 
 export const selectSketchToExtrude = (state: RootState) => state.modellingTool.sketchToExtrude;
+export const selectSelectedSketch = (state: RootState) => state.modellingTool.selectedSketch;
 
 export default modellingToolSlice.reducer;
