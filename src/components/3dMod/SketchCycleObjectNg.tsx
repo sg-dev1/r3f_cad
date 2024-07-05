@@ -21,7 +21,7 @@ export interface SketchCycleObjectNgProps {
 }
 
 const SketchCycleObjectNg = ({ sketchCycle }: SketchCycleObjectNgProps) => {
-  const sketchIsVisible = useSelector((state: RootState) => state.sketchs.sketches[sketchCycle.sketch.id].isVisible);
+  const sketchIsVisible = useSelector((state: RootState) => state.sketchs.sketches[sketchCycle.sketch.id]?.isVisible);
   const selectedSketch = useAppSelector(selectSelectedSketch);
 
   const quaternion = useMemo(() => getRotationForPlaneAsQuaternion(sketchCycle.sketch.plane), [sketchCycle]);

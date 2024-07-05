@@ -1,5 +1,4 @@
 Priority of improvements (my ranking)
-  - B017
   - B016
   - B012  // improvement, more features (3d geom tools)
   - B008  // arbitrary plane awareness
@@ -70,8 +69,6 @@ List of Improvements
 
 (B016) Implement hiding of 3D Geometry - needs an object explorer
 
-(B017) Bug in delete sketch (no longer working)
-
 
 On Hold
 
@@ -95,6 +92,8 @@ On Hold
 
 
 Done Improvements
+
+(B017) Bug in delete sketch (no longer working)
 
 (B015) Implement hiding of sketches in 3D modeller
      - Faces should be only visible for a single selected sketch

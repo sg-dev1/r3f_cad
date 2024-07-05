@@ -76,7 +76,7 @@ const SketchTable = () => {
               onClick={() => dispatch(setSketchVisibility({ id: record.id, visible: !sketches[record.id].isVisible }))}
             >
               <span className="material-symbols-outlined">
-                {sketches[record.id].isVisible ? 'visibility_off' : 'visibility'}
+                {sketches[record.id]?.isVisible ? 'visibility_off' : 'visibility'}
                 {/* visibility */}
               </span>
             </Button>
