@@ -154,7 +154,8 @@ const OcctRoot = () => {
 
     const finalShapes: Geometry3DType[] = [];
     const geomIdsToRemove: number[] = [];
-    for (const geom of geometries3d) {
+    const allGeometries = Object.entries(geometries3d).map(([key, value]) => value);
+    for (const geom of allGeometries) {
       const sketchShape = sketchShapes.filter(
         // only support one modelling operation
         (shape) =>

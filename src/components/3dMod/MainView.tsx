@@ -10,6 +10,7 @@ import OcctRoot from './OcctRoot';
 import { Canvas } from '@react-three/fiber';
 import { GizmoHelper, GizmoViewport, Grid, OrbitControls } from '@react-three/drei';
 import ThreeAxisPlanes from './ThreeAxisPlanes';
+import Geom3DTable from './Geom3DTable';
 
 const { Header, Content, Sider } = Layout;
 
@@ -61,6 +62,7 @@ const MainView = () => {
             }}
           >
             <SketchTable />
+            <Geom3DTable />
           </Sider>
 
           <Content style={{ marginLeft: 500, padding: '10px 24px 24px', backgroundColor: 'slategray' }}>

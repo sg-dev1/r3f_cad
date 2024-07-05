@@ -1,9 +1,11 @@
-/** This component contains a list of all sketches presented to the user in the 3D modelling tool. */
+/** This component contains a list of all geometries presented to the user in the 3D modelling tool.
+ *  Was a quick way to implement (B016) hiding of 3D geometry.
+ *  Will in future be replaced by tree view (B003)
+ */
 import { useAppDispatch, useAppSelector } from '@/app/hooks';
-import { selectSelectedSketch, setSelectedSketch } from '@/app/slices/modellingToolStateSlice';
-import { deleteSketch, selectSketchs, setActiveSketch, setSketchVisibility } from '@/app/slices/sketchSlice';
-import { Button, Flex, Popconfirm, Table } from 'antd';
-import { ColumnsType } from 'antd/es/table';
+import { removeGeometries, select3dGeometries, setGeometryVisibility } from '@/app/slices/geom3dSlice';
+import { Button, Flex, Popconfirm } from 'antd';
+import Table, { ColumnsType } from 'antd/es/table';
 import React, { useEffect, useState } from 'react';
 
 interface DataType {
@@ -12,26 +14,21 @@ interface DataType {
   name: string;
 }
 
-const SketchTable = () => {
+const Geom3DTable = () => {
   const [tableData, setTableData] = useState<DataType[]>([]);
-  const sketches = useAppSelector(selectSketchs);
-  const selectedSketch = useAppSelector(selectSelectedSketch);
+  const geometries3d = useAppSelector(select3dGeometries);
 
   const [selectedRowKey, setSelectedRowKey] = useState<string | null>(null);
   const dispatch = useAppDispatch();
 
   useEffect(() => {
-    const values: DataType[] = Object.entries(sketches).map(([key, value]) => ({
+    const values: DataType[] = Object.entries(geometries3d).map(([key, value]) => ({
       key: String(value.id),
       id: value.id,
       name: value.name,
     }));
     setTableData(values);
-  }, [sketches]);
-
-  useEffect(() => {
-    setSelectedRowKey(String(selectedSketch));
-  }, [selectedSketch]);
+  }, [geometries3d]);
 
   // ---
 
@@ -62,22 +59,17 @@ const SketchTable = () => {
       render: (_, record) => {
         return (
           <Flex>
-            <Button style={{ padding: '3px 5px' }} type="text" onClick={() => handleUpdate(record as DataType)}>
+            {/* <Button style={{ padding: '3px 5px' }} type="text" onClick={() => handleUpdate(record)}>
               <span className="material-symbols-outlined">edit</span>
-            </Button>
-            <Popconfirm title="Sure to delete?" onConfirm={() => handleDelete(record as DataType)}>
+            </Button> */}
+            <Popconfirm title="Sure to delete?" onConfirm={() => handleDelete(record)}>
               <span style={{ padding: '3px 5px' }} className="material-symbols-outlined">
                 delete
               </span>
             </Popconfirm>
-            <Button
-              style={{ padding: '3px 5px' }}
-              type="text"
-              onClick={() => dispatch(setSketchVisibility({ id: record.id, visible: !sketches[record.id].isVisible }))}
-            >
+            <Button style={{ padding: '3px 5px' }} type="text" onClick={() => handleVisibility(record)}>
               <span className="material-symbols-outlined">
-                {sketches[record.id]?.isVisible ? 'visibility_off' : 'visibility'}
-                {/* visibility */}
+                {geometries3d[record.id]?.isVisible ? 'visibility_off' : 'visibility'}
               </span>
             </Button>
           </Flex>
@@ -86,19 +78,27 @@ const SketchTable = () => {
     },
   ];
 
+  /*
+  // Note - here extrude length could be manipulated (not needed now)
   const handleUpdate = (record: DataType) => {
     console.log('update', record);
-    dispatch(setActiveSketch(record.id));
+    //dispatch(setActiveSketch(record.id));
   };
+  */
 
   const handleDelete = (record: DataType) => {
     console.log('delete', record);
-    dispatch(deleteSketch(record.id));
+    dispatch(removeGeometries({ ids: [record.id] }));
+  };
+
+  const handleVisibility = (record: DataType) => {
+    console.log('visibility', record);
+    dispatch(setGeometryVisibility({ id: record.id, visible: !geometries3d[record.id].isVisible }));
   };
 
   const handleRowClick = (record: DataType) => {
     setSelectedRowKey(record.key);
-    dispatch(setSelectedSketch(record.id));
+    //dispatch(setSelectedSketch(record.id));
   };
 
   return (
@@ -108,7 +108,7 @@ const SketchTable = () => {
       //scroll={{ y: '35vh' }}
       columns={columns}
       dataSource={tableData}
-      title={() => <b>Sketchs</b>}
+      title={() => <b>Geometries</b>}
       onRow={(record, rowIndex) => {
         return {
           onClick: (event) => {
@@ -121,4 +121,4 @@ const SketchTable = () => {
   );
 };
 
-export default SketchTable;
+export default Geom3DTable;

@@ -5,12 +5,12 @@ import { Geom3dType, ModellingOperation, ModellingOperationType } from './geom3d
 
 export interface Geom3dState {
   geomIdCount: number;
-  geometries: Geom3dType[];
+  geometries: { [key: number]: Geom3dType };
 }
 
 const initialState: Geom3dState = {
   geomIdCount: 0,
-  geometries: [],
+  geometries: {},
 };
 
 export const geom3dSlice = createSlice({
@@ -24,21 +24,36 @@ export const geom3dSlice = createSlice({
         sketchRef: payload.sketchRef,
         distance: payload.distance,
       };
-      state.geometries.push({
+      state.geometries[state.geomIdCount] = {
         id: state.geomIdCount,
-        name: `Sketch${state.geomIdCount}`,
+        name: `Geometry${state.geomIdCount}`,
         isVisible: true,
         modellingOperations: [extrudeOp],
-      });
+      };
       state.geomIdCount++;
     },
     removeGeometries: (state: Geom3dState, action: PayloadAction<{ ids: number[] }, string>) => {
-      state.geometries = state.geometries.filter((geom) => !action.payload.ids.includes(geom.id));
+      const anyIdNotFound = action.payload.ids.reduce(
+        (aggregate, currId, elem, arr) => aggregate || !(currId in state.geometries),
+        false
+      );
+      if (anyIdNotFound) {
+        console.error('There is at least one non existing id in ids', action.payload.ids);
+        return;
+      }
+      action.payload.ids.forEach((id) => delete state.geometries[id]);
+    },
+    setGeometryVisibility: (state: Geom3dState, { payload: { id, visible } }) => {
+      if (!(id in state.geometries)) {
+        console.error('There is no geometry with id ' + id + '.');
+        return;
+      }
+      state.geometries[id].isVisible = visible;
     },
   },
 });
 
-export const { createGeom3d, removeGeometries } = geom3dSlice.actions;
+export const { createGeom3d, removeGeometries, setGeometryVisibility } = geom3dSlice.actions;
 
 export const select3dGeometries = (state: RootState) => state.geom3d.geometries;
 
