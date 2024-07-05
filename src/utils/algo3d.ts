@@ -17,12 +17,12 @@ type CadTool3DShapeSubset = Line3DInlinePointType | CircleInlinePointType | ArcI
 
 /** Datatype returned by this library */
 export interface SketchCycleType {
-  cycle: CadTool3DShapeSubset[];
-  face: Inputs.OCCT.TopoDSFacePointer;
-  faceArea: number;
-  sketch: SketchType;
-  index: number;
-  flattenShapes: FlattenShapeSubset[];
+  cycle: CadTool3DShapeSubset[]; // the cycle
+  face: Inputs.OCCT.TopoDSFacePointer; // the cycle as occt face
+  faceArea: number; // area of the face (cycle)
+  sketch: SketchType; // the Sketch this cycle belongs to. One Sketch may have multiple cycles.
+  index: number; // index of this cycle for the given sketch
+  flattenShapes: FlattenShapeSubset[]; // mainly used internal by this library
 }
 
 const findConnectedLinesInSketch = (sketch: SketchType) => {

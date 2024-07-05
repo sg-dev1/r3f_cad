@@ -1,5 +1,5 @@
 /** This redux slice holds state information for 3D geometry created by different modelling operations. */
-import { createSlice } from '@reduxjs/toolkit';
+import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 import { RootState } from '../store';
 import { Geom3dType, ModellingOperation, ModellingOperationType } from './geom3d';
 
@@ -27,14 +27,18 @@ export const geom3dSlice = createSlice({
       state.geometries.push({
         id: state.geomIdCount,
         name: `Sketch${state.geomIdCount}`,
+        isVisible: true,
         modellingOperations: [extrudeOp],
       });
       state.geomIdCount++;
     },
+    removeGeometries: (state: Geom3dState, action: PayloadAction<{ ids: number[] }, string>) => {
+      state.geometries = state.geometries.filter((geom) => !action.payload.ids.includes(geom.id));
+    },
   },
 });
 
-export const { createGeom3d } = geom3dSlice.actions;
+export const { createGeom3d, removeGeometries } = geom3dSlice.actions;
 
 export const select3dGeometries = (state: RootState) => state.geom3d.geometries;
 

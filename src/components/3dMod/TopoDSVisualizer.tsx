@@ -4,14 +4,9 @@ import { BitByBitOCCT } from '@bitbybit-dev/occt-worker';
 import { Inputs } from '@bitbybit-dev/occt';
 import { occtShapeToBufferGeoms } from './occt_visualize';
 import * as THREE from 'three';
+import { Geometry3DType } from '@/app/types/Geometry3DType';
 
-const TopoDSVisualizer = ({
-  bitbybitOcct,
-  shape,
-}: {
-  bitbybitOcct: BitByBitOCCT;
-  shape: Inputs.OCCT.TopoDSShapePointer;
-}) => {
+const TopoDSVisualizer = ({ bitbybitOcct, shape }: { bitbybitOcct: BitByBitOCCT; shape: Geometry3DType }) => {
   const [shapeGeometries, setShapeGeometries] = useState<THREE.BufferGeometry[]>([]);
 
   useEffect(() => {
@@ -23,13 +18,18 @@ const TopoDSVisualizer = ({
     };
 
     async function load() {
-      const geometries = await occtShapeToBufferGeoms(bitbybitOcct, shape, 0.01);
+      const geometries = await occtShapeToBufferGeoms(bitbybitOcct, shape.occtShape, 0.01);
       if (!active) {
         return;
       }
       setShapeGeometries(geometries);
     }
   }, [bitbybitOcct, shape]);
+
+  // check if visible at all
+  if (!shape.geom3d?.isVisible) {
+    return <></>;
+  }
 
   return (
     <>

@@ -14,7 +14,8 @@ import { SketchType } from '@/app/slices/Sketch';
 import { STLExporter } from 'three/examples/jsm/Addons.js';
 import * as THREE from 'three';
 import TopoDSVisualizer from './TopoDSVisualizer';
-import { createGeom3d, select3dGeometries } from '@/app/slices/geom3dSlice';
+import { createGeom3d, removeGeometries, select3dGeometries } from '@/app/slices/geom3dSlice';
+import { Geometry3DType } from '@/app/types/Geometry3DType';
 
 const OcctRoot = () => {
   const [bitbybit, setBitbybit] = useState<BitByBitOCCT>();
@@ -23,7 +24,7 @@ const OcctRoot = () => {
   const sketchs = useAppSelector(selectSketchs);
   const [sketchShapes, setSketchShapes] = useState<SketchCycleType[]>([]);
   const geometries3d = useAppSelector(select3dGeometries);
-  const [shapes3d, setShapes3d] = useState<Inputs.OCCT.TopoDSShapePointer[]>([]);
+  const [shapes3d, setShapes3d] = useState<Geometry3DType[]>([]);
 
   const [sketchToExtrude, cycleIndex] = useAppSelector(selectSketchToExtrude);
   const shapeToExtrude = sketchShapes.filter(
@@ -106,15 +107,11 @@ const OcctRoot = () => {
     createGeom3dShapes(bitbybit);
   }, [sketchShapes, geometries3d]);
 
-  /* This is only needed if adding a new 3d feature
-     should be handled separately
-  useEffect(() => {
-    //
-  }, [geometries3d]);
-  */
-
   // ---
 
+  /** Converts the sketchs from redux store to objects that can be displayed in 3D space.
+   *  Output type is list of SketchCycleType.
+   */
   const createSketchShapes = async (bitbybit?: BitByBitOCCT) => {
     if (!bitbybit) {
       return;
@@ -146,12 +143,17 @@ const OcctRoot = () => {
     setSketchShapes(shapes);
   };
 
+  /** Converts 3D geometry from redux store (resulting from modelling operations) to objects
+   *  that can be displayed in 3D space.
+   *  Output type is list of Inputs.OCCT.TopoDSShapePointer.
+   */
   const createGeom3dShapes = async (bitbybit?: BitByBitOCCT) => {
     if (!bitbybit) {
       return;
     }
 
-    const finalShapes: Inputs.OCCT.TopoDSShapePointer[] = [];
+    const finalShapes: Geometry3DType[] = [];
+    const geomIdsToRemove: number[] = [];
     for (const geom of geometries3d) {
       const sketchShape = sketchShapes.filter(
         // only support one modelling operation
@@ -160,15 +162,21 @@ const OcctRoot = () => {
           shape.index === geom.modellingOperations[0].sketchRef[1]
       );
       const length = geom.modellingOperations[0].distance;
-      console.log('[createGeom3dShapes]', sketchShape);
+      //console.log('[createGeom3dShapes]', sketchShape);
       if (sketchShape.length > 0) {
-        const finalShape = await extrudeSketch(sketchShape[0].face, sketchShape[0].sketch, length, false);
+        const finalShape = await extrudeSketch(sketchShape[0].face, sketchShape[0].sketch, length);
         if (finalShape) {
-          finalShapes.push(finalShape);
+          finalShapes.push({ geom3d: geom, occtShape: finalShape });
         }
       } else {
         console.warn('Sketchshape was undefined for geom ', geom);
+        geomIdsToRemove.push(geom.id);
       }
+    }
+
+    if (geomIdsToRemove.length > 0) {
+      // clean up all "orphaned geometries" where the sketch was removed
+      dispatch(removeGeometries({ ids: geomIdsToRemove }));
     }
 
     setShapes3d(finalShapes);
@@ -206,12 +214,10 @@ const OcctRoot = () => {
 
   // ---
 
-  const extrudeSketch = async (
-    face: Inputs.OCCT.TopoDSFacePointer,
-    sketch: SketchType,
-    length: number,
-    addToScene: boolean
-  ) => {
+  /** Modelling operation that extrudes a sketch given by a 2D face the given length
+   *  (may be negative --> 3D shape points into the opposite direction).
+   */
+  const extrudeSketch = async (face: Inputs.OCCT.TopoDSFacePointer, sketch: SketchType, length: number) => {
     if (!bitbybit) {
       return;
     }
@@ -232,14 +238,11 @@ const OcctRoot = () => {
     */
     //console.log(extrude);
 
-    if (addToScene) {
-      setShapes3d([...shapes3d, extrude]);
-    }
-
     //await downloadStep(extrude);
     return extrude;
   };
 
+  /** Provides functionality to download a given shape as STEP file. */
   const downloadStep = async (shape: Inputs.OCCT.TopoDSShapePointer) => {
     if (!bitbybit) {
       return;

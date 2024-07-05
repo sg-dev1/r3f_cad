@@ -3,6 +3,7 @@
 export interface Geom3dType {
   id: number;
   name: string;
+  isVisible: boolean;
 
   // history of all modelling operations applied to a 3D Geometry
   modellingOperations: ModellingOperation[];
@@ -10,7 +11,7 @@ export interface Geom3dType {
 
 export interface ModellingOperation {
   type: ModellingOperationType;
-  sketchRef: [number, number];
+  sketchRef: [number, number]; // sketch id, id of cycle in sketch
   distance: number;
 }
 
