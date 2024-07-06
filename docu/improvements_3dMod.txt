@@ -70,6 +70,8 @@ List of Improvements
 (B019) Testing - at least algo3d should have some unit tests
     - would also have the benefit that refactorings could be done
     - performance tests, etc.
+    - for unit testing use jest
+      https://nextjs.org/docs/app/building-your-application/testing/jest
 
 
 On Hold
