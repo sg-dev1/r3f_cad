@@ -1,6 +1,5 @@
 Priority of improvements (my ranking)
-  - B016
-  - B018  // algo3d improvement
+  - B019  // testing
   - B012  // improvement, more features (3d geom tools)
   - B008  // arbitrary plane awareness
   - B011  [data persistence, debug]
@@ -68,24 +67,9 @@ List of Improvements
      - support of more operations (e.g. union, intersect etc.)
      - improvement of display --> also visualize the edges
 
-(B016) Implement hiding of 3D Geometry - needs an object explorer
-
-(B018) algo3d: Add support for "inner cycles"
-     Current Status:
-     - currently cycles are only seen as connected (e.g. belonging to a cluster)
-       if they have intersection points
-     - cycles that don't have intersection points belong to a different cluster
-     Wanted Status:
-     - if a cycle is inside some other cycle, shapes should be created accordingly
-        - use the larger cycle as other border
-        - use the smaller (inside) cycle as inner border
-        - there are additional shapes having the inside cycles as their border
-        a) there may be mulitple shapes inside each other
-        b) inside these shapes there may be additional shapes
-     - need to implement an algorithm to get all this inside shapes
-        - this merges existing cluster (e.g. removes them)
-        - we do not want overlapping shapes (currently that's the case because 
-          we don't have this functionality)
+(B019) Testing - at least algo3d should have some unit tests
+    - would also have the benefit that refactorings could be done
+    - performance tests, etc.
 
 
 On Hold
@@ -110,6 +94,25 @@ On Hold
 
 
 Done Improvements
+
+(B018) algo3d: Add support for "inner cycles"
+     Current Status:
+     - currently cycles are only seen as connected (e.g. belonging to a cluster)
+       if they have intersection points
+     - cycles that don't have intersection points belong to a different cluster
+     Wanted Status:
+     - if a cycle is inside some other cycle, shapes should be created accordingly
+        - use the larger cycle as other border
+        - use the smaller (inside) cycle as inner border
+        - there are additional shapes having the inside cycles as their border
+        a) there may be mulitple shapes inside each other
+        b) inside these shapes there may be additional shapes
+     - need to implement an algorithm to get all this inside shapes
+        - this merges existing cluster (e.g. removes them)
+        - we do not want overlapping shapes (currently that's the case because 
+          we don't have this functionality)
+
+(B016) Implement hiding of 3D Geometry - needs an object explorer
 
 (B017) Bug in delete sketch (no longer working)
 

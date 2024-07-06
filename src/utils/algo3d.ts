@@ -1,6 +1,6 @@
 /** This library contains functionality to find all distinct circles in a sketch. */
 import { SketchType } from '@/app/slices/Sketch';
-import { Arc, Circle, Point, Segment, Vector } from '@flatten-js/core';
+import { Arc, Circle, Point, Polygon, Segment, Vector, Relations } from '@flatten-js/core';
 import { convert2DPointTo3D, getNormalVectorForPlane, getPointU, getPointV } from './threejs_planes';
 import { BitByBitOCCT } from '@bitbybit-dev/occt-worker';
 import { Inputs } from '@bitbybit-dev/occt';
@@ -13,11 +13,12 @@ type FlattenPointsMapType = { [key: number]: Point };
 type FlattenShapeSubset = Segment | Circle | Arc;
 type FlattenShapeSubsetNoCircle = Segment | Arc;
 type FlattenShapeStruct = { id: number; shape: FlattenShapeSubset };
-type CadTool3DShapeSubset = Line3DInlinePointType | CircleInlinePointType | ArcInlinePointType;
+export type CadTool3DShapeSubset = Line3DInlinePointType | CircleInlinePointType | ArcInlinePointType;
 
 /** Datatype returned by this library */
 export interface SketchCycleType {
-  cycle: CadTool3DShapeSubset[]; // the cycle
+  cycle: CadTool3DShapeSubset[]; // the (outer) cycle
+  innerCycles: CadTool3DShapeSubset[][]; // inner cycles (e.g. holes) if there are any
   face: Inputs.OCCT.TopoDSFacePointer; // the cycle as occt face
   faceArea: number; // area of the face (cycle)
   sketch: SketchType; // the Sketch this cycle belongs to. One Sketch may have multiple cycles.
@@ -961,6 +962,7 @@ export const findCyclesInSketchAndConvertToOcct = async (sketch: SketchType, bit
 
     result.push({
       cycle: cycleIn3D,
+      innerCycles: [], // init empty array (search for holes in later step)
       face: face,
       faceArea: faceArea,
       sketch: sketch,
@@ -979,22 +981,22 @@ export const findCyclesInSketchAndConvertToOcct = async (sketch: SketchType, bit
       continue;
     }
 
+    // from here down we can safely use FlattenShapeSubsetNoCircle for all cluster stuff
+
     let clusterIndex = -1;
     for (const [key, cycleIds] of Object.entries(clusters)) {
       // key is just the clusterid, value contains ids of all cycles
       for (let i = 0; i < cycleIds.length; i++) {
         const cycleToCompareShapes = result[cycleIds[i]].flattenShapes;
         for (let j = 0; j < cycleToCompareShapes.length; j++) {
-          if (!(cycleToCompareShapes[j] instanceof Circle)) {
-            const toCompareShape = cycleToCompareShapes[j] as FlattenShapeSubsetNoCircle;
-            for (let k = 0; k < cycle.length; k++) {
-              // here it is clear that thisShape cannot be a cycle
-              const thisShape = cycle[k] as FlattenShapeSubsetNoCircle;
-              const intersect = toCompareShape.intersect(thisShape);
-              if (intersect.length > 0) {
-                clusterIndex = Number(key);
-                break;
-              }
+          const toCompareShape = cycleToCompareShapes[j] as FlattenShapeSubsetNoCircle;
+          for (let k = 0; k < cycle.length; k++) {
+            // here it is clear that thisShape cannot be a cycle
+            const thisShape = cycle[k] as FlattenShapeSubsetNoCircle;
+            const intersect = toCompareShape.intersect(thisShape);
+            if (intersect.length > 0) {
+              clusterIndex = Number(key);
+              break;
             }
           }
           if (clusterIndex !== -1) {
@@ -1020,12 +1022,15 @@ export const findCyclesInSketchAndConvertToOcct = async (sketch: SketchType, bit
     }
   }
 
-  //console.log('---clusters', clusters);
+  console.log('---clusters', clusters);
 
   // --- Remove from each cluster the element with the maximum area
 
-  const newResult: SketchCycleType[] = result.filter((cycle) => cycle.cycle[0].t === GeometryType.CIRCLE);
+  const allCircles = result.filter((cycle) => cycle.cycle[0].t === GeometryType.CIRCLE);
+  const newResult: SketchCycleType[] = [...allCircles];
   const facesToDelete: Inputs.OCCT.TopoDSFacePointer[] = [];
+  type SketchCycleWithPolygonType = { cycle: SketchCycleType; polygon: Polygon };
+  const clustersComplete: { [clusterIndex: number]: SketchCycleWithPolygonType[] } = {};
   for (const [key, cycleIds] of Object.entries(clusters)) {
     const sketchCycleInCluster = result.filter((cycle) => cycleIds.includes(cycle.index));
     const maxIdx = sketchCycleInCluster.reduce(
@@ -1035,11 +1040,160 @@ export const findCyclesInSketchAndConvertToOcct = async (sketch: SketchType, bit
     const reducedSketchCycle = sketchCycleInCluster.filter((item, index) => index !== maxIdx);
     newResult.push(...reducedSketchCycle);
     facesToDelete.push(sketchCycleInCluster[maxIdx].face);
+    //console.log('--maxIdx', maxIdx, 'key', key, 'clusters[Number(key)]', clusters[Number(key)]);
+    clusters[Number(key)] = clusters[Number(key)].filter((id, index) => index !== maxIdx);
+
+    const sortedSketchCyclesInCluster = sketchCycleInCluster.toSorted(
+      (cycle1, cycle2) => cycle2.faceArea - cycle1.faceArea
+    );
+    clustersComplete[Number(key)] = sortedSketchCyclesInCluster.map((cycle) => ({
+      cycle: cycle,
+      polygon: new Polygon(cycle.flattenShapes as FlattenShapeSubsetNoCircle[]),
+    }));
   }
   // cleanup in occt
   await bitbybit.occt.deleteShapes({ shapes: facesToDelete });
 
-  //console.log('newResult', newResult, 'result', result);
+  console.log('newResult', newResult, 'result', result, 'clusters', clusters);
+
+  // ---
+
+  // B018 - support for "inner cycles"
+  //  - Use Polygon class from flatten -> can be easily initialized using Segment/Arc array from SketchCycleType
+  //                                      (Polygon.addFace() also works similar as the Polygon constructor)
+  //      - could use Flatten.Relations.inside to check if one polygon lies inside the other
+  //          (use Flatten.Relations.covered if the boundary shall be included)
+  //      - maybe use Boolean Operations to retrieve final shapes
+  //        (not needed, since we only have to calculated SketchCycleType.innerCycles)
+  //
+  //      Properties
+  //      - IMPORTANT: We may also need to outer cycle of the cluster as removed in the previous step
+  //          - if one polygon contains the other cycle, we do not have to check the rest of the cluster
+  //      - Two cycles belonging to one cluster cannot be inside each other (they are distinct)
+  //      Algorithm
+  //      Step 1: Search if any shapes from one cluster lie inside the other
+  //         - start with the other shape (currently removed) --> if it fits inside other shapes need not be searched
+  //         - otherwise search individual shapes
+  //      Step 2: Add innerCycles found for certain SketchCycles
+  //
+  console.log('---clustersComplete', clustersComplete);
+
+  // add all circles to clustersComplete
+  allCircles.forEach((circle) => {
+    clustersComplete[nextClusterIndex] = [{ cycle: circle, polygon: new Polygon(circle.flattenShapes[0] as Circle) }];
+    nextClusterIndex++;
+  });
+
+  //
+  // Step 1
+  //
+  // (A)
+  // this is a bruteforce approach (a bit computation heavy) - maybe this can be done smarter?
+  type InsideMapType = { cycle: SketchCycleType; polygon: Polygon; innerClusterIndex: number; outerCycleIndex: number };
+  const insideMap: { [clusterIndex: number]: InsideMapType[] } = {};
+  for (const [outerClusterIndex, outerCycles] of Object.entries(clustersComplete)) {
+    let isFirstOuterCycle = true;
+    for (const outerCycle of outerCycles) {
+      // skip the first outer cycle since it is not part of newResult (was filtered out)
+      if (!isFirstOuterCycle) {
+        for (const [innerClusterIndex, innerCycles] of Object.entries(clustersComplete)) {
+          if (outerClusterIndex === innerClusterIndex) {
+            // do not compare a cluster with itself
+            continue;
+          }
+          let isFirstInnerCycle = true;
+          for (const innerCycle of innerCycles) {
+            if (Relations.inside(innerCycle.polygon, outerCycle.polygon)) {
+              // add the shape to "inside shapes" of outerCycle
+              const mapIndex = Number(outerClusterIndex);
+              if (mapIndex in insideMap) {
+                insideMap[mapIndex].push({
+                  ...innerCycle,
+                  innerClusterIndex: Number(innerClusterIndex),
+                  outerCycleIndex: outerCycle.cycle.index,
+                });
+              } else {
+                insideMap[mapIndex] = [
+                  {
+                    ...innerCycle,
+                    innerClusterIndex: Number(innerClusterIndex),
+                    outerCycleIndex: outerCycle.cycle.index,
+                  },
+                ];
+              }
+              if (isFirstInnerCycle) {
+                // stop the search in this clusters since all other shapes must lie inside (special case)
+                break;
+              }
+            }
+            isFirstInnerCycle = false;
+          }
+        }
+      }
+      isFirstOuterCycle = false;
+    }
+  }
+
+  console.log('insideMap', insideMap);
+
+  // (B)
+  // we still have the issue that shapes inside the innerCycle are added as well
+  // they need to be removed
+  // update newResult using insideMap
+  for (const [clusterIndex, cyclesOfCluster] of Object.entries(insideMap)) {
+    for (const insideMapCycle of cyclesOfCluster) {
+      // now check if outerCycle.innerClusterIndex is in insideMap (referred as "other cluster element")
+      //   if yes, we have to remove from this cluster all elements with the same innerClusterIndex
+      //   as found in the "other cluster element"
+      if (insideMapCycle.innerClusterIndex in insideMap) {
+        const otherClusterElement = insideMap[insideMapCycle.innerClusterIndex];
+        const cycleIds = otherClusterElement.map((insideMapElem) => insideMapElem.innerClusterIndex);
+        insideMap[Number(clusterIndex)] = insideMap[Number(clusterIndex)].filter(
+          (insideMapElem) => !cycleIds.includes(insideMapElem.innerClusterIndex)
+        );
+      }
+    }
+  }
+
+  console.log('(B) insideMap', insideMap);
+
+  //
+  // Step 2
+  //
+  // build an update map and apply the final result
+  const updateMap: { [cycleIndex: number]: CadTool3DShapeSubset[][] } = {};
+  for (const [clusterIndex, cyclesOfCluster] of Object.entries(insideMap)) {
+    const cycleIndices = clusters[Number(clusterIndex)];
+    for (const insideMapCycle of cyclesOfCluster) {
+      if (cycleIndices.includes(insideMapCycle.outerCycleIndex)) {
+        if (insideMapCycle.outerCycleIndex in updateMap) {
+          updateMap[insideMapCycle.outerCycleIndex].push(insideMapCycle.cycle.cycle);
+        } else {
+          updateMap[insideMapCycle.outerCycleIndex] = [insideMapCycle.cycle.cycle];
+        }
+      } else {
+        // This check should be normally not needed, only to be sure that this condition does not happen
+        console.warn(
+          'cycleIndices does not include insideMapCycle.outerCycleIndex. This may indicate a bug.',
+          cycleIndices,
+          insideMapCycle.outerCycleIndex
+        );
+      }
+    }
+  }
+
+  console.log('updateMap', updateMap);
+
+  for (const [cycleIndex, data] of Object.entries(updateMap)) {
+    const sketchCycleToUpdate = newResult.find((elem) => elem.index === Number(cycleIndex));
+    if (sketchCycleToUpdate) {
+      sketchCycleToUpdate.innerCycles = data;
+    } else {
+      console.warn('Sketch cycle was not found for index', cycleIndex);
+    }
+  }
+
+  console.log('newResult', newResult);
 
   // ---
 

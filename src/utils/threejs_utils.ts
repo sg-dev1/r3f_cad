@@ -1,6 +1,12 @@
 /** This library contains helper functionality for three.js. */
 import * as THREE from 'three';
-import { SKETCH_PLANE_MAP } from './threejs_planes';
+import { SKETCH_PLANE_MAP, getPointU2, getPointV2 } from './threejs_planes';
+import { CadTool3DShapeSubset } from './algo3d';
+import { Point3DInlineType } from '@/app/types/Point3DType';
+import { GeometryType } from '@/app/types/EntityType';
+import { Line3DInlinePointType } from '@/app/types/Line3DType';
+import { ArcInlinePointType } from '@/app/types/ArcType';
+import { CircleInlinePointType } from '@/app/types/CircleType';
 
 /**
  * Calculates the intersection of a ray casted from the camera to a specific plane.
@@ -70,4 +76,113 @@ export const calcIntersectionWithPlaneFromRect = (
   //console.log('Plane intersection:', out);
 
   return result;
+};
+
+/** Convert a CadTool3DShapeSubset array to a THREE.Shape using the given plane. */
+export const cadTool3DShapeToThreeShape = (shapesFromCycle: CadTool3DShapeSubset[], plane: string) => {
+  // https://threejs.org/docs/index.html?q=shape#api/en/extras/core/Shape
+  const threeShape = new THREE.Shape();
+
+  if (shapesFromCycle.length > 1) {
+    const firstShape = shapesFromCycle[0];
+    let firstPoint: Point3DInlineType | null = null;
+    if (firstShape.t === GeometryType.LINE) {
+      firstPoint = (firstShape as Line3DInlinePointType).start;
+    } else if (firstShape.t === GeometryType.ARC) {
+      firstPoint = (firstShape as ArcInlinePointType).start;
+    }
+    // CIRCLE is handled differently (see below)
+
+    if (firstPoint !== null) {
+      threeShape.moveTo(getPointU2(plane, firstPoint), getPointV2(plane, firstPoint));
+      //console.log('moveto', firstPoint);
+      let arcIdx = 0;
+      shapesFromCycle.forEach((shape) => {
+        if (shape.t === GeometryType.LINE) {
+          const lineSegment = shape as Line3DInlinePointType;
+          threeShape.lineTo(getPointU2(plane, lineSegment.end), getPointV2(plane, lineSegment.end));
+          //console.log('lineto', lineSegment.end);
+        } else if (shape.t === GeometryType.ARC) {
+          const arc = shape as ArcInlinePointType;
+          //console.log('arc', arc);
+          threeShape.absarc(arc.midPt2d[0], arc.midPt2d[1], arc.radius, arc.start_angle, arc.end_angle, arc.clockwise);
+          arcIdx++;
+        } else {
+          console.warn('Should not get here. Type t ' + shape.t + ' not supported');
+        }
+      });
+    } else {
+      console.warn('firstPoint was null.');
+    }
+  } else {
+    // CIRCLE
+    if (shapesFromCycle[0].t === GeometryType.CIRCLE) {
+      const circle = shapesFromCycle[0] as CircleInlinePointType;
+      threeShape.moveTo(circle.midPt2d[0], circle.midPt2d[1]);
+      threeShape.absellipse(
+        circle.midPt2d[0],
+        circle.midPt2d[1],
+        circle.radius,
+        circle.radius,
+        0,
+        2 * Math.PI,
+        true,
+        0
+      );
+    } else {
+      console.warn('Should not get here. Type t ' + shapesFromCycle[0].t + ' with one element not supported');
+    }
+  }
+
+  return threeShape;
+};
+
+/** Convert a CadTool3DShapeSubset array to Point3DInlineType array. */
+export const cadTool3DShapeTo3DPoints = (
+  shapesFromCycle: CadTool3DShapeSubset[],
+  arcPointsArray: Point3DInlineType[][],
+  circlePointsArray: Point3DInlineType[][]
+) => {
+  const points: Point3DInlineType[] = [];
+
+  if (shapesFromCycle.length > 1) {
+    const firstShape = shapesFromCycle[0];
+    let firstPoint: Point3DInlineType | null = null;
+    if (firstShape.t === GeometryType.LINE) {
+      firstPoint = (firstShape as Line3DInlinePointType).start;
+    } else if (firstShape.t === GeometryType.ARC) {
+      firstPoint = (firstShape as ArcInlinePointType).start;
+    }
+    // CIRCLE is handled differently (see below)
+
+    if (firstPoint !== null) {
+      points.push(firstPoint);
+      //console.log('moveto', firstPoint);
+      let arcIdx = 0;
+      shapesFromCycle.forEach((shape) => {
+        if (shape.t === GeometryType.LINE) {
+          const lineSegment = shape as Line3DInlinePointType;
+          points.push(lineSegment.end);
+          //console.log('lineto', lineSegment.end);
+        } else if (shape.t === GeometryType.ARC) {
+          const [_, ...otherArcPoints] = arcPointsArray[arcIdx];
+          points.push(...otherArcPoints);
+          arcIdx++;
+        } else {
+          console.warn('Should not get here. Type t ' + shape.t + ' not supported');
+        }
+      });
+    } else {
+      console.warn('firstPoint was null.');
+    }
+  } else {
+    // CIRCLE
+    if (shapesFromCycle[0].t === GeometryType.CIRCLE) {
+      points.push(...circlePointsArray[0]);
+    } else {
+      console.warn('Should not get here. Type t ' + shapesFromCycle[0].t + ' with one element not supported');
+    }
+  }
+
+  return points;
 };
