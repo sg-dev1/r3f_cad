@@ -142,7 +142,7 @@ const config: Config = {
   // runner: "jest-runner",
 
   // The paths to modules that run some code to configure or set up the testing environment before each test
-  // setupFiles: [],
+  setupFiles: ['jsdom-worker'],
 
   // A list of paths to modules that run some code to configure or set up the testing framework before each test
   setupFilesAfterEnv: ['<rootDir>/jest.setup.ts'],
@@ -155,6 +155,7 @@ const config: Config = {
 
   // The test environment that will be used for testing
   // testEnvironment: "jest-environment-node",
+  testEnvironment: 'jsdom',
 
   // Options that will be passed to the testEnvironment
   // testEnvironmentOptions: {},
@@ -190,6 +191,7 @@ const config: Config = {
   //   "\\\\node_modules\\\\",
   //   "\\.pnp\\.[^\\\\]+$"
   // ],
+  //transformIgnorePatterns: ['node_modules/(?!(@bitbybit-dev/occt-worker))'],
 
   // An array of regexp pattern strings that are matched against all modules before the module loader will automatically return a mock for them
   // unmockedModulePathPatterns: undefined,
@@ -204,4 +206,30 @@ const config: Config = {
   // watchman: true,
 };
 
-export default createJestConfig(config);
+//export default createJestConfig(config);
+
+async function jestConfig() {
+  const nextJestConfig = await createJestConfig(config)();
+
+  // /node_modules/ is the first pattern
+  if (nextJestConfig.transformIgnorePatterns === undefined) {
+    nextJestConfig.transformIgnorePatterns = [];
+  }
+  const esModules = [
+    '@bitbybit-dev',
+    'jsdom-worker',
+    'node-fetch',
+    'data-uri-to-buffer',
+    'fetch-blob',
+    'formdata-polyfill',
+  ].join('|');
+  nextJestConfig.transformIgnorePatterns[0] = `node_modules/(?!${esModules})`;
+  //nextJestConfig.transformIgnorePatterns[0] = '!node_modules';
+  //nextJestConfig.transformIgnorePatterns = [];
+
+  //console.log(nextJestConfig.transformIgnorePatterns);
+
+  return nextJestConfig;
+}
+
+module.exports = jestConfig;

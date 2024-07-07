@@ -68,8 +68,12 @@ List of Improvements
      - improvement of display --> also visualize the edges
 
 (B019) Testing - at least algo3d should have some unit tests
+    - @testing algo3d:
+      - use of jsdom-worker as Web Worker replacement
+      - there are still timeout issues --> not working as expected
+      - alternatively could refactore the code to get the @bitbybit-dev functionality out of algo3d
     - would also have the benefit that refactorings could be done
-    - performance tests, etc.
+    (- performance tests, etc.)
     - for unit testing use jest
       https://nextjs.org/docs/app/building-your-application/testing/jest
 

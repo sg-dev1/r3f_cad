@@ -864,6 +864,7 @@ const dfs_cycle = (graph: number[][], u: number, p: number, color: number[], par
 
 /** Finds all cycles in the given sketch and returns a list of SketchCycleType. */
 export const findCyclesInSketchAndConvertToOcct = async (sketch: SketchType, bitbybit: BitByBitOCCT) => {
+  //console.log('sketch', sketch);
   const cyclesInSketch = findConnectedLinesInSketch(sketch);
 
   //console.log('--- cyclesInSketch', cyclesInSketch);
@@ -1051,8 +1052,11 @@ export const findCyclesInSketchAndConvertToOcct = async (sketch: SketchType, bit
       polygon: new Polygon(cycle.flattenShapes as FlattenShapeSubsetNoCircle[]),
     }));
   }
-  // cleanup in occt
-  await bitbybit.occt.deleteShapes({ shapes: facesToDelete });
+
+  if (facesToDelete.length > 0) {
+    // cleanup in occt
+    await bitbybit.occt.deleteShapes({ shapes: facesToDelete });
+  }
 
   console.log('newResult', newResult, 'result', result, 'clusters', clusters);
 
