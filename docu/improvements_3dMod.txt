@@ -69,9 +69,14 @@ List of Improvements
 
 (B019) Testing - at least algo3d should have some unit tests
     - @testing algo3d:
+      - refactored algo3d into algo3d and algo3d-occ (with @bitbybit-dev functionality)
+          - tests need to be run on algo3d to test its functionality
+          - algo3d-occ cannot be tested for now due to dependency on web worker (only manual test in browser)
       - use of jsdom-worker as Web Worker replacement
-      - there are still timeout issues --> not working as expected
-      - alternatively could refactore the code to get the @bitbybit-dev functionality out of algo3d
+        https://github.com/developit/jsdom-worker/tree/main
+        - could not get it working with that
+        - there are still timeout issues --> not working as expected
+        - alternatively could refactore the code to get the @bitbybit-dev functionality out of algo3d
     - would also have the benefit that refactorings could be done
     (- performance tests, etc.)
     - for unit testing use jest
@@ -117,6 +122,19 @@ Done Improvements
         - this merges existing cluster (e.g. removes them)
         - we do not want overlapping shapes (currently that's the case because 
           we don't have this functionality)
+     - Implementation notes (copied from source file and shortened)
+        - Use Polygon class from flatten -> can be easily initialized using Segment/Arc array from SketchCycleType
+        - could use Flatten.Relations.inside to check if one polygon lies inside the other
+        - did not use Boolean Operations to retrieve final shapes (not needed)
+        Properties of Implementation:
+        - IMPORTANT: We may also need to outer cycle of the cluster as removed in the previous step
+            - if one polygon contains the other cycle, we do not have to check the rest of the cluster
+        - Two cycles belonging to one cluster cannot be inside each other (they are distinct)
+        Algorithm:
+        Step 1: Search if any shapes from one cluster lie inside the other
+          - start with the other shape (currently removed) --> if it fits inside other shapes need not be searched
+          - otherwise search individual shapes
+        Step 2: Add innerCycles found for certain SketchCycles
 
 (B016) Implement hiding of 3D Geometry - needs an object explorer
 

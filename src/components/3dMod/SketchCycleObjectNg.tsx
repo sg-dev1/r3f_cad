@@ -6,7 +6,7 @@ import { ArcInlinePointType } from '@/app/types/ArcType';
 import { CircleInlinePointType } from '@/app/types/CircleType';
 import { GeometryType } from '@/app/types/EntityType';
 import { Point3DInlineType } from '@/app/types/Point3DType';
-import { SketchCycleType } from '@/utils/algo3d';
+import { SketchCycleTypeOcct } from '@/utils/algo3d-occ';
 import { getRotationForPlaneAsQuaternion } from '@/utils/threejs_planes';
 import { cadTool3DShapeTo3DPoints, cadTool3DShapeToThreeShape } from '@/utils/threejs_utils';
 import useArcPoints from '@/utils/useArcPoints';
@@ -17,7 +17,7 @@ import { useSelector } from 'react-redux';
 import * as THREE from 'three';
 
 export interface SketchCycleObjectNgProps {
-  sketchCycle: SketchCycleType;
+  sketchCycle: SketchCycleTypeOcct;
 }
 
 const SketchCycleObjectNg = ({ sketchCycle }: SketchCycleObjectNgProps) => {

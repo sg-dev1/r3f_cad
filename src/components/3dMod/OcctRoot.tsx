@@ -4,7 +4,7 @@ import { selectSketchToExtrude, setSketchToExtrude } from '@/app/slices/modellin
 import { BitByBitOCCT, OccStateEnum } from '@bitbybit-dev/occt-worker';
 import React, { useEffect, useState } from 'react';
 import { selectSketchs } from '@/app/slices/sketchSlice';
-import { SketchCycleType, findCyclesInSketchAndConvertToOcct } from '@/utils/algo3d';
+import { SketchCycleTypeOcct, findCyclesInSketchAndConvertToOcct } from '@/utils/algo3d-occ';
 import useKeyboard from '@/utils/useKeyboard';
 import SketchCycleObjectNg from './SketchCycleObjectNg';
 import R3fHtmlInput from '../Utils/R3fHtmlInput';
@@ -22,7 +22,7 @@ const OcctRoot = () => {
 
   const dispatch = useAppDispatch();
   const sketchs = useAppSelector(selectSketchs);
-  const [sketchShapes, setSketchShapes] = useState<SketchCycleType[]>([]);
+  const [sketchShapes, setSketchShapes] = useState<SketchCycleTypeOcct[]>([]);
   const geometries3d = useAppSelector(select3dGeometries);
   const [shapes3d, setShapes3d] = useState<Geometry3DType[]>([]);
 
@@ -125,11 +125,11 @@ const OcctRoot = () => {
     if (sketchShapes.length > 0) {
       console.log('Deleting previous sketchShapes ', sketchShapes);
       await bitbybit.occt.deleteShapes({
-        shapes: sketchShapes.map((sketchCycle) => sketchCycle.face),
+        shapes: sketchShapes.map((sketchCycle) => sketchCycle.occtFace),
       });
     }
 
-    const shapes: SketchCycleType[] = [];
+    const shapes: SketchCycleTypeOcct[] = [];
     const allSketchs = Object.entries(sketchs).map(([key, value]) => value);
     for (const sketch of allSketchs) {
       const sketchCycle = await findCyclesInSketchAndConvertToOcct(sketch, bitbybit);
@@ -165,7 +165,7 @@ const OcctRoot = () => {
       const length = geom.modellingOperations[0].distance;
       //console.log('[createGeom3dShapes]', sketchShape);
       if (sketchShape.length > 0) {
-        const finalShape = await extrudeSketch(sketchShape[0].face, sketchShape[0].sketch, length);
+        const finalShape = await extrudeSketch(sketchShape[0].occtFace, sketchShape[0].sketch, length);
         if (finalShape) {
           finalShapes.push({ geom3d: geom, occtShape: finalShape });
         }

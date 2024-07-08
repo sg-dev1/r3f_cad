@@ -142,7 +142,7 @@ const config: Config = {
   // runner: "jest-runner",
 
   // The paths to modules that run some code to configure or set up the testing environment before each test
-  setupFiles: ['jsdom-worker'],
+  //setupFiles: ['jsdom-worker'],
 
   // A list of paths to modules that run some code to configure or set up the testing framework before each test
   setupFilesAfterEnv: ['<rootDir>/jest.setup.ts'],
@@ -215,15 +215,15 @@ async function jestConfig() {
   if (nextJestConfig.transformIgnorePatterns === undefined) {
     nextJestConfig.transformIgnorePatterns = [];
   }
-  const esModules = [
-    '@bitbybit-dev',
-    'jsdom-worker',
-    'node-fetch',
-    'data-uri-to-buffer',
-    'fetch-blob',
-    'formdata-polyfill',
-  ].join('|');
-  nextJestConfig.transformIgnorePatterns[0] = `node_modules/(?!${esModules})`;
+  // const esModules = [
+  //   '@bitbybit-dev',
+  //   'jsdom-worker',
+  //   'node-fetch',
+  //   'data-uri-to-buffer',
+  //   'fetch-blob',
+  //   'formdata-polyfill',
+  // ].join('|');
+  // nextJestConfig.transformIgnorePatterns[0] = `node_modules/(?!${esModules})`;
   //nextJestConfig.transformIgnorePatterns[0] = '!node_modules';
   //nextJestConfig.transformIgnorePatterns = [];
 
