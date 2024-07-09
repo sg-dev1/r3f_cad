@@ -16004,4 +16004,6 @@ describe('algo3d test suite', () => {
     ];
     expect(sketchCycleTypesEquals(findCyclesInSketch(sketch), expectedResult)).toBe(true);
   });
+
+  // TODO we need a test sketch with multiple (overlapping) line segments (not just circles)
 });

@@ -863,7 +863,7 @@ export interface SketchCycleType {
 
 /** Finds all distinct circles in a sketch. */
 export const findCyclesInSketch = (sketch: SketchType) => {
-  console.log('sketch', sketch);
+  //console.log('sketch', sketch);
   const cyclesInSketch = findConnectedLinesInSketch(sketch);
 
   const sketchCycle: SketchCycleType[] = [];
@@ -989,8 +989,8 @@ export const findCyclesInSketch = (sketch: SketchType) => {
     );
   }
 
-  console.log('sketchCycleNew', sketchCycleNew, 'sketchCycle', sketchCycle, 'clusters', clusters);
-  console.log('---clustersComplete', clustersComplete);
+  //console.log('sketchCycleNew', sketchCycleNew, 'sketchCycle', sketchCycle, 'clusters', clusters);
+  //console.log('---clustersComplete', clustersComplete);
 
   // ---
 
@@ -1050,7 +1050,7 @@ export const findCyclesInSketch = (sketch: SketchType) => {
     }
   }
 
-  console.log('insideMap', insideMap);
+  //console.log('insideMap', insideMap);
 
   // (B)
   // we still have the issue that shapes inside the innerCycle are added as well
@@ -1071,7 +1071,7 @@ export const findCyclesInSketch = (sketch: SketchType) => {
     }
   }
 
-  console.log('(B) insideMap', insideMap);
+  //console.log('(B) insideMap', insideMap);
 
   //
   // Step 2 (of B018 implementation - support for "inner cycles")
@@ -1098,7 +1098,7 @@ export const findCyclesInSketch = (sketch: SketchType) => {
     }
   }
 
-  console.log('updateMap', updateMap);
+  //console.log('updateMap', updateMap);
 
   for (const [cycleIndex, data] of Object.entries(updateMap)) {
     const sketchCycleToUpdate = sketchCycleNew.find((elem) => elem.index === Number(cycleIndex));
@@ -1109,7 +1109,7 @@ export const findCyclesInSketch = (sketch: SketchType) => {
     }
   }
 
-  console.log('sketchCycleNew', sketchCycleNew);
+  //console.log('sketchCycleNew', sketchCycleNew);
 
   // ---
 

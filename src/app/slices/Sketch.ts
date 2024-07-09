@@ -75,7 +75,7 @@ export const sketchAddEntity = (sketch: SketchType, p: Point3DType, type: Geomet
     sketch.entityIdCounter++;
   } else if (GeometryType.ARC === type) {
     console.warn('Geometry type arc is not yet supported.');
-    // TODO add implementation
+    // TODO add arc support
   } else {
     console.error('The given Geometry type ' + geometryTypeToString(type) + ' is not yet implemented');
   }
@@ -99,7 +99,7 @@ export const sketchRemoveEntity = (sketch: SketchType, id: number, type: Geometr
     _deleteCircleById(sketch, id);
   } else if (GeometryType.ARC === type) {
     console.warn('Geometry type arc is not yet supported.');
-    // TODO add implementation
+    // TODO add arc support
   } else {
     console.error('The given Geometry type ' + geometryTypeToString(type) + ' is not yet implemented');
   }
@@ -156,13 +156,6 @@ export const sketchDeleteLengthConstraintForLine = (sketch: SketchType, lineId: 
   const constraint = _getConstraintForLineWithPtToPtDistanceType(sketch, lineId);
   if (constraint) {
     sketchDeleteConstraintById(sketch, constraint.constraint.id);
-    /*
-    sketchDeleteConstraint(sketch, {
-      id: constraint.constraint.id,
-      t: SlvsConstraints.SLVS_C_PT_PT_DISTANCE,
-      v: [0, constraint.p1_id, constraint.p2_id, 0, 0],
-    });
-    */
   }
 };
 
@@ -184,7 +177,7 @@ export const sketchUpdateEntities = (sketch: SketchType, workplane: string, enti
     } else if (element.t === 'circle') {
       sketchUpdateCircleRadius(sketch, element.id, element.v[1]);
     } else if (element.t === 'arc') {
-      // TODO
+      // TODO add arc support
       console.warn('[sketchUpdateEntities] Arc is not yet supported');
     }
   });
