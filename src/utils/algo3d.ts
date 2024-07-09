@@ -2,10 +2,11 @@
 import { SketchType } from '@/app/slices/Sketch';
 import { Arc, Circle, Point, Polygon, Segment, Vector, Relations } from '@flatten-js/core';
 import { convert2DPointTo3D, getPointU, getPointV } from './threejs_planes';
-import { CircleInlinePointType } from '@/app/types/CircleType';
-import { Line3DInlinePointType } from '@/app/types/Line3DType';
-import { ArcInlinePointType } from '@/app/types/ArcType';
+import { CircleInlinePointType, circleInlineEquals } from '@/app/types/CircleType';
+import { Line3DInlinePointType, line3DInlineEquals } from '@/app/types/Line3DType';
+import { ArcInlinePointType, arcInlineEquals } from '@/app/types/ArcType';
 import { GeometryType } from '@/app/types/EntityType';
+import { floatNumbersEqual } from './utils';
 
 type FlattenPointsMapType = { [key: number]: Point };
 type FlattenShapeSubset = Segment | Circle | Arc;
@@ -1113,4 +1114,74 @@ export const findCyclesInSketch = (sketch: SketchType) => {
   // ---
 
   return sketchCycleNew;
+};
+
+// ---
+
+/** Equality check for SketchCycleType
+ *
+ *  For equality the following conditions must hold:
+ *  - cycle arrays are equal
+ *  - innerCycles arrays are equal
+ *  - cycleArea equal
+ *  - index equal
+ *  Equality for all other fields (e.g. sketch, flattenShapes, polygon is not checked).
+ */
+export const sketchCycleTypeEquals = (a: SketchCycleType, b: SketchCycleType) => {
+  const cadToolShapesEqual = (a?: CadTool3DShapeSubset, b?: CadTool3DShapeSubset) => {
+    if (a !== undefined && a?.t === b?.t) {
+      let result = false;
+      switch (a.t) {
+        case GeometryType.LINE:
+          result = line3DInlineEquals(a as Line3DInlinePointType, b as Line3DInlinePointType);
+          break;
+        case GeometryType.CIRCLE:
+          result = circleInlineEquals(a as CircleInlinePointType, b as CircleInlinePointType);
+          break;
+        case GeometryType.ARC:
+          result = arcInlineEquals(a as ArcInlinePointType, b as ArcInlinePointType);
+          break;
+        default:
+      }
+      return result;
+    }
+
+    return false;
+  };
+  const cadToolShapeArraysEqual = (a: CadTool3DShapeSubset[], b: CadTool3DShapeSubset[]) => {
+    if (a.length === b.length) {
+      return a
+        .map((shape, i) => [shape, b[i]])
+        .reduce((equals, shapes, i, arr) => equals && cadToolShapesEqual(shapes[0], shapes[1]), true);
+    }
+    return false;
+  };
+
+  const cycleEq =
+    a.cycle.length === b.cycle.length &&
+    a.cycle
+      .map((shape, i) => [shape, b.cycle[i]])
+      .reduce((equals, shapes, i, arr) => equals && cadToolShapesEqual(shapes[0], shapes[1]), true);
+  const innerCyclesEq =
+    a.innerCycles.length === b.innerCycles.length &&
+    a.innerCycles
+      .map((shape, i) => [shape, b.innerCycles[i]])
+      .reduce((equals, shapes, i, arr) => equals && cadToolShapeArraysEqual(shapes[0], shapes[1]), true);
+  const areaEq = floatNumbersEqual(a.cycleArea, b.cycleArea);
+  const indexEq = a.index === b.index;
+
+  return cycleEq && innerCyclesEq && areaEq && indexEq;
+};
+
+/** Equality check for SketchCycleType arrays */
+export const sketchCycleTypesEquals = (a: SketchCycleType[], b: SketchCycleType[]) => {
+  if (a.length === b.length) {
+    return a
+      .map((shape, i) => [shape, b[i]])
+      .reduce((equals, shapes, i, arr) => equals && sketchCycleTypeEquals(shapes[0], shapes[1]), true);
+  }
+
+  //console.log('-------------sketchCycleTypesEquals', false);
+
+  return false;
 };

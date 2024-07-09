@@ -1,6 +1,6 @@
 /** This library contains the types used to represent lines in the application. */
 import { GeometryType } from './EntityType';
-import { Point3DInlineType } from './Point3DType';
+import { Point3DInlineType, point3DInlineEquals } from './Point3DType';
 
 export interface Line3DType {
   id: number;
@@ -17,3 +17,11 @@ export interface Line3DInlinePointType {
   start: Point3DInlineType;
   end: Point3DInlineType;
 }
+
+export const line3DInlineEquals = (a: Line3DInlinePointType, b: Line3DInlinePointType) => {
+  if (a.t === b.t && point3DInlineEquals(a.start, b.start) && point3DInlineEquals(a.end, b.end)) {
+    return true;
+  } else {
+    return false;
+  }
+};
