@@ -1,7 +1,6 @@
 Priority of improvements (my ranking)
   - B012  // improvement, more features (3d geom tools)
   - B008  // arbitrary plane awareness
-  - B020  // testing
   - B011  [data persistence, debug]
   - B004  [data model] - updated by solving other tickets
   - B003
@@ -67,8 +66,6 @@ List of Improvements
      - support of more operations (e.g. union, intersect etc.)
      - improvement of display --> also visualize the edges
 
-(B020) Add more unit tests (e.g. for Sketch.ts etc.)
-
 
 On Hold
 
@@ -92,6 +89,8 @@ On Hold
 
 
 Done Improvements
+
+(B020) Add more unit tests (e.g. for Sketch.ts etc.)
 
 (B019) Testing - at least algo3d should have some unit tests
     - @testing algo3d:

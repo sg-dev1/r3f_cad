@@ -596,6 +596,7 @@ const binary_search = (arr: [number, number, number][], v1: number, v2: number) 
 // Simple algorithm using dfs_cycle to find cycles in graph
 // Has the downside that it does not find all cycles...
 // Therefore it needs to be improved.
+/*
 const find_cycles_simple = (
   flattenPointToString: (point: Point) => string,
   pointStringMap: Map<string, number>,
@@ -799,7 +800,9 @@ const find_cycles_simple = (
 
   return flattenShapeCycle2;
 };
+*/
 
+/*
 const dfs_cycle = (graph: number[][], u: number, p: number, color: number[], par: number[], cycles: number[][]) => {
   // already (completely)
   // visited vertex.
@@ -847,6 +850,7 @@ const dfs_cycle = (graph: number[][], u: number, p: number, color: number[], par
   // completely visited.
   color[u] = 2;
 };
+*/
 
 // -------------------------------------
 
@@ -1109,7 +1113,7 @@ export const findCyclesInSketch = (sketch: SketchType) => {
     }
   }
 
-  //console.log('sketchCycleNew', sketchCycleNew);
+  //console.log('result', sketchCycleNew);
 
   // ---
 
