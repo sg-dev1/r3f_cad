@@ -83,11 +83,23 @@ List of Improvements
 
 (B020) Proper visualization of 3D objects
      - Currently visualization is done using the shape converted to a mesh
-       used as input for a BufferGeometry
+       used as input for a BufferGeometry (see TopoDSVisualizer.tsx)
      - There are other ways to visualize 3d geometry (than BufferGeometry):
         - e.g. use ExtrudeGeometry for extrude operations
           https://threejs.org/docs/index.html#api/en/geometries/ExtrudeGeometry
         - (not sure if this will work for other modelling operation types)
+     - Maybe even better to visualize individual parts of shape separately:
+        - faces
+        - edges
+        (to retrieve faces, wires, edges from occt shape see OcctRoot.tsx)
+        - Benefit:
+          - Faces/edges can be highlighed (and selected) separately
+          --> build support for multi select
+        - draw edges in different color than face (so no need for wireframe)
+        - shadows on face (need proper material, lighting)
+        - e.g. use drei Line for edge (an arc are multiple lines with useArcPoints())
+        - for faces use shapeGeometry
+        - could put everything into a three.js Group
 
 
 On Hold

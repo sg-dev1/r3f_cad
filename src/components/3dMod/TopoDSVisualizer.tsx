@@ -1,4 +1,11 @@
-/** This component contains the main geometry drawing functionality of occt 3D geometry. */
+/** This component contains the main geometry drawing functionality of occt 3D geometry.
+ *  Simple way to visualize by
+ *  - converting the occt shape to a mesh (bitbybitOcct.occt.shapeToMesh)
+ *  - visualize the mesh by using a buffer geometry
+ *  - additionally, show a Wireframe for the mesh
+ *
+ * Maybe this should be called MeshVisualizer.tsx
+ */
 import React, { useEffect, useState } from 'react';
 import { BitByBitOCCT } from '@bitbybit-dev/occt-worker';
 import { Inputs } from '@bitbybit-dev/occt';
@@ -19,19 +26,16 @@ const TopoDSVisualizer = ({ bitbybitOcct, shape }: { bitbybitOcct: BitByBitOCCT;
     };
 
     async function load() {
-      const geometries = await occtShapeToBufferGeometry(bitbybitOcct, shape.occtShape, 0.01);
+      const bufferGeometry = await occtShapeToBufferGeometry(bitbybitOcct, shape.occtShape, 0.1);
       if (!active) {
         return;
       }
-      setShapeGeometry(geometries);
+      setShapeGeometry(bufferGeometry);
     }
   }, [bitbybitOcct, shape]);
 
   return (
     <>
-      {/* All faces of the shape are represented by its own buffer geometry.
-      Therefore multiple of them need to be rendered.
-      What about performance? Is there a better way to do it? */}
       {shapeGeometry && (
         <>
           <mesh
@@ -52,13 +56,13 @@ const TopoDSVisualizer = ({ bitbybitOcct, shape }: { bitbybitOcct: BitByBitOCCT;
             geometry={shapeGeometry} // Will create the wireframe based on input geometry.
             visible={shape.geom3d?.isVisible}
             // Other props
-            simplify={true} // Remove some edges from wireframes
+            simplify={false} // Remove some edges from wireframes
             fill={'#00ff00'} // Color of the inside of the wireframe
             fillMix={0} // Mix between the base color and the Wireframe 'fill'. 0 = base; 1 = wireframe
             fillOpacity={0.25} // Opacity of the inner fill
             stroke={'#E0E0E0'} // Color of the stroke
             strokeOpacity={1} // Opacity of the stroke
-            thickness={0.05} // Thinkness of the lines
+            thickness={0.01} // Thinkness of the lines
             colorBackfaces={false} // Whether to draw lines that are facing away from the camera
             backfaceStroke={'#0000ff'} // Color of the lines that are facing away from the camera
             dashInvert={true} // Invert the dashes

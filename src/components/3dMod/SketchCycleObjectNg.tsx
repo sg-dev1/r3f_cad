@@ -12,7 +12,7 @@ import { cadTool3DShapeTo3DPoints, cadTool3DShapeToThreeShape } from '@/utils/th
 import useArcPoints from '@/utils/useArcPoints';
 import useCirclePoints from '@/utils/useCirclePoints';
 import { Line } from '@react-three/drei';
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
 import * as THREE from 'three';
 
@@ -40,25 +40,6 @@ const SketchCycleObjectNg = ({ sketchCycle }: SketchCycleObjectNgProps) => {
   const circlePointsArray = circles.map((circle) => useCirclePoints({ circle: circle, quaternion: quaternion }));
 
   const [hovered, setHovered] = useState<boolean>(false);
-  const [shapeGeom, setShapeGeom] = useState<THREE.ShapeGeometry | null>(null);
-  const [shapePoints, setShapePoints] = useState<Point3DInlineType[]>([]);
-
-  // ---
-
-  useEffect(() => {
-    if (sketchIsVisible) {
-      if (selectedSketch === sketchCycle.sketch.id) {
-        setShapeGeom(shapeGeometryPrecomputed);
-      } else {
-        setShapeGeom(null);
-      }
-      setShapePoints(shapePointsPrecomputed);
-    } else {
-      // in case shape is not visible, nothing needs to be drawn
-      setShapeGeom(null);
-      setShapePoints([]);
-    }
-  }, [sketchIsVisible, selectedSketch]);
 
   // ---
 
@@ -81,7 +62,7 @@ const SketchCycleObjectNg = ({ sketchCycle }: SketchCycleObjectNgProps) => {
 
     return [threeShapeGeometry, points];
   };
-  const [shapeGeometryPrecomputed, shapePointsPrecomputed] = useMemo(() => drawShape(), [sketchCycle]);
+  const [shapeGeometry, shapePoints] = useMemo(() => drawShape(), [sketchCycle]);
 
   const obtainShapeColor = () => {
     if (hovered) {
@@ -95,20 +76,21 @@ const SketchCycleObjectNg = ({ sketchCycle }: SketchCycleObjectNgProps) => {
 
   return (
     <>
-      {shapeGeom && (
+      {shapeGeometry && (
         <mesh
           frustumCulled={false}
-          geometry={shapeGeom}
+          geometry={shapeGeometry}
           onPointerOver={() => setHovered(true)}
           onPointerOut={() => setHovered(false)}
           onClick={() => dispatch(setSketchToExtrude([sketchCycle.sketch.id, sketchCycle.index]))}
+          visible={sketchIsVisible && selectedSketch === sketchCycle.sketch.id}
         >
           <meshBasicMaterial color={obtainShapeColor()} side={THREE.DoubleSide} />
         </mesh>
       )}
       {shapePoints.length > 0 && (
         // Do not rotate line since all points already have the correct coordinates
-        <Line points={shapePoints} color="blue" />
+        <Line points={shapePoints} color="blue" visible={sketchIsVisible} />
       )}
     </>
   );
