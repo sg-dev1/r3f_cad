@@ -2,6 +2,7 @@
 import { BitByBitOCCT } from '@bitbybit-dev/occt-worker';
 import { Inputs } from '@bitbybit-dev/occt';
 import { BufferAttribute, BufferGeometry, Group, Mesh, MeshNormalMaterial, Scene } from 'three';
+import * as BufferGeometryUtils from 'three/addons/utils/BufferGeometryUtils.js';
 
 export const occtShapeToBufferGeoms = async (
   bitbybitOcct: BitByBitOCCT,
@@ -35,6 +36,17 @@ export const occtShapeToBufferGeoms = async (
   //console.log(geometries);
 
   return geometries;
+};
+
+export const occtShapeToBufferGeometry = async (
+  bitbybitOcct: BitByBitOCCT,
+  shape: Inputs.OCCT.TopoDSShapePointer,
+  precision: number
+) => {
+  const geometries = await occtShapeToBufferGeoms(bitbybitOcct, shape, precision);
+  const result = BufferGeometryUtils.mergeGeometries(geometries, false);
+  // To use Wireframe from drei we need a non-index version
+  return result.toNonIndexed();
 };
 
 /*

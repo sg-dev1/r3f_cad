@@ -1,4 +1,5 @@
 Priority of improvements (my ranking)
+  - B020  // improvement, visualization of 3d objects
   - B012  // improvement, more features (3d geom tools)
   - B008  // arbitrary plane awareness
   - B011  [data persistence, debug]
@@ -61,10 +62,32 @@ List of Improvements
      (has something to do with serialization - not necesarrily connected to 3dMod tool)
      - need to serialize state of app anyways
 
-(B012) Creating and display of 3D objects
-     - as follow up for B007
-     - support of more operations (e.g. union, intersect etc.)
-     - improvement of display --> also visualize the edges
+(B012) Creating of 3D objects
+     - support of more operations 
+     - 1) Boolean operations like union, cut, intersect etc. (OCCTBooleans)
+     - 2) Modelling operations like pocket (holes), sweep along path (pipe), loft, revolve, etc. 
+         (OCCTOperations)
+         2.1) Additive
+           - extrude (aka pad)
+           - revolve (e.g. revolve a selected sketch around some axis)
+           - loft
+           - pipe (sweep a sketch along a path)
+         2.2) Subtractive
+           - pocket (e.g. subtractive extrude)
+           - revolve (groove - einen Nut in einen Körper machen)
+           - loft
+           - pipe
+      - 3) Fillets (Abrundungen) & Chamfers (Abschrägung am Eck) (OCCTFillets)
+      - Boolean operations (1) should be applied automatically if two geometries (3d bodies) touch
+        each other -> need to find out when two bodies are touching
+
+(B020) Proper visualization of 3D objects
+     - Currently visualization is done using the shape converted to a mesh
+       used as input for a BufferGeometry
+     - There are other ways to visualize 3d geometry (than BufferGeometry):
+        - e.g. use ExtrudeGeometry for extrude operations
+          https://threejs.org/docs/index.html#api/en/geometries/ExtrudeGeometry
+        - (not sure if this will work for other modelling operation types)
 
 
 On Hold

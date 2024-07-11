@@ -73,6 +73,7 @@ const MainView = () => {
               {/* <CameraControls minDistance={1.2} maxDistance={4} ref={cameraControlsRef} /> */}
               <OrbitControls makeDefault enableDamping={true} dampingFactor={0.1} />
               <ambientLight intensity={2} />
+              {/* <pointLight intensity={10.75} position={[0, 10000, 0]} /> */}
 
               {/* Constains test component adding test object using Occt */}
               {/* <OcctWorkerTest /> */}

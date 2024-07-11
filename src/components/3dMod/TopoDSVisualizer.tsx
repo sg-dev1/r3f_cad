@@ -2,12 +2,13 @@
 import React, { useEffect, useState } from 'react';
 import { BitByBitOCCT } from '@bitbybit-dev/occt-worker';
 import { Inputs } from '@bitbybit-dev/occt';
-import { occtShapeToBufferGeoms } from './occt_visualize';
+import { occtShapeToBufferGeometry, occtShapeToBufferGeoms } from './occt_visualize';
 import * as THREE from 'three';
 import { Geometry3DType } from '@/app/types/Geometry3DType';
+import { Wireframe } from '@react-three/drei';
 
 const TopoDSVisualizer = ({ bitbybitOcct, shape }: { bitbybitOcct: BitByBitOCCT; shape: Geometry3DType }) => {
-  const [shapeGeometries, setShapeGeometries] = useState<THREE.BufferGeometry[]>([]);
+  const [shapeGeometry, setShapeGeometry] = useState<THREE.BufferGeometry | null>(null);
 
   useEffect(() => {
     // https://stackoverflow.com/a/66071205
@@ -18,36 +19,58 @@ const TopoDSVisualizer = ({ bitbybitOcct, shape }: { bitbybitOcct: BitByBitOCCT;
     };
 
     async function load() {
-      const geometries = await occtShapeToBufferGeoms(bitbybitOcct, shape.occtShape, 0.01);
+      const geometries = await occtShapeToBufferGeometry(bitbybitOcct, shape.occtShape, 0.01);
       if (!active) {
         return;
       }
-      setShapeGeometries(geometries);
+      setShapeGeometry(geometries);
     }
   }, [bitbybitOcct, shape]);
-
-  // check if visible at all
-  if (!shape.geom3d?.isVisible) {
-    return <></>;
-  }
 
   return (
     <>
       {/* All faces of the shape are represented by its own buffer geometry.
       Therefore multiple of them need to be rendered.
       What about performance? Is there a better way to do it? */}
-      {shapeGeometries.map((geom, index) => (
-        <mesh
-          key={index}
-          geometry={geom}
-          //onPointerOver={() => setHovered(true)}
-          //onPointerOut={() => setHovered(false)}
-          //onClick={() => dispatch(setSketchToExtrude([sketchCycle.sketch.id, sketchCycle.index]))}
-        >
-          {/* side={THREE.DoubleSide} as in SketchCycleObjectNg not needed since the inside is not visible */}
-          <meshBasicMaterial color={'blue'} />
-        </mesh>
-      ))}
+      {shapeGeometry && (
+        <>
+          <mesh
+            geometry={shapeGeometry}
+            visible={shape.geom3d?.isVisible}
+            //onPointerOver={() => setHovered(true)}
+            //onPointerOut={() => setHovered(false)}
+            //onClick={() => dispatch(setSketchToExtrude([sketchCycle.sketch.id, sketchCycle.index]))}
+          >
+            {/* side={THREE.DoubleSide} as in SketchCycleObjectNg not needed since the inside is not visible */}
+            <meshBasicMaterial color={'blue'} />
+            {/* <meshStandardMaterial color={'blue'} /> */}
+          </mesh>
+          {/* Use the second way to display the Wireframe from
+          https://github.com/pmndrs/drei?tab=readme-ov-file#wireframe
+          The first way inside the mesh behaved a bit buggy. */}
+          <Wireframe
+            geometry={shapeGeometry} // Will create the wireframe based on input geometry.
+            visible={shape.geom3d?.isVisible}
+            // Other props
+            simplify={true} // Remove some edges from wireframes
+            fill={'#00ff00'} // Color of the inside of the wireframe
+            fillMix={0} // Mix between the base color and the Wireframe 'fill'. 0 = base; 1 = wireframe
+            fillOpacity={0.25} // Opacity of the inner fill
+            stroke={'#E0E0E0'} // Color of the stroke
+            strokeOpacity={1} // Opacity of the stroke
+            thickness={0.05} // Thinkness of the lines
+            colorBackfaces={false} // Whether to draw lines that are facing away from the camera
+            backfaceStroke={'#0000ff'} // Color of the lines that are facing away from the camera
+            dashInvert={true} // Invert the dashes
+            dash={false} // Whether to draw lines as dashes
+            dashRepeats={4} // Number of dashes in one seqment
+            dashLength={0.5} // Length of each dash
+            squeeze={false} // Narrow the centers of each line segment
+            squeezeMin={0.2} // Smallest width to squueze to
+            squeezeMax={1} // Largest width to squeeze from
+          />
+        </>
+      )}
     </>
   );
 };
