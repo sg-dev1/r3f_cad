@@ -52,6 +52,63 @@ export const occtShapeToBufferGeometry = async (
   return result.toNonIndexed();
 };
 
+export interface DecomposedOcctShapeDto {
+  faces: Inputs.OCCT.TopoDSFacePointer[];
+  wires: Inputs.OCCT.TopoDSWirePointer[][];
+  edges: Inputs.OCCT.TopoDSEdgePointer[][][];
+  points: Inputs.Base.Point3[][][][][];
+}
+
+/** Retrieve all faces, wires, edges, and points from an occt 3d shape.
+ *  A face may have multiple wires, no assumptions are made about flatteness of
+ *  returned arrays.
+ */
+export const occtGetFacesWiresEdgesPoints4Shape = async (
+  bitbybitOcct: BitByBitOCCT,
+  shape: Inputs.OCCT.TopoDSShapePointer
+): Promise<DecomposedOcctShapeDto> => {
+  const faces = await bitbybitOcct.occt.shapes.face.getFaces({ shape: shape });
+  const allWires = await Promise.all(
+    faces.map(async (face) => await bitbybitOcct.occt.shapes.wire.getWires({ shape: face }))
+  );
+  //console.log('---faces', faces);
+  //console.log('---allWires', allWires);
+  const allEdgesOfWires = await Promise.all(
+    allWires.map(
+      async (wires) =>
+        await Promise.all(
+          wires.map(async (wire) => await bitbybitOcct.occt.shapes.edge.getEdgesAlongWire({ shape: wire }))
+        )
+    )
+  );
+  //console.log('---allEdges', allEdgesOfWires);
+  const allPointsOfAllEdgesOfWires = await Promise.all(
+    allEdgesOfWires.map(
+      async (edgesOfWires) =>
+        await Promise.all(
+          edgesOfWires.map(
+            async (edges) =>
+              await Promise.all(
+                edges.map(
+                  async (edge) =>
+                    await bitbybitOcct.occt.shapes.edge.edgesToPoints({
+                      shape: edge,
+                      angularDeflection: 0.1,
+                      curvatureDeflection: 0.1,
+                      minimumOfPoints: 2,
+                      uTolerance: 1.0e-9,
+                      minimumLength: 1.0e-7,
+                    })
+                )
+              )
+          )
+        )
+    )
+  );
+
+  return { faces: faces, wires: allWires, edges: allEdgesOfWires, points: allPointsOfAllEdgesOfWires };
+};
+
 /*
 export const faceToMeshData = async (bitbybitOcct: BitByBitOCCT, face: Inputs.OCCT.TopoDSFacePointer) => {
   const res: Inputs.OCCT.DecomposedMeshDto = await bitbybitOcct.occt.shapeToMesh({

@@ -16,6 +16,7 @@ import * as THREE from 'three';
 import TopoDSVisualizer from './TopoDSVisualizer';
 import { createGeom3d, removeGeometries, select3dGeometries } from '@/app/slices/geom3dSlice';
 import { Geometry3DType } from '@/app/types/Geometry3DType';
+import Occt3dGeometryVisualizer from './Occt3dGeometryVisualizer';
 
 const OcctRoot = () => {
   const [bitbybit, setBitbybit] = useState<BitByBitOCCT>();
@@ -239,52 +240,6 @@ const OcctRoot = () => {
     */
     //console.log(extrude);
 
-    // demo code to retrieve the following for an extruded shape
-    //  - all faces
-    //  - foreach face the wire
-    //  - foreach wire the edges
-    /*
-    const faces = await bitbybit.occt.shapes.face.getFaces({ shape: extrude });
-    const allWires = await Promise.all(
-      faces.map(async (face) => await bitbybit.occt.shapes.wire.getWires({ shape: face }))
-    );
-    console.log('---faces', faces);
-    console.log('---allWires', allWires);
-    const allEdgesOfWires = await Promise.all(
-      allWires.map(
-        async (wires) =>
-          await Promise.all(
-            wires.map(async (wire) => await bitbybit.occt.shapes.edge.getEdgesAlongWire({ shape: wire }))
-          )
-      )
-    );
-    console.log('---allEdges', allEdgesOfWires);
-    const allPointsOfAllEdgesOfWires = await Promise.all(
-      allEdgesOfWires.map(
-        async (edgesOfWires) =>
-          await Promise.all(
-            edgesOfWires.map(
-              async (edges) =>
-                await Promise.all(
-                  edges.map(
-                    async (edge) =>
-                      await bitbybit.occt.shapes.edge.edgesToPoints({
-                        shape: edge,
-                        angularDeflection: 0.1,
-                        curvatureDeflection: 0.1,
-                        minimumOfPoints: 2,
-                        uTolerance: 1.0e-9,
-                        minimumLength: 1.0e-7,
-                      })
-                  )
-                )
-            )
-          )
-      )
-    );
-    console.log('--allPointsOfAllEdgesOfWires', allPointsOfAllEdgesOfWires);
-    */
-
     //await downloadStep(extrude);
     return extrude;
   };
@@ -356,8 +311,10 @@ const OcctRoot = () => {
         />
       )}
 
+      {/* {bitbybit &&
+        shapes3d.map((shape, index) => <TopoDSVisualizer key={index} bitbybitOcct={bitbybit} shape={shape} />)} */}
       {bitbybit &&
-        shapes3d.map((shape, index) => <TopoDSVisualizer key={index} bitbybitOcct={bitbybit} shape={shape} />)}
+        shapes3d.map((shape, index) => <Occt3dGeometryVisualizer key={index} bitbybitOcct={bitbybit} shape={shape} />)}
     </>
   );
 };
