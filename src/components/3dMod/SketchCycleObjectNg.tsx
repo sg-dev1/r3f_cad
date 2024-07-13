@@ -82,7 +82,11 @@ const SketchCycleObjectNg = ({ sketchCycle }: SketchCycleObjectNgProps) => {
           geometry={shapeGeometry}
           onPointerOver={() => setHovered(true)}
           onPointerOut={() => setHovered(false)}
-          onClick={() => dispatch(setSketchToExtrude([sketchCycle.sketch.id, sketchCycle.index]))}
+          onClick={() => {
+            if (sketchIsVisible && selectedSketch === sketchCycle.sketch.id) {
+              dispatch(setSketchToExtrude([sketchCycle.sketch.id, sketchCycle.index]));
+            }
+          }}
           visible={sketchIsVisible && selectedSketch === sketchCycle.sketch.id}
         >
           <meshBasicMaterial color={obtainShapeColor()} side={THREE.DoubleSide} />

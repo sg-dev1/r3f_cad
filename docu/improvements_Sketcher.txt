@@ -1,5 +1,6 @@
 Priority of improvements (my ranking)
 // MVP
+  - 026 // bug
   - 025 [backend, anoying bug]
 
 // Later
@@ -54,6 +55,11 @@ List of Improvements
       - Keep changes from previous run
       - Compare it with this run
       --> if swapped points detected - discard the change
+
+(026) Bugfix: There is a bug in the cursor tool (moving a sketch shape).
+      When trying to move a shape it disappears from the sketcher screen.
+      Seems that also the third coordinate is updated.
+      This is related to (007) - the drag'n'drop feature of lines
 
 
 Done Improvements

@@ -1,5 +1,6 @@
 Priority of improvements (my ranking)
-  - B020  // improvement, visualization of 3d objects
+  - B020  // testing
+  - B021  // improvement, visualization of 3d objects
   - B012  // improvement, more features (3d geom tools)
   - B008  // arbitrary plane awareness
   - B011  [data persistence, debug]
@@ -81,7 +82,7 @@ List of Improvements
       - Boolean operations (1) should be applied automatically if two geometries (3d bodies) touch
         each other -> need to find out when two bodies are touching
 
-(B020) Proper visualization of 3D objects
+(B021) Proper visualization of 3D objects
      - Currently visualization is done using the shape converted to a mesh
        used as input for a BufferGeometry (see TopoDSVisualizer.tsx)
      - There are other ways to visualize 3d geometry (than BufferGeometry):
@@ -100,6 +101,10 @@ List of Improvements
         - e.g. use drei Line for edge (an arc are multiple lines with useArcPoints())
         - for faces use shapeGeometry
         - could put everything into a three.js Group
+
+(B022)  More testing / bug fixing:
+       - combine "inner shape" test case with intersection point test case, e.g.
+         have a geometry with inner shapes as well as intersection geometry
 
 
 On Hold
@@ -124,6 +129,12 @@ On Hold
 
 
 Done Improvements
+
+(B022-A) Bugfix: Input field for extruding sketch shapes appeared randomly because onClick event on invisible shapes fired.
+         In this way it seemed that some geometry was extruded rotated (was not the case).
+
+(B022-B) Bugfix: After deleting a sketch the shape geometry still remained visible (hover still worked etc.)
+         Issue was that sketchShapes list in OcctRoot.tsx was not properly updated.
 
 (B020) Add more unit tests (e.g. for Sketch.ts etc.)
 
