@@ -83,6 +83,12 @@ List of Improvements
         each other -> need to find out when two bodies are touching
 
 (B021) Proper visualization of 3D objects
+     - Tidy up/ follow up tasks:
+        - support for highlighting of faces
+        - improvement of face coloring (e.g. shadows - use different material?)
+        - maybe could get rid of screen flickering of overlapping (edge) lines and faces?
+        - support of (multi) selection (maybe also proper naming needed --> Topo naming problem)
+        
      - Currently visualization is done using the shape converted to a mesh
        used as input for a BufferGeometry (see TopoDSVisualizer.tsx)
      - There are other ways to visualize 3d geometry (than BufferGeometry):

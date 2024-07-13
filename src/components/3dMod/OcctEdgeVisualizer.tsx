@@ -1,3 +1,4 @@
+/** This component visualizes an edge of a 3d shape. */
 import { Line } from '@react-three/drei';
 import React, { useState } from 'react';
 

@@ -2,7 +2,7 @@
 import { useAppDispatch, useAppSelector } from '@/app/hooks';
 import { selectSketchToExtrude, setSketchToExtrude } from '@/app/slices/modellingToolStateSlice';
 import { BitByBitOCCT, OccStateEnum } from '@bitbybit-dev/occt-worker';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { selectSketchs } from '@/app/slices/sketchSlice';
 import { SketchCycleTypeOcct, findCyclesInSketchAndConvertToOcct } from '@/utils/algo3d-occ';
 import useKeyboard from '@/utils/useKeyboard';
@@ -21,6 +21,7 @@ import Occt3dGeometryVisualizer from './Occt3dGeometryVisualizer';
 const OcctRoot = () => {
   const [bitbybit, setBitbybit] = useState<BitByBitOCCT>();
 
+  const firstRender = useRef(true);
   const dispatch = useAppDispatch();
   const sketchs = useAppSelector(selectSketchs);
   const [sketchShapes, setSketchShapes] = useState<SketchCycleTypeOcct[]>([]);
@@ -98,6 +99,12 @@ const OcctRoot = () => {
   // Note: This useEffect is needed if f.e. a sketch is deleted so it can also be removed from display
   //       (needs an updated of sketchShapes list).
   useEffect(() => {
+    // skip this call on first render also no geometries are created because sketchShapes array
+    // is empty
+    if (firstRender.current) {
+      firstRender.current = false;
+      return;
+    }
     console.log('---useEffect sketchs', bitbybit);
     const sketchIds = Object.keys(sketchs).map((key) => Number(key));
     const sketchShapesFiltered = sketchShapes.filter((shape) => sketchIds.includes(shape.sketch.id));
@@ -181,7 +188,8 @@ const OcctRoot = () => {
           shape.index === geom.modellingOperations[0].sketchRef[1]
       );
       const length = geom.modellingOperations[0].distance;
-      //console.log('[createGeom3dShapes]', sketchShape);
+      //console.log('[createGeom3dShapes]', 'filtered-sketchShape', sketchShape);
+      //console.log("geom", geom, "sketchShapes", sketchShapes);
       if (sketchShape.length > 0) {
         const finalShape = await extrudeSketch(sketchShape[0].occtFace, sketchShape[0].sketch, length);
         if (finalShape) {
