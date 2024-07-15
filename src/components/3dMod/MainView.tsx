@@ -23,8 +23,14 @@ const MainView = () => {
 
   const fov = 70;
   const aspect = 2; // the canvas default
-  const near = 0.01;
-  const far = 1000;
+  // Needs to be tuned to mitigate the z-fighting problem
+  // (e.g. one surface drawn onto the other is flickering because it is not sure which pixel is in front)
+  // see https://stackoverflow.com/a/21106656
+  const near = 1; // do not make this too small else we get screen flickering (due to z-fighting problem)
+  const far = 10000; // with a higher value the objects start to disappear very light (when they are already very small)
+  // with that you have to zoom very far out to see anything
+  //const near = 1000;
+  //const far = 3500000;
 
   const onCreateNewSketch = () => {
     // In this way it is possible to select the plane for where to draw the sketch

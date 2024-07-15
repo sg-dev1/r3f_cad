@@ -89,7 +89,15 @@ const SketchCycleObjectNg = ({ sketchCycle }: SketchCycleObjectNgProps) => {
           }}
           visible={sketchIsVisible && selectedSketch === sketchCycle.sketch.id}
         >
-          <meshBasicMaterial color={obtainShapeColor()} side={THREE.DoubleSide} />
+          {/* Use a negative polygonOffset to solve the z-fighting problem with OcctFaceVisualizer.tsx component
+              (which has positive offset to be always drawn behind this component)
+           */}
+          <meshBasicMaterial
+            color={obtainShapeColor()}
+            side={THREE.DoubleSide}
+            polygonOffset
+            polygonOffsetFactor={-0.1}
+          />
         </mesh>
       )}
       {shapePoints.length > 0 && (

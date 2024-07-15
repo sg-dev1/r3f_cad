@@ -13,7 +13,6 @@ import { getNormalVectorForPlane } from '@/utils/threejs_planes';
 import { SketchType } from '@/app/slices/Sketch';
 import { STLExporter } from 'three/examples/jsm/Addons.js';
 import * as THREE from 'three';
-import TopoDSVisualizer from './TopoDSVisualizer';
 import { createGeom3d, removeGeometries, select3dGeometries } from '@/app/slices/geom3dSlice';
 import { Geometry3DType } from '@/app/types/Geometry3DType';
 import Occt3dGeometryVisualizer from './Occt3dGeometryVisualizer';
@@ -32,6 +31,11 @@ const OcctRoot = () => {
   const shapeToExtrude = sketchShapes.filter(
     (shape) => shape.sketch.id === sketchToExtrude && shape.index === cycleIndex
   );
+
+  /*
+  const {gl} = useThree()
+  useEffect(() => {gl}, [gl])
+  */
 
   // keyboard events
   /* old hidding functionality - quick and dirty using number keys (no longer supported)

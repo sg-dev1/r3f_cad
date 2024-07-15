@@ -85,6 +85,7 @@ List of Improvements
 (B021) Proper visualization of 3D objects
      - Tidy up/ follow up tasks:
         - support for highlighting of faces
+        - address z-fighting problem (between faces and lines)
         - improvement of face coloring (e.g. shadows - use different material?)
         - maybe could get rid of screen flickering of overlapping (edge) lines and faces?
         - support of (multi) selection (maybe also proper naming needed --> Topo naming problem)

@@ -17,6 +17,7 @@ const OcctFaceVisualizer = ({
   edgePoints: [number, number, number][][][][];
   visible: boolean;
 }) => {
+  const [hovered, setHovered] = useState(false);
   const [bufferGeom, setBufferGeom] = useState<BufferGeometry | null>(null);
 
   useEffect(() => {
@@ -47,8 +48,8 @@ const OcctFaceVisualizer = ({
         <mesh
           frustumCulled={false}
           geometry={bufferGeom}
-          //onPointerOver={() => setHovered(true)}
-          //onPointerOut={() => setHovered(false)}
+          onPointerOver={() => setHovered(true)}
+          onPointerOut={() => setHovered(false)}
           //onClick={() => {
           //  if (sketchIsVisible && selectedSketch === sketchCycle.sketch.id) {
           //    dispatch(setSketchToExtrude([sketchCycle.sketch.id, sketchCycle.index]));
@@ -56,7 +57,11 @@ const OcctFaceVisualizer = ({
           //}}
           visible={visible}
         >
-          <meshBasicMaterial color={'gray'} />
+          {/* Use a positive polygonOffset to solve the z-fighting problem with SketchCycleObjectNg.tsx component
+              (which has negative offset to be always drawn in front of this component)
+           */}
+          <meshBasicMaterial color={hovered ? 'yellow' : 'gray'} polygonOffset polygonOffsetFactor={0.1} />
+          {/* <meshStandardMaterial color={hovered ? 'yellow' : 'gray'} polygonOffset polygonOffsetFactor={0.1} /> */}
         </mesh>
       )}
 
