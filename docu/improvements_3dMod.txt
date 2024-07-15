@@ -1,6 +1,6 @@
 Priority of improvements (my ranking)
-  - B020  // testing
-  - B021  // improvement, visualization of 3d objects
+  - B022  // testing
+  - B023  // data model, topo naming problem
   - B012  // improvement, more features (3d geom tools)
   - B008  // arbitrary plane awareness
   - B011  [data persistence, debug]
@@ -82,36 +82,23 @@ List of Improvements
       - Boolean operations (1) should be applied automatically if two geometries (3d bodies) touch
         each other -> need to find out when two bodies are touching
 
-(B021) Proper visualization of 3D objects
-     - Tidy up/ follow up tasks:
-        - support for highlighting of faces
-        - address z-fighting problem (between faces and lines)
-        - improvement of face coloring (e.g. shadows - use different material?)
-        - maybe could get rid of screen flickering of overlapping (edge) lines and faces?
-        - support of (multi) selection (maybe also proper naming needed --> Topo naming problem)
-        
-     - Currently visualization is done using the shape converted to a mesh
-       used as input for a BufferGeometry (see TopoDSVisualizer.tsx)
-     - There are other ways to visualize 3d geometry (than BufferGeometry):
-        - e.g. use ExtrudeGeometry for extrude operations
-          https://threejs.org/docs/index.html#api/en/geometries/ExtrudeGeometry
-        - (not sure if this will work for other modelling operation types)
-     - Maybe even better to visualize individual parts of shape separately:
-        - faces
-        - edges
-        (to retrieve faces, wires, edges from occt shape see OcctRoot.tsx)
-        - Benefit:
-          - Faces/edges can be highlighed (and selected) separately
-          --> build support for multi select
-        - draw edges in different color than face (so no need for wireframe)
-        - shadows on face (need proper material, lighting)
-        - e.g. use drei Line for edge (an arc are multiple lines with useArcPoints())
-        - for faces use shapeGeometry
-        - could put everything into a three.js Group
-
 (B022)  More testing / bug fixing:
        - combine "inner shape" test case with intersection point test case, e.g.
          have a geometry with inner shapes as well as intersection geometry
+
+(B023) Topological naming problem
+  - Implement proper naming of 3d geometry s.t. it can be referenced
+  - Need to think how to best solve this for this application
+  - May need kind of a diff to do updates: <OLD_STATE> vs <NEW_STATE>, what has changed?
+  Things to do:
+  - Implement topological sorting in algo3d.ts:
+     - Currently we rely on indices as found by the sketch cycle algorithm,
+       need to assure that they are stable (e.g. after anything in the sketch was changed)
+     - In geom3d.ts a sketch cycle is referenced by [<sketch-id>, <id-of-cycle>]
+        - the <sketch-id> is stable
+        - but the <id-of-cycle> may change
+     - How will this behave when cycles are added/ removed?
+     - Instead of the <id-of-cycle> it would be better to have a stable name
 
 
 On Hold
@@ -136,6 +123,34 @@ On Hold
 
 
 Done Improvements
+
+(B021) Proper visualization of 3D objects
+     - Tidy up/ follow up tasks:
+        - support for highlighting of faces
+        - address z-fighting problem (between faces and lines)
+           - get rid of screen flickering of overlapping (edge) lines and faces?
+        - improvement of face coloring (e.g. shadows - use different material?)        
+        - support of (multi) selection (maybe also proper naming needed --> Topo naming problem)
+           --> later/ other ticket
+        
+     - Currently visualization is done using the shape converted to a mesh
+       used as input for a BufferGeometry (see TopoDSVisualizer.tsx)
+     - There are other ways to visualize 3d geometry (than BufferGeometry):
+        - e.g. use ExtrudeGeometry for extrude operations
+          https://threejs.org/docs/index.html#api/en/geometries/ExtrudeGeometry
+        - (not sure if this will work for other modelling operation types)
+     - Maybe even better to visualize individual parts of shape separately:
+        - faces
+        - edges
+        (to retrieve faces, wires, edges from occt shape see OcctRoot.tsx)
+        - Benefit:
+          - Faces/edges can be highlighed (and selected) separately
+          --> build support for multi select
+        - draw edges in different color than face (so no need for wireframe)
+        - shadows on face (need proper material, lighting)
+        - e.g. use drei Line for edge (an arc are multiple lines with useArcPoints())
+        - for faces use shapeGeometry
+        - could put everything into a three.js Group
 
 (B022-A) Bugfix: Input field for extruding sketch shapes appeared randomly because onClick event on invisible shapes fired.
          In this way it seemed that some geometry was extruded rotated (was not the case).

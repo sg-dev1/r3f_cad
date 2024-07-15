@@ -1,7 +1,7 @@
 /** This component contains the main view for the 3D modelling tool. */
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Button, Layout } from 'antd';
 import { createSketch } from '@/app/slices/sketchSlice';
 import { useAppDispatch } from '@/app/hooks';
@@ -11,6 +11,7 @@ import { Canvas } from '@react-three/fiber';
 import { GizmoHelper, GizmoViewport, Grid, OrbitControls } from '@react-three/drei';
 import ThreeAxisPlanes from './ThreeAxisPlanes';
 import Geom3DTable from './Geom3DTable';
+import { DirectionalLight } from 'three';
 
 const { Header, Content, Sider } = Layout;
 
@@ -18,6 +19,7 @@ const MainView = () => {
   //const activeSketchId = useAppSelector(selectActiveSketchId);
   const dispatch = useAppDispatch();
   // const cameraControlsRef = useRef<CameraControls>(null);
+  const directionalLightRef = useRef<DirectionalLight>(null);
 
   const [threeAxisPlanesVisible, setThreeAxisPlanesVisible] = useState<boolean>(false);
 
@@ -31,6 +33,8 @@ const MainView = () => {
   // with that you have to zoom very far out to see anything
   //const near = 1000;
   //const far = 3500000;
+
+  // ---
 
   const onCreateNewSketch = () => {
     // In this way it is possible to select the plane for where to draw the sketch
@@ -77,9 +81,22 @@ const MainView = () => {
               camera={{ fov, aspect, near, far, position: [200, 50, 200] }}
             >
               {/* <CameraControls minDistance={1.2} maxDistance={4} ref={cameraControlsRef} /> */}
-              <OrbitControls makeDefault enableDamping={true} dampingFactor={0.1} />
+              <OrbitControls
+                makeDefault
+                enableDamping={true}
+                dampingFactor={0.1}
+                onChange={(e) => {
+                  if (e && directionalLightRef && directionalLightRef.current) {
+                    directionalLightRef.current.position.copy(e.target.object.position);
+                  }
+                }}
+              />
+              {/* Set this light intensity a bit lower than the intensity of the directional light below to see shadows */}
               <ambientLight intensity={2} />
-              {/* <pointLight intensity={10.75} position={[0, 10000, 0]} /> */}
+              {/* DirectionalLight behaves similar to sun light (e.g. to simulate daylight) 
+                  https://threejs.org/docs/index.html#api/en/lights/DirectionalLight
+              */}
+              <directionalLight ref={directionalLightRef} color={0xffffff} intensity={3} position={[200, 50, 200]} />
 
               {/* Constains test component adding test object using Occt */}
               {/* <OcctWorkerTest /> */}

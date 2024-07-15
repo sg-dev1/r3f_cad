@@ -57,11 +57,13 @@ const OcctFaceVisualizer = ({
           //}}
           visible={visible}
         >
-          {/* Use a positive polygonOffset to solve the z-fighting problem with SketchCycleObjectNg.tsx component
-              (which has negative offset to be always drawn in front of this component)
+          {/* - Use a positive polygonOffset to solve the z-fighting problem with SketchCycleObjectNg.tsx component
+                (which has negative offset to be always drawn in front of this component)
+              - Use MeshStandardMaterial (instead of MeshBasicMaterial) to see shadows
+                https://threejs.org/docs/index.html#api/en/materials/MeshStandardMaterial
+                https://threejs.org/docs/index.html#api/en/materials/MeshBasicMaterial
            */}
-          <meshBasicMaterial color={hovered ? 'yellow' : 'gray'} polygonOffset polygonOffsetFactor={0.1} />
-          {/* <meshStandardMaterial color={hovered ? 'yellow' : 'gray'} polygonOffset polygonOffsetFactor={0.1} /> */}
+          <meshStandardMaterial color={hovered ? 'yellow' : 'gray'} polygonOffset polygonOffsetFactor={0.1} />
         </mesh>
       )}
 
