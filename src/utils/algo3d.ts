@@ -8,6 +8,8 @@ import { ArcInlinePointType, arcInlineEquals } from '@/app/types/ArcType';
 import { GeometryType } from '@/app/types/EntityType';
 import { floatNumbersEqual } from './utils';
 
+const DEBUG_FLAG = false;
+
 type FlattenPointsMapType = { [key: number]: Point };
 type FlattenShapeSubset = Segment | Circle | Arc;
 type FlattenShapeSubsetNoCircle = Segment | Arc;
@@ -867,7 +869,10 @@ export interface SketchCycleType {
 
 /** Finds all distinct circles in a sketch. */
 export const findCyclesInSketch = (sketch: SketchType) => {
-  //console.log('sketch', sketch);
+  if (DEBUG_FLAG) {
+    console.log('sketch', sketch);
+  }
+
   const cyclesInSketch = findConnectedLinesInSketch(sketch);
 
   const sketchCycle: SketchCycleType[] = [];
@@ -993,8 +998,10 @@ export const findCyclesInSketch = (sketch: SketchType) => {
     );
   }
 
-  //console.log('sketchCycleNew', sketchCycleNew, 'sketchCycle', sketchCycle, 'clusters', clusters);
-  //console.log('---clustersComplete', clustersComplete);
+  if (DEBUG_FLAG) {
+    console.log('sketchCycleNew', sketchCycleNew, 'sketchCycle', sketchCycle, 'clusters', clusters);
+    console.log('---clustersComplete', clustersComplete);
+  }
 
   // ---
 
@@ -1054,7 +1061,9 @@ export const findCyclesInSketch = (sketch: SketchType) => {
     }
   }
 
-  //console.log('insideMap', insideMap);
+  if (DEBUG_FLAG) {
+    console.log('insideMap', insideMap);
+  }
 
   // (B)
   // we still have the issue that shapes inside the innerCycle are added as well
@@ -1075,7 +1084,9 @@ export const findCyclesInSketch = (sketch: SketchType) => {
     }
   }
 
-  //console.log('(B) insideMap', insideMap);
+  if (DEBUG_FLAG) {
+    console.log('(B) insideMap', insideMap);
+  }
 
   //
   // Step 2 (of B018 implementation - support for "inner cycles")
@@ -1102,7 +1113,9 @@ export const findCyclesInSketch = (sketch: SketchType) => {
     }
   }
 
-  //console.log('updateMap', updateMap);
+  if (DEBUG_FLAG) {
+    console.log('updateMap', updateMap);
+  }
 
   for (const [cycleIndex, data] of Object.entries(updateMap)) {
     const sketchCycleToUpdate = sketchCycleNew.find((elem) => elem.index === Number(cycleIndex));
@@ -1113,7 +1126,9 @@ export const findCyclesInSketch = (sketch: SketchType) => {
     }
   }
 
-  //console.log('result', sketchCycleNew);
+  if (DEBUG_FLAG) {
+    console.log('result', sketchCycleNew);
+  }
 
   // ---
 

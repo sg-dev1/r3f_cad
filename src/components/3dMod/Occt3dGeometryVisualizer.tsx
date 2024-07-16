@@ -40,8 +40,8 @@ const Occt3dGeometryVisualizer = ({ bitbybitOcct, shape }: { bitbybitOcct: BitBy
     return decomposedOcctShape.points.flat(3);
   }, [decomposedOcctShape]);
 
-  console.log('decomposedOcctShape.faces', decomposedOcctShape?.faces);
-  console.log('pointsOfDecomposedOcctShape', pointsOfDecomposedOcctShape);
+  //console.log('decomposedOcctShape.faces', decomposedOcctShape?.faces);
+  //console.log('pointsOfDecomposedOcctShape', pointsOfDecomposedOcctShape);
 
   return (
     <>

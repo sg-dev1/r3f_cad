@@ -1,5 +1,4 @@
 Priority of improvements (my ranking)
-  - B022  // testing
   - B023  // data model, topo naming problem
   - B012  // improvement, more features (3d geom tools)
   - B008  // arbitrary plane awareness
@@ -82,10 +81,6 @@ List of Improvements
       - Boolean operations (1) should be applied automatically if two geometries (3d bodies) touch
         each other -> need to find out when two bodies are touching
 
-(B022)  More testing / bug fixing:
-       - combine "inner shape" test case with intersection point test case, e.g.
-         have a geometry with inner shapes as well as intersection geometry
-
 (B023) Topological naming problem
   - Implement proper naming of 3d geometry s.t. it can be referenced
   - Need to think how to best solve this for this application
@@ -102,6 +97,10 @@ List of Improvements
 
 
 On Hold
+
+(B022)  More testing / bug fixing:
+       - combine "inner shape" test case with intersection point test case, e.g.
+         have a geometry with inner shapes as well as intersection geometry
 
 (B013) Issue with current handling of bitbybit
      -> should be created once upon first opening of page and then reused
