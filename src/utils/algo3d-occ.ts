@@ -2,7 +2,7 @@
 import { SketchType } from '@/app/slices/Sketch';
 import { BitByBitOCCT } from '@bitbybit-dev/occt-worker';
 import { Inputs } from '@bitbybit-dev/occt';
-import { CadTool3DShapeSubset, findCyclesInSketch } from './algo3d';
+import { CadTool3DShapeSubset, SketchCycleType, findCyclesInSketch } from './algo3d';
 import { Arc, Circle, Segment } from '@flatten-js/core';
 import { convert2DPointTo3D, getNormalVectorForPlane } from './threejs_planes';
 
@@ -12,6 +12,7 @@ export interface SketchCycleTypeOcct {
   innerCycles: CadTool3DShapeSubset[][]; // inner cycles (e.g. holes) if there are any
   cycleArea: number; // area of the cycle
   sketch: SketchType; // the Sketch this cycle belongs to. One Sketch may have multiple cycles.
+  label: string; // label of the sketch cycle
   index: number; // index of this cycle for the given sketch
   occtFace: Inputs.OCCT.TopoDSFacePointer; // the cycle as occt face
 }
@@ -74,6 +75,7 @@ export const findCyclesInSketchAndConvertToOcct = async (sketch: SketchType, bit
       innerCycles: cycle.innerCycles,
       cycleArea: cycle.cycleArea,
       sketch: cycle.sketch,
+      label: cycle.label,
       index: cycle.index,
       occtFace: face,
     });

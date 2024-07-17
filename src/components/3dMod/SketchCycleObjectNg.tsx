@@ -80,7 +80,12 @@ const SketchCycleObjectNg = ({ sketchCycle }: SketchCycleObjectNgProps) => {
         <mesh
           frustumCulled={false}
           geometry={shapeGeometry}
-          onPointerOver={() => setHovered(true)}
+          onPointerOver={() => {
+            if (sketchIsVisible && selectedSketch === sketchCycle.sketch.id) {
+              setHovered(true);
+              console.log('SketchCycleObjectNg: ', sketchCycle.index, sketchCycle.label);
+            }
+          }}
           onPointerOut={() => setHovered(false)}
           onClick={() => {
             if (sketchIsVisible && selectedSketch === sketchCycle.sketch.id) {
