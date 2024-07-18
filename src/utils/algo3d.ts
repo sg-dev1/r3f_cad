@@ -1136,12 +1136,6 @@ export const findCyclesInSketch = (sketch: SketchType) => {
 
   // ---
 
-  // Center of gravity (center of mass, centroid) of polygon:
-  // X = SUM[(Xi + Xi+1) * (Xi * Yi+1 - Xi+1 * Yi)] / 6 / A
-  // Y = SUM[(Yi + Yi+1) * (Xi * Yi+1 - Xi+1 * Yi)] / 6 / A
-  // with vertices (x0,y0), (x1,y1), ..., (xn−1,yn−1)
-  // A ... area
-  // https://stackoverflow.com/a/5271722
   //
   // 1) Build graph of sketch cycles where
   //    - nodes are center of gravity of a face
@@ -1158,7 +1152,9 @@ export const findCyclesInSketch = (sketch: SketchType) => {
   // - structure (topological) changes if faces are added/ deleted (merged) -- e.g. nodes are added/ removed
   //
   // @1 Labeling of graph (with indices - counter)
-  //  - e.g. start with top left node  --> node0  (aka. n0 and n1, n2 etc. for the other clusters)
+  //  - e.g. start with (top) left node  --> node0  (aka. n0 and n1, n2 etc. for the other clusters)
+  //         - not easy to get the top left node because there could be a node to the right with a higher y coordinate
+  //         --> therefore only use left node (node with lowest y coordinate) - always use top left corner (not the centroid)
   //  - then do BFS to assign labels to all neighbors:
   //      - node0#1, node0#2, ...
   //      - for neighbors of node0#1:  node0#1#1, node0#1#2, ...
@@ -1169,6 +1165,7 @@ export const findCyclesInSketch = (sketch: SketchType) => {
   // comparision criteria:
   //   center of gravity - if no inner cycles
   //   otherwise - top left corner of bounding box
+  //   --> won't make that much difference, because if the geometry changes, both will also change (in most cases)
   //
   // Issue with counter: leads to instablities when nodes get added/removed,
   //   so a bit more generic naming than a simple counter is needed
@@ -1195,20 +1192,12 @@ export const findCyclesInSketch = (sketch: SketchType) => {
   //                e.g. same neighbor nodes
   //    - in case of no match, new labels need to be generated
   //
-  // Initial labelling issues:
-  // - when there are inner cycles, Circles always have lower label numbers (e.g. they are inside a face with higher label number) - see e.g. Sketch7, Sketch2
-  // - Circle ids seem to also not be consistent ordered (e.g. in Sketch2 they go in a circle and don't always start at the left)
-  //   Order seems to only depend on where they are located in intial sketchCycles array received as input
-  // - Label indices should also be geometrically align (e.g. from left to right on the x axis) and not the depend on the order sketchCycles array (see Sketch0, Sketch1)
-  //   --> this is most likely because neighbor nodes in adjacency list are sorted (according to index === order in sketchCycle input array)
-  //       Need geometrical sorting instead
-  //
   // Follow up tasks:
   // - save graph in redux
   // - comparision with graph from redux --> alternative labeling function
   //
 
-  stableSortSketchCycles(sketchCycleNew);
+  labelSketchCycles(sketchCycleNew);
 
   // ---
 
@@ -1287,6 +1276,7 @@ export const sketchCycleTypesEquals = (a: SketchCycleType[], b: SketchCycleType[
 
 // ---
 
+/** Represents a node of the graph used for labeling of sketch cycles. */
 export interface GraphNode {
   id: number;
   centroid: [number, number];
@@ -1297,7 +1287,8 @@ export interface GraphNode {
   label: string;
 }
 
-const stableSortSketchCycles = (sketchCycles: SketchCycleType[]) => {
+/** Main function for sketch cycle labeling. */
+const labelSketchCycles = (sketchCycles: SketchCycleType[]) => {
   if (sketchCycles.length === 0) {
     return;
   }
@@ -1319,36 +1310,50 @@ const stableSortSketchCycles = (sketchCycles: SketchCycleType[]) => {
   });
 };
 
-// adds labels to all the sketchCycles in the graphy
-// mainly for initial labelling
+/** Add initial labels to all the sketchCycles in the graph */
 const labelGraph = (graphNodes: GraphNode[], graphAdjacencyList: number[][]) => {
-  // find start node for labeling
-  let startNodeIdx = 0;
-  let startNodeX = graphNodes[0].topLeftCorner[0];
-  //let startNodeY = graphNodes[0].topLeftCorner[1];
-  for (let i = 1; i < graphNodes.length; i++) {
-    const currNode = graphNodes[i];
-    // search for far left node - only use x coordinate for now
-    if (currNode.topLeftCorner[0] < startNodeX) {
-      startNodeIdx = i;
-      startNodeX = currNode.topLeftCorner[0];
-      //startNodeY = currNode.topLeftCorner[1];
-    }
-  }
-
   const visited: number[] = Array(graphNodes.length).fill(0);
-  graphNodes[startNodeIdx].label = 'n0';
-  bfs_label(graphNodes, graphAdjacencyList, visited, startNodeIdx);
 
-  let startLabelId = 1;
-  do {
-    startNodeIdx = -1;
-    for (let i = 0; i < visited.length; i++) {
+  // find the start node by searching for a non visited node which is the furthes on the left
+  // on the x axis (lowest x coordinate).
+  const findStartNode = (): number => {
+    let startNodeIdx = -1;
+    for (let i = 0; i < graphNodes.length; i++) {
       if (visited[i] !== 1) {
         startNodeIdx = i;
         break;
       }
     }
+
+    if (startNodeIdx === -1) {
+      // not found
+      return -1;
+    }
+
+    let startNodeX = graphNodes[startNodeIdx].topLeftCorner[0];
+    for (let i = 1; i < graphNodes.length; i++) {
+      if (visited[i] !== 1) {
+        const currNode = graphNodes[i];
+        // search for far left node - only use x coordinate for now
+        // needs to be aligned with the sort criteria at the end of buildGraph
+        // (indices spread from left to right on the x axis)
+        if (currNode.topLeftCorner[0] < startNodeX) {
+          startNodeIdx = i;
+          startNodeX = currNode.topLeftCorner[0];
+        }
+      }
+    }
+
+    return startNodeIdx;
+  };
+  const firstStartNodeIdx = findStartNode();
+  graphNodes[firstStartNodeIdx].label = 'n0';
+  bfs_label(graphNodes, graphAdjacencyList, visited, firstStartNodeIdx);
+
+  let startLabelId = 1;
+  let startNodeIdx = -1;
+  do {
+    startNodeIdx = findStartNode();
     if (startNodeIdx !== -1) {
       graphNodes[startNodeIdx].label = 'n' + startLabelId;
       bfs_label(graphNodes, graphAdjacencyList, visited, startNodeIdx);
@@ -1359,7 +1364,7 @@ const labelGraph = (graphNodes: GraphNode[], graphAdjacencyList: number[][]) => 
   console.log('visited', visited);
 };
 
-// labels (one cluster of) the sketchCycle nodes in the graph in a BFS way
+/** Labels (one cluster of) the sketchCycle nodes in the graph in a BFS way */
 const bfs_label = (graphNodes: GraphNode[], graphAdjacencyList: number[][], visited: number[], startNodeId: number) => {
   const queue: number[] = [];
 
@@ -1382,8 +1387,9 @@ const bfs_label = (graphNodes: GraphNode[], graphAdjacencyList: number[][], visi
   }
 };
 
-// helper function to build the graph used for labeling of sketchCycles
-// returns list of graph nodes and adjacency list
+/** Helper function to build the graph used for labeling of sketchCycles
+ *  Returns list of graph nodes and adjacency list.
+ */
 const buildGraph = (sketchCycles: SketchCycleType[]): [GraphNode[], number[][]] => {
   const graphNodes: GraphNode[] = sketchCycles.map((sketchCycle, index) => {
     //const edgePoints: Point3DInlineType[] = [];
@@ -1406,7 +1412,7 @@ const buildGraph = (sketchCycles: SketchCycleType[]): [GraphNode[], number[][]] 
       label: '',
     };
   });
-  //const graphAdjacencyList: number[][] = Array.from(Array(sketchCycles.length), () => Array());
+
   const graphAdjacencySet: Set<number>[] = Array.from(Array(sketchCycles.length), () => new Set<number>());
   graphNodes.forEach((outerNode) => {
     graphNodes.forEach((innerNode) => {
@@ -1434,8 +1440,6 @@ const buildGraph = (sketchCycles: SketchCycleType[]): [GraphNode[], number[][]] 
       }
 
       if (match) {
-        //graphAdjacencyList[outerNode.id].push(innerNode.id);
-        //graphAdjacencyList[innerNode.id].push(outerNode.id);
         graphAdjacencySet[outerNode.id].add(innerNode.id);
         graphAdjacencySet[innerNode.id].add(outerNode.id);
       }
@@ -1443,19 +1447,31 @@ const buildGraph = (sketchCycles: SketchCycleType[]): [GraphNode[], number[][]] 
   });
 
   const graphAdjacencyList: number[][] = graphAdjacencySet.map((adjacencySet) =>
-    Array.from(adjacencySet.values()).toSorted()
+    // with this sort criteria indices spread from left to right on x axis
+    Array.from(adjacencySet.values()).toSorted(
+      (a: number, b: number) => graphNodes[a].topLeftCorner[0] - graphNodes[b].topLeftCorner[0]
+    )
   );
 
   return [graphNodes, graphAdjacencyList];
 };
 
-// helper function to calc centroid of all corner points of sketchCycle
+/**
+ * Helper function to calc centroid of all corner points of sketchCycle.
+ * For Circles the midpoint is returned.
+ */
 const calcCentroid = (sketchCycle: SketchCycleType): [number, number] => {
   if (sketchCycle.cycle.length === 1 && sketchCycle.cycle[0].t === GeometryType.CIRCLE) {
     return (sketchCycle.cycle[0] as CircleInlinePointType).midPt2d;
   } else {
     let result: [number, number] = [0, 0];
     for (let i = 0; i < sketchCycle.cycle.length - 1; i++) {
+      // Center of gravity (center of mass, centroid) of polygon:
+      // X = SUM[(Xi + Xi+1) * (Xi * Yi+1 - Xi+1 * Yi)] / 6 / A
+      // Y = SUM[(Yi + Yi+1) * (Xi * Yi+1 - Xi+1 * Yi)] / 6 / A
+      // with vertices (x0,y0), (x1,y1), ..., (xn−1,yn−1)
+      // A ... area
+      // https://stackoverflow.com/a/5271722
       const shapeI = sketchCycle.cycle[i] as CadTool3DShapeSubsetNoCircle;
       const shapeIPlus1 = sketchCycle.cycle[i + 1] as CadTool3DShapeSubsetNoCircle;
       const shapeIPointX = getPointU2(sketchCycle.sketch.plane, shapeI.end);
@@ -1477,7 +1493,7 @@ const calcCentroid = (sketchCycle: SketchCycleType): [number, number] => {
   }
 };
 
-// helper function to get bounding box of top left corner of sketchCycle
+/** Helper function to get bounding box of top left corner of sketchCycle. */
 const getTopLeftCorner = (sketchCycle: SketchCycleType): [number, number] => {
   const box = sketchCycle.polygon.box;
   return [box.xmin, box.ymax];

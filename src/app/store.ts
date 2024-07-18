@@ -11,7 +11,7 @@ import storage from 'redux-persist/lib/storage';
 const persistConfig = {
   key: 'root', // key for persisted state in storage
   storage, // localStorage as storage engine
-  blocklist: ['sketchTool', 'modellingTool'],
+  blacklist: ['sketchTool', 'modellingTool'],
 };
 
 const rootReducer = combineReducers({
