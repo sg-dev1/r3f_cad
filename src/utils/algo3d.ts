@@ -8,6 +8,7 @@ import { ArcInlinePointType, arcInlineEquals } from '@/app/types/ArcType';
 import { GeometryType } from '@/app/types/EntityType';
 import { floatNumbersEqual } from './utils';
 import { Point3DInlineType, point3DInlineEquals } from '@/app/types/Point3DType';
+import { GraphGeom2d } from '@/app/slices/graphGeom2dSlice';
 
 const DEBUG_FLAG = false;
 
@@ -867,11 +868,28 @@ export interface SketchCycleType {
   index: number; // index of this cycle for the given sketch
   flattenShapes: FlattenShapeSubset[]; // flatten shapes (used internally)
   polygon: Polygon; // flatten polygon (used internally)
-  label: string;
+  label?: string;
 }
 
+export type SaveGraphToReduxFunction = (
+  sketchId: number,
+  nodes: SketchShapeLabelingGraphNode[],
+  adjacencyList: number[][]
+) => void;
+const dummySaveGraphToRedux = (
+  sketchId: number,
+  nodes: SketchShapeLabelingGraphNode[],
+  adjacencyList: number[][]
+): void => {
+  console.log('dummySaveGraphToRedux - noop');
+};
+
 /** Finds all distinct circles in a sketch. */
-export const findCyclesInSketch = (sketch: SketchType) => {
+export const findCyclesInSketch = (
+  sketch: SketchType,
+  saveGraphGeom2d: SaveGraphToReduxFunction = dummySaveGraphToRedux,
+  prevGraphGeom2d: GraphGeom2d | null = null
+) => {
   if (DEBUG_FLAG) {
     console.log('sketch', sketch);
   }
@@ -1184,20 +1202,29 @@ export const findCyclesInSketch = (sketch: SketchType) => {
   // A) Index (label) generation --> esp. after modelling (when there was no modification
   //                                 and we only have one graph)
   // B) comparision of two graphs (copying of labels from old graph to new graph)
+  //    - at the beginning the list of names (aka namesList) contains all names of the graph saved in redux
   //    - start by matching nodes from old graph with new graph and copy names
-  //        - geometrical matching --> if dimensions of points match - we have found a match
+  //      and for each mapped name remove it from the names list
+  //        1) geometrical matching --> if dimensions of points match - we have found a match
   //                                   e.g. compare center of gravity to be faster
-  //        - topological matching
+  //          - if we still have unmapped names (aka unmappedNames) we need to proceed
+  //          - if namesList is not yet empty we still need to assign these names
+  //          - if len(unmappedNames) > len(namesList)   --> there are new SketchCycles that did not exist before
+  //                                                         (e.g. faces were added)
+  //                                                         --> need to generate new labels
+  //          - if len(namesList) > len(unmappedNames)   --> there were SketchCycles deleted in the modify operation
+  //                                                         (e.g. faces were merged)
+  //          - if len(namesList) === len(unmappedNames) --> This could mean that the topology has not changed
+  //                                                         (but it could have changed - some faces added, same number deleted)
+  //        2) topological matching
   //            - kind of structural matching in graph,
   //                e.g. same neighbor nodes
-  //    - in case of no match, new labels need to be generated
   //
   // Follow up tasks:
-  // - save graph in redux
   // - comparision with graph from redux --> alternative labeling function
   //
 
-  labelSketchCycles(sketchCycleNew);
+  labelSketchCycles(sketchCycleNew, saveGraphGeom2d, prevGraphGeom2d);
 
   // ---
 
@@ -1277,18 +1304,23 @@ export const sketchCycleTypesEquals = (a: SketchCycleType[], b: SketchCycleType[
 // ---
 
 /** Represents a node of the graph used for labeling of sketch cycles. */
-export interface GraphNode {
+export interface SketchShapeLabelingGraphNode {
   id: number;
   centroid: [number, number];
   topLeftCorner: [number, number];
-  sketchCycle: SketchCycleType;
+  sketchCycle: SketchCycleType; // will not be persisted in redux (not possible, type far too complex)
   //edgePoints: Point3DInlineType[];
+  // not needed to persist in redux (could be persisted if needed, but I don't think it is required)
   edges: [Point3DInlineType, Point3DInlineType][];
   label: string;
 }
 
 /** Main function for sketch cycle labeling. */
-const labelSketchCycles = (sketchCycles: SketchCycleType[]) => {
+const labelSketchCycles = (
+  sketchCycles: SketchCycleType[],
+  saveGraph: SaveGraphToReduxFunction,
+  prevGraphGeom2d: GraphGeom2d | null
+) => {
   if (sketchCycles.length === 0) {
     return;
   }
@@ -1296,11 +1328,18 @@ const labelSketchCycles = (sketchCycles: SketchCycleType[]) => {
   // Build graph
   const [graphNodes, graphAdjacencyList] = buildGraph(sketchCycles);
 
-  // labelling
-  labelGraph(graphNodes, graphAdjacencyList);
+  if (prevGraphGeom2d === null) {
+    // labelling
+    labelGraph(graphNodes, graphAdjacencyList);
+  } else {
+    console.log('--prevGraphGeom2d', prevGraphGeom2d);
 
-  // TODO comparing graphs - only if graph in redux is found
-  // TODO save graph to redux
+    // TODO comparing graphs - only if graph in redux is found
+    // label new graph according to old graph
+
+    console.log('---dummy call to labelGraph, remove it in future!');
+    labelGraph(graphNodes, graphAdjacencyList);
+  }
 
   console.log('graphNodes', graphNodes);
   console.log('graphAdjacencyList', graphAdjacencyList);
@@ -1308,10 +1347,13 @@ const labelSketchCycles = (sketchCycles: SketchCycleType[]) => {
   graphNodes.forEach((node) => {
     node.sketchCycle.label = node.label;
   });
+
+  // save graph to redux
+  saveGraph(sketchCycles[0].sketch.id, graphNodes, graphAdjacencyList);
 };
 
 /** Add initial labels to all the sketchCycles in the graph */
-const labelGraph = (graphNodes: GraphNode[], graphAdjacencyList: number[][]) => {
+const labelGraph = (graphNodes: SketchShapeLabelingGraphNode[], graphAdjacencyList: number[][]) => {
   const visited: number[] = Array(graphNodes.length).fill(0);
 
   // find the start node by searching for a non visited node which is the furthes on the left
@@ -1365,7 +1407,12 @@ const labelGraph = (graphNodes: GraphNode[], graphAdjacencyList: number[][]) => 
 };
 
 /** Labels (one cluster of) the sketchCycle nodes in the graph in a BFS way */
-const bfs_label = (graphNodes: GraphNode[], graphAdjacencyList: number[][], visited: number[], startNodeId: number) => {
+const bfs_label = (
+  graphNodes: SketchShapeLabelingGraphNode[],
+  graphAdjacencyList: number[][],
+  visited: number[],
+  startNodeId: number
+) => {
   const queue: number[] = [];
 
   visited[startNodeId] = 1;
@@ -1390,8 +1437,8 @@ const bfs_label = (graphNodes: GraphNode[], graphAdjacencyList: number[][], visi
 /** Helper function to build the graph used for labeling of sketchCycles
  *  Returns list of graph nodes and adjacency list.
  */
-const buildGraph = (sketchCycles: SketchCycleType[]): [GraphNode[], number[][]] => {
-  const graphNodes: GraphNode[] = sketchCycles.map((sketchCycle, index) => {
+const buildGraph = (sketchCycles: SketchCycleType[]): [SketchShapeLabelingGraphNode[], number[][]] => {
+  const graphNodes: SketchShapeLabelingGraphNode[] = sketchCycles.map((sketchCycle, index) => {
     //const edgePoints: Point3DInlineType[] = [];
     const edges: [Point3DInlineType, Point3DInlineType][] = [];
 

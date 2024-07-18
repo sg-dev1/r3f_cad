@@ -16,6 +16,8 @@ import * as THREE from 'three';
 import { createGeom3d, removeGeometries, select3dGeometries } from '@/app/slices/geom3dSlice';
 import { Geometry3DType } from '@/app/types/Geometry3DType';
 import Occt3dGeometryVisualizer from './Occt3dGeometryVisualizer';
+import { SketchShapeLabelingGraphNode } from '@/utils/algo3d';
+import { selectStateGraphs, setStateGraph } from '@/app/slices/graphGeom2dSlice';
 
 const OcctRoot = () => {
   const [bitbybit, setBitbybit] = useState<BitByBitOCCT>();
@@ -31,6 +33,7 @@ const OcctRoot = () => {
   const shapeToExtrude = sketchShapes.filter(
     (shape) => shape.sketch.id === sketchToExtrude && shape.index === cycleIndex
   );
+  const graphGeom2dStateGraphs = useAppSelector(selectStateGraphs);
 
   /*
   const {gl} = useThree()
@@ -138,6 +141,28 @@ const OcctRoot = () => {
 
   // ---
 
+  /** Save the state graph for sketch shape labeling to redux */
+  const saveGraphGeom2dToRedux = (
+    sketchId: number,
+    nodes: SketchShapeLabelingGraphNode[],
+    adjacencyList: number[][]
+  ): void => {
+    dispatch(
+      setStateGraph({
+        sketchId,
+        graph: {
+          nodes: nodes.map((node) => ({
+            id: node.id,
+            centroid: node.centroid,
+            topLeftCorner: node.topLeftCorner,
+            label: node.label,
+          })),
+          adjacencyList: adjacencyList,
+        },
+      })
+    );
+  };
+
   /** Converts the sketchs from redux store to objects that can be displayed in 3D space.
    *  Output type is list of SketchCycleType.
    */
@@ -161,7 +186,12 @@ const OcctRoot = () => {
     const shapes: SketchCycleTypeOcct[] = [];
     const allSketchs = Object.entries(sketchs).map(([key, value]) => value);
     for (const sketch of allSketchs) {
-      const sketchCycle = await findCyclesInSketchAndConvertToOcct(sketch, bitbybit);
+      const sketchCycle = await findCyclesInSketchAndConvertToOcct(
+        sketch,
+        bitbybit,
+        saveGraphGeom2dToRedux,
+        graphGeom2dStateGraphs[sketch.id]
+      );
       //console.log('faces', faces, faces.length);
       shapes.push(...sketchCycle);
     }

@@ -4,6 +4,7 @@ import sketchReducer from './slices/sketchSlice';
 import sketchToolReducer from './slices/sketchToolStateSlice';
 import modellingReducer from './slices/modellingToolStateSlice';
 import geom3dReducer from './slices/geom3dSlice';
+import graphGeom2dReducer from './slices/graphGeom2dSlice';
 import { FLUSH, PAUSE, PERSIST, PURGE, REGISTER, REHYDRATE, persistReducer, persistStore } from 'redux-persist';
 import storage from 'redux-persist/lib/storage';
 // ...
@@ -19,6 +20,7 @@ const rootReducer = combineReducers({
   sketchTool: sketchToolReducer,
   modellingTool: modellingReducer,
   geom3d: geom3dReducer,
+  graphGeom2d: graphGeom2dReducer,
 });
 
 const persistedReducer = persistReducer(persistConfig, rootReducer);

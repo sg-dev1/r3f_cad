@@ -2,9 +2,10 @@
 import { SketchType } from '@/app/slices/Sketch';
 import { BitByBitOCCT } from '@bitbybit-dev/occt-worker';
 import { Inputs } from '@bitbybit-dev/occt';
-import { CadTool3DShapeSubset, SketchCycleType, findCyclesInSketch } from './algo3d';
+import { CadTool3DShapeSubset, SaveGraphToReduxFunction, SketchCycleType, findCyclesInSketch } from './algo3d';
 import { Arc, Circle, Segment } from '@flatten-js/core';
 import { convert2DPointTo3D, getNormalVectorForPlane } from './threejs_planes';
+import { GraphGeom2d } from '@/app/slices/graphGeom2dSlice';
 
 /** Datatype representing a sketch cycle including occt data (the face) */
 export interface SketchCycleTypeOcct {
@@ -12,14 +13,19 @@ export interface SketchCycleTypeOcct {
   innerCycles: CadTool3DShapeSubset[][]; // inner cycles (e.g. holes) if there are any
   cycleArea: number; // area of the cycle
   sketch: SketchType; // the Sketch this cycle belongs to. One Sketch may have multiple cycles.
-  label: string; // label of the sketch cycle
+  label?: string; // label of the sketch cycle
   index: number; // index of this cycle for the given sketch
   occtFace: Inputs.OCCT.TopoDSFacePointer; // the cycle as occt face
 }
 
 /** Finds all cycles in a sketch and adds occt data to it. */
-export const findCyclesInSketchAndConvertToOcct = async (sketch: SketchType, bitbybit: BitByBitOCCT) => {
-  const cyclesInSketch = findCyclesInSketch(sketch);
+export const findCyclesInSketchAndConvertToOcct = async (
+  sketch: SketchType,
+  bitbybit: BitByBitOCCT,
+  saveGraphGeom2d: SaveGraphToReduxFunction,
+  prevGraphGeom2d: GraphGeom2d | null
+) => {
+  const cyclesInSketch = findCyclesInSketch(sketch, saveGraphGeom2d, prevGraphGeom2d);
 
   const result: SketchCycleTypeOcct[] = [];
   for (const cycle of cyclesInSketch) {
