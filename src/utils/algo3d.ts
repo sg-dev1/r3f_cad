@@ -1,7 +1,7 @@
 /** This library contains functionality to find all distinct circles in a sketch. */
 import { SketchType } from '@/app/slices/Sketch';
 import { Arc, Circle, Point, Polygon, Segment, Vector, Relations } from '@flatten-js/core';
-import { convert2DPointTo3D, getPointU, getPointU2, getPointV, getPointV2 } from './threejs_planes';
+import { convert2DPointTo3D, convert3dPointTo2d, getPointU, getPointU2, getPointV, getPointV2 } from './threejs_planes';
 import { CircleInlinePointType, circleInlineEquals } from '@/app/types/CircleType';
 import { Line3DInlinePointType, line3DInlineEquals } from '@/app/types/Line3DType';
 import { ArcInlinePointType, arcInlineEquals } from '@/app/types/ArcType';
@@ -18,6 +18,7 @@ type FlattenShapeSubsetNoCircle = Segment | Arc;
 type FlattenShapeStruct = { id: number; shape: FlattenShapeSubset };
 export type CadTool3DShapeSubset = Line3DInlinePointType | CircleInlinePointType | ArcInlinePointType;
 type CadTool3DShapeSubsetNoCircle = Line3DInlinePointType | ArcInlinePointType;
+export type Point2dInlineType = [number, number];
 
 const findConnectedLinesInSketch = (sketch: SketchType) => {
   //
@@ -868,7 +869,10 @@ export interface SketchCycleType {
   index: number; // index of this cycle for the given sketch
   flattenShapes: FlattenShapeSubset[]; // flatten shapes (used internally)
   polygon: Polygon; // flatten polygon (used internally)
+
+  // these are mainly needed, for debug, make it optional to not break tests
   label?: string;
+  centroid?: Point2dInlineType;
 }
 
 export type SaveGraphToReduxFunction = (
@@ -1206,7 +1210,7 @@ export const findCyclesInSketch = (
   //    - start by matching nodes from old graph with new graph and copy names
   //      and for each mapped name remove it from the names list
   //        1) geometrical matching --> if dimensions of points match - we have found a match
-  //                                   e.g. compare center of gravity to be faster
+  //                                   e.g. compare center of gravity to be faster (exact match)
   //          - if we still have unmapped names (aka unmappedNames) we need to proceed
   //          - if namesList is not yet empty we still need to assign these names
   //          - if len(unmappedNames) > len(namesList)   --> there are new SketchCycles that did not exist before
@@ -1219,6 +1223,16 @@ export const findCyclesInSketch = (
   //        2) topological matching
   //            - kind of structural matching in graph,
   //                e.g. same neighbor nodes
+  //
+  // @Matching: - If we don't get an exact match we could search for "similar" nodes,
+  //              e.g. next centroid with the lowest distance (e.g. use Manhattan distance)
+  //            - Nodes need than also to have same/similar topology,
+  //              e.g. matching neighbor nodes
+  //              - same number of neighbors?
+  //              - if they are already labelled and have the same label in the prevGraph -> match
+  //              - are labels of neighbors matching?
+  //              - labeling can also be used to refer to parents, e.g.
+  //                n0#0 is parent of n0#0#0
   //
   // Follow up tasks:
   // - comparision with graph from redux --> alternative labeling function
@@ -1306,10 +1320,11 @@ export const sketchCycleTypesEquals = (a: SketchCycleType[], b: SketchCycleType[
 /** Represents a node of the graph used for labeling of sketch cycles. */
 export interface SketchShapeLabelingGraphNode {
   id: number;
-  centroid: [number, number];
-  topLeftCorner: [number, number];
+  centroid: Point2dInlineType;
+  area: number;
+  topLeftCorner: Point2dInlineType;
   sketchCycle: SketchCycleType; // will not be persisted in redux (not possible, type far too complex)
-  //edgePoints: Point3DInlineType[];
+  edgePoints2d: Point2dInlineType[];
   // not needed to persist in redux (could be persisted if needed, but I don't think it is required)
   edges: [Point3DInlineType, Point3DInlineType][];
   label: string;
@@ -1334,22 +1349,84 @@ const labelSketchCycles = (
   } else {
     console.log('--prevGraphGeom2d', prevGraphGeom2d);
 
-    // TODO comparing graphs - only if graph in redux is found
     // label new graph according to old graph
-
-    console.log('---dummy call to labelGraph, remove it in future!');
-    labelGraph(graphNodes, graphAdjacencyList);
+    const visited: number[] = Array(graphNodes.length).fill(0);
+    assignLabelsFromPrevGraph(prevGraphGeom2d, graphNodes, graphAdjacencyList, visited);
   }
 
   console.log('graphNodes', graphNodes);
   console.log('graphAdjacencyList', graphAdjacencyList);
 
+  // copy some of the properties of the graph to the sketch cycle
+  // (optional properties of the sketch cycle)
   graphNodes.forEach((node) => {
     node.sketchCycle.label = node.label;
+    node.sketchCycle.centroid = node.centroid;
   });
 
   // save graph to redux
   saveGraph(sketchCycles[0].sketch.id, graphNodes, graphAdjacencyList);
+};
+
+/** Assign labels from the previous graph (saved in redux) to the newly built graph. */
+const assignLabelsFromPrevGraph = (
+  prevGraphGeom2d: GraphGeom2d,
+  graphNodes: SketchShapeLabelingGraphNode[],
+  graphAdjacencyList: number[][],
+  visitedNodes: number[]
+) => {
+  const unassignedNodes: number[] = [];
+  for (let i = 0; i < prevGraphGeom2d.nodes.length; i++) {
+    const node = prevGraphGeom2d.nodes[i];
+    //const adjacencyList = prevGraphGeom2d.adjacencyList[i];
+    let labelAssigned = false;
+    for (let j = 0; j < graphNodes.length; j++) {
+      const mh = manhattanDistance(node.centroid, graphNodes[j].centroid);
+      const mhNorm = mh / graphNodes[j].sketchCycle.cycleArea;
+      // console.log(
+      //   'i',
+      //   i,
+      //   'j',
+      //   j,
+      //   'c1',
+      //   node.centroid,
+      //   'c2',
+      //   graphNodes[j].centroid,
+      //   'mh',
+      //   mh,
+      //   'mhNorm',
+      //   mhNorm,
+      //   'a1',
+      //   node.faceArea,
+      //   'a2',
+      //   graphNodes[j].sketchCycle.cycleArea
+      // );
+      if (
+        visitedNodes[j] === 0 &&
+        floatNumbersEqual(node.centroid[0], graphNodes[j].centroid[0]) &&
+        floatNumbersEqual(node.centroid[1], graphNodes[j].centroid[1])
+      ) {
+        graphNodes[j].label = node.label; // copy the label
+        visitedNodes[j] = 1;
+        labelAssigned = true;
+        break;
+      }
+    }
+    if (!labelAssigned) {
+      unassignedNodes.push(i);
+    }
+  }
+
+  if (unassignedNodes.length) {
+    console.warn('unassigned nodes', unassignedNodes);
+
+    // we could not assign all nodes based on centroids
+    // this means we have to do further checks, e.g.
+    //   - Manhattan distance of centroid < X  (aka search for similar nodes)
+    //          (distance to normalize by dividing by the faceArea)
+    //   - Topology
+    // TODO
+  }
 };
 
 /** Add initial labels to all the sketchCycles in the graph */
@@ -1439,22 +1516,34 @@ const bfs_label = (
  */
 const buildGraph = (sketchCycles: SketchCycleType[]): [SketchShapeLabelingGraphNode[], number[][]] => {
   const graphNodes: SketchShapeLabelingGraphNode[] = sketchCycles.map((sketchCycle, index) => {
-    //const edgePoints: Point3DInlineType[] = [];
+    const edgePoints2d: Point2dInlineType[] = [];
     const edges: [Point3DInlineType, Point3DInlineType][] = [];
 
     if (sketchCycle.cycle[0].t !== GeometryType.CIRCLE) {
-      sketchCycle.cycle.forEach((cycle) => {
-        //edgePoints.push((cycle as CadTool3DShapeSubsetNoCircle).end);
+      sketchCycle.cycle.forEach((cycle, index) => {
         edges.push([(cycle as CadTool3DShapeSubsetNoCircle).start, (cycle as CadTool3DShapeSubsetNoCircle).end]);
+        if (cycle.t === GeometryType.LINE) {
+          edgePoints2d.push(convert3dPointTo2d(sketchCycle.sketch.plane, (cycle as CadTool3DShapeSubsetNoCircle).end));
+        } else {
+          // Arc
+          const middlePoint: Point = (sketchCycle.flattenShapes[index] as Arc).middle();
+          edgePoints2d.push([middlePoint.x, middlePoint.y]);
+          edgePoints2d.push(convert3dPointTo2d(sketchCycle.sketch.plane, (cycle as CadTool3DShapeSubsetNoCircle).end));
+        }
       });
+    } else {
+      edgePoints2d.push((sketchCycle.cycle[0] as CircleInlinePointType).midPt2d);
     }
+
+    const [centroid, area] = calcCentroid(sketchCycle, edgePoints2d);
 
     return {
       id: index,
-      centroid: calcCentroid(sketchCycle),
+      centroid: centroid,
+      area: area,
       topLeftCorner: getTopLeftCorner(sketchCycle),
       sketchCycle: sketchCycle,
-      //edgePoints: edgePoints,
+      edgePoints2d: edgePoints2d,
       edges: edges,
       label: '',
     };
@@ -1507,24 +1596,22 @@ const buildGraph = (sketchCycles: SketchCycleType[]): [SketchShapeLabelingGraphN
  * Helper function to calc centroid of all corner points of sketchCycle.
  * For Circles the midpoint is returned.
  */
-const calcCentroid = (sketchCycle: SketchCycleType): [number, number] => {
+const calcCentroid = (sketchCycle: SketchCycleType, edgePoints2d: Point2dInlineType[]): [Point2dInlineType, number] => {
   if (sketchCycle.cycle.length === 1 && sketchCycle.cycle[0].t === GeometryType.CIRCLE) {
-    return (sketchCycle.cycle[0] as CircleInlinePointType).midPt2d;
+    return [edgePoints2d[0], sketchCycle.cycleArea];
   } else {
-    let result: [number, number] = [0, 0];
-    for (let i = 0; i < sketchCycle.cycle.length - 1; i++) {
+    let result: Point2dInlineType = [0, 0];
+    for (let i = 0; i < edgePoints2d.length - 1; i++) {
       // Center of gravity (center of mass, centroid) of polygon:
       // X = SUM[(Xi + Xi+1) * (Xi * Yi+1 - Xi+1 * Yi)] / 6 / A
       // Y = SUM[(Yi + Yi+1) * (Xi * Yi+1 - Xi+1 * Yi)] / 6 / A
       // with vertices (x0,y0), (x1,y1), ..., (xn−1,yn−1)
       // A ... area
       // https://stackoverflow.com/a/5271722
-      const shapeI = sketchCycle.cycle[i] as CadTool3DShapeSubsetNoCircle;
-      const shapeIPlus1 = sketchCycle.cycle[i + 1] as CadTool3DShapeSubsetNoCircle;
-      const shapeIPointX = getPointU2(sketchCycle.sketch.plane, shapeI.end);
-      const shapeIPlus1PointX = getPointU2(sketchCycle.sketch.plane, shapeIPlus1.end);
-      const shapeIPointY = getPointV2(sketchCycle.sketch.plane, shapeI.end);
-      const shapeIPlus1PointY = getPointV2(sketchCycle.sketch.plane, shapeIPlus1.end);
+      const shapeIPointX = edgePoints2d[i][0];
+      const shapeIPlus1PointX = edgePoints2d[i + 1][0];
+      const shapeIPointY = edgePoints2d[i][1];
+      const shapeIPlus1PointY = edgePoints2d[i + 1][1];
       // X = SUM[(Xi + Xi+1) * (Xi * Yi+1 - Xi+1 * Yi)] / 6 / A
       // Y = SUM[(Yi + Yi+1) * (Xi * Yi+1 - Xi+1 * Yi)] / 6 / A
       result[0] +=
@@ -1533,15 +1620,60 @@ const calcCentroid = (sketchCycle: SketchCycleType): [number, number] => {
         (shapeIPointY + shapeIPlus1PointY) * (shapeIPointX * shapeIPlus1PointY - shapeIPlus1PointX * shapeIPointY);
     }
 
-    result[0] /= 6 / sketchCycle.cycleArea;
-    result[1] /= 6 / sketchCycle.cycleArea;
+    // consider last point to first point as well
+    const shapeIPointX = edgePoints2d[edgePoints2d.length - 1][0];
+    const shapeIPlus1PointX = edgePoints2d[0][0];
+    const shapeIPointY = edgePoints2d[edgePoints2d.length - 1][1];
+    const shapeIPlus1PointY = edgePoints2d[0][1];
+    result[0] +=
+      (shapeIPointX + shapeIPlus1PointX) * (shapeIPointX * shapeIPlus1PointY - shapeIPlus1PointX * shapeIPointY);
+    result[1] +=
+      (shapeIPointY + shapeIPlus1PointY) * (shapeIPointX * shapeIPlus1PointY - shapeIPlus1PointX * shapeIPointY);
 
-    return result;
+    // need a special function for centroid area since the face area accounts
+    // for the actual geometry (including arcs) - holes are substracted
+    // --> if the face area is used the centroid value is wrong (outside of the shape)
+    const areaForCentroid = calcAreaForCentroid(edgePoints2d);
+    result[0] /= 6 * areaForCentroid;
+    result[1] /= 6 * areaForCentroid;
+
+    return [result, areaForCentroid];
   }
 };
 
+/** Helper function to calc the area for the centroid.
+ *  See https://stackoverflow.com/a/5271722
+ */
+const calcAreaForCentroid = (edgePoints2d: Point2dInlineType[]): number => {
+  let result = 0;
+  for (let i = 0; i < edgePoints2d.length - 1; i++) {
+    const shapeIPointX = edgePoints2d[i][0];
+    const shapeIPlus1PointX = edgePoints2d[i + 1][0];
+    const shapeIPointY = edgePoints2d[i][1];
+    const shapeIPlus1PointY = edgePoints2d[i + 1][1];
+    // polygons signed area
+    result += shapeIPointX * shapeIPlus1PointY - shapeIPlus1PointX * shapeIPointY;
+  }
+
+  // consider last point to first point as well
+  const shapeIPointX = edgePoints2d[edgePoints2d.length - 1][0];
+  const shapeIPlus1PointX = edgePoints2d[0][0];
+  const shapeIPointY = edgePoints2d[edgePoints2d.length - 1][1];
+  const shapeIPlus1PointY = edgePoints2d[0][1];
+  // polygons signed area
+  result += shapeIPointX * shapeIPlus1PointY - shapeIPlus1PointX * shapeIPointY;
+
+  result /= 2;
+  return result;
+};
+
 /** Helper function to get bounding box of top left corner of sketchCycle. */
-const getTopLeftCorner = (sketchCycle: SketchCycleType): [number, number] => {
+const getTopLeftCorner = (sketchCycle: SketchCycleType): Point2dInlineType => {
   const box = sketchCycle.polygon.box;
   return [box.xmin, box.ymax];
+};
+
+/** Helper to calculate Manhattan distance of two 2d points. */
+const manhattanDistance = (a: Point2dInlineType, b: Point2dInlineType) => {
+  return Math.abs(a[0] - b[0]) + Math.abs(a[1] - b[1]);
 };

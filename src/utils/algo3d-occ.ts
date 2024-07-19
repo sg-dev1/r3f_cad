@@ -13,9 +13,12 @@ export interface SketchCycleTypeOcct {
   innerCycles: CadTool3DShapeSubset[][]; // inner cycles (e.g. holes) if there are any
   cycleArea: number; // area of the cycle
   sketch: SketchType; // the Sketch this cycle belongs to. One Sketch may have multiple cycles.
-  label?: string; // label of the sketch cycle
   index: number; // index of this cycle for the given sketch
   occtFace: Inputs.OCCT.TopoDSFacePointer; // the cycle as occt face
+
+  // optional fields of algo3d.ts SketchCycleType
+  label?: string; // label of the sketch cycle
+  centroid?: [number, number];
 }
 
 /** Finds all cycles in a sketch and adds occt data to it. */
@@ -81,9 +84,10 @@ export const findCyclesInSketchAndConvertToOcct = async (
       innerCycles: cycle.innerCycles,
       cycleArea: cycle.cycleArea,
       sketch: cycle.sketch,
-      label: cycle.label,
       index: cycle.index,
       occtFace: face,
+      label: cycle.label,
+      centroid: cycle.centroid,
     });
   }
 

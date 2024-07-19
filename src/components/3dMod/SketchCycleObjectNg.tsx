@@ -7,11 +7,11 @@ import { CircleInlinePointType } from '@/app/types/CircleType';
 import { GeometryType } from '@/app/types/EntityType';
 import { Point3DInlineType } from '@/app/types/Point3DType';
 import { SketchCycleTypeOcct } from '@/utils/algo3d-occ';
-import { getRotationForPlaneAsQuaternion } from '@/utils/threejs_planes';
+import { convert2DPointTo3D, getRotationForPlaneAsQuaternion } from '@/utils/threejs_planes';
 import { cadTool3DShapeTo3DPoints, cadTool3DShapeToThreeShape } from '@/utils/threejs_utils';
 import useArcPoints from '@/utils/useArcPoints';
 import useCirclePoints from '@/utils/useCirclePoints';
-import { Line } from '@react-three/drei';
+import { Line, Point, Points } from '@react-three/drei';
 import React, { useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
 import * as THREE from 'three';
@@ -108,6 +108,15 @@ const SketchCycleObjectNg = ({ sketchCycle }: SketchCycleObjectNgProps) => {
       {shapePoints.length > 0 && (
         // Do not rotate line since all points already have the correct coordinates
         <Line points={shapePoints} color="blue" visible={sketchIsVisible} />
+      )}
+      {sketchCycle.centroid && (
+        <Points frustumCulled={false} visible={sketchIsVisible}>
+          <pointsMaterial vertexColors size={4} />
+          <Point
+            position={convert2DPointTo3D(sketchCycle.sketch.plane, ...sketchCycle.centroid)}
+            color={hovered ? 'red' : 'cyan'}
+          />
+        </Points>
       )}
     </>
   );

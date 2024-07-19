@@ -168,6 +168,10 @@ export const convert2DPointTo3D = (plane: string, u: number, v: number): [number
   }
 };
 
+export const convert3dPointTo2d = (plane: string, p: Point3DInlineType): [number, number] => {
+  return [getPointU2(plane, p), getPointV2(plane, p)];
+};
+
 export const getNormalVectorForPlane = (plane: string): [number, number, number] => {
   if ('xy' === plane) {
     return [0, 0, 1];

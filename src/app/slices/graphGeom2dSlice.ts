@@ -10,6 +10,10 @@ export interface GraphNodeGeom2d {
   id: number;
   centroid: [number, number];
   topLeftCorner: [number, number];
+  // This stores the area as used (and calculated by) centroid calculation
+  // (this is not the area retrieved from the flatten polygon but an approximated version,
+  //  it is not accounted for holes, arcs are approximated by using the middle point as additional point)
+  faceArea: number;
   label: string;
 }
 

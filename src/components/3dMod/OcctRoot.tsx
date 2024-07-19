@@ -155,6 +155,7 @@ const OcctRoot = () => {
             id: node.id,
             centroid: node.centroid,
             topLeftCorner: node.topLeftCorner,
+            faceArea: node.area,
             label: node.label,
           })),
           adjacencyList: adjacencyList,
