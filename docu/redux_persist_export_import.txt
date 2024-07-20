@@ -1,0 +1,13 @@
+For saving/ restoring the redux persist state the Firefox extension LocalStorage Editor shall be used:
+https://addons.mozilla.org/en-US/firefox/addon/localstorage-editor/
+
+# Export
+Just press the "Download" button in the extension to download the local storage data in a json file.
+
+# Import
+- Open the file to import and copy all its content to clickboard (CTRL+A followed by CTRL+C)
+  (Direct import via file system seems not to be exported)
+- In the LocalStorage Editor view delete the existing local storage by using "Delete" button
+- Press the "Import" button to load the data from the clipboard
+- Important: Press the "Submit" button to apply the changes to local storage.
+             Without this step nothing gets changed in local storage.

@@ -2,7 +2,6 @@ Priority of improvements (my ranking)
   - B023  // data model, topo naming problem
   - B012  // improvement, more features (3d geom tools)
   - B008  // arbitrary plane awareness
-  - B011  [data persistence, debug]
   - B004  [data model] - updated by solving other tickets
   - B003
 
@@ -58,11 +57,7 @@ List of Improvements
           (these rotations should be around origin, an offset may need to be considered separately,
            e.g. need to use the position)
 
-(B011) Debug tool s.t. a current state of application can be saved and later on restored
-     (has something to do with serialization - not necesarrily connected to 3dMod tool)
-     - need to serialize state of app anyways
-     --> use the Firefox Extension LocalStorage Editor to import/export redux state
-     https://addons.mozilla.org/en-US/firefox/addon/localstorage-editor/
+
 
 (B012) Creating of 3D objects
      - support of more operations 
@@ -124,6 +119,12 @@ On Hold
 
 
 Done Improvements
+
+(B011) Debug tool s.t. a current state of application can be saved and later on restored
+     (has something to do with serialization - not necesarrily connected to 3dMod tool)
+     - need to serialize state of app anyways
+     --> use the Firefox Extension LocalStorage Editor to import/export redux state
+     https://addons.mozilla.org/en-US/firefox/addon/localstorage-editor/
 
 (B021) Proper visualization of 3D objects
      - Tidy up/ follow up tasks:
