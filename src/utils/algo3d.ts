@@ -8,7 +8,7 @@ import { ArcInlinePointType, arcInlineEquals } from '@/app/types/ArcType';
 import { GeometryType } from '@/app/types/EntityType';
 import { floatNumbersEqual } from './utils';
 import { Point3DInlineType, point3DInlineEquals } from '@/app/types/Point3DType';
-import { GraphGeom2d } from '@/app/slices/graphGeom2dSlice';
+import { GraphGeom2d, GraphNodeGeom2d } from '@/app/slices/graphGeom2dSlice';
 
 const DEBUG_FLAG = false;
 
@@ -1224,16 +1224,6 @@ export const findCyclesInSketch = (
   //            - kind of structural matching in graph,
   //                e.g. same neighbor nodes
   //
-  // @Matching: - If we don't get an exact match we could search for "similar" nodes,
-  //              e.g. next centroid with the lowest distance (e.g. use Manhattan distance)
-  //            - Nodes need than also to have same/similar topology,
-  //              e.g. matching neighbor nodes
-  //              - same number of neighbors?
-  //              - if they are already labelled and have the same label in the prevGraph -> match
-  //              - are labels of neighbors matching?
-  //              - labeling can also be used to refer to parents, e.g.
-  //                n0#0 is parent of n0#0#0
-  //
   // Follow up tasks:
   // - comparision with graph from redux --> alternative labeling function
   //
@@ -1352,6 +1342,8 @@ const labelSketchCycles = (
     // label new graph according to old graph
     const visited: number[] = Array(graphNodes.length).fill(0);
     assignLabelsFromPrevGraph(prevGraphGeom2d, graphNodes, graphAdjacencyList, visited);
+
+    //labelGraph(graphNodes, graphAdjacencyList);
   }
 
   console.log('graphNodes', graphNodes);
@@ -1376,31 +1368,14 @@ const assignLabelsFromPrevGraph = (
   visitedNodes: number[]
 ) => {
   const unassignedNodes: number[] = [];
+  //const mhs: number[] = [];
   for (let i = 0; i < prevGraphGeom2d.nodes.length; i++) {
     const node = prevGraphGeom2d.nodes[i];
     //const adjacencyList = prevGraphGeom2d.adjacencyList[i];
     let labelAssigned = false;
     for (let j = 0; j < graphNodes.length; j++) {
       const mh = manhattanDistance(node.centroid, graphNodes[j].centroid);
-      const mhNorm = mh / graphNodes[j].sketchCycle.cycleArea;
-      // console.log(
-      //   'i',
-      //   i,
-      //   'j',
-      //   j,
-      //   'c1',
-      //   node.centroid,
-      //   'c2',
-      //   graphNodes[j].centroid,
-      //   'mh',
-      //   mh,
-      //   'mhNorm',
-      //   mhNorm,
-      //   'a1',
-      //   node.faceArea,
-      //   'a2',
-      //   graphNodes[j].sketchCycle.cycleArea
-      // );
+      //mhs.push(mh);
       if (
         visitedNodes[j] === 0 &&
         floatNumbersEqual(node.centroid[0], graphNodes[j].centroid[0]) &&
@@ -1417,15 +1392,91 @@ const assignLabelsFromPrevGraph = (
     }
   }
 
-  if (unassignedNodes.length) {
-    console.warn('unassigned nodes', unassignedNodes);
+  //console.log('---', Math.min(...mhs), Math.max(...mhs));
 
-    // we could not assign all nodes based on centroids
-    // this means we have to do further checks, e.g.
-    //   - Manhattan distance of centroid < X  (aka search for similar nodes)
-    //          (distance to normalize by dividing by the faceArea)
-    //   - Topology
-    // TODO
+  const unlabelledNodes: number[] = [];
+  visitedNodes.forEach((value, index) => {
+    if (value === 0) {
+      unlabelledNodes.push(index);
+    }
+  });
+
+  if (unlabelledNodes.length > 0) {
+    console.warn('unlabelled nodes', unlabelledNodes);
+    if (unassignedNodes.length > 0) {
+      console.info('unassigned nodes', unassignedNodes);
+
+      // we could not assign all nodes based on centroids
+      // this means we have to do further checks, e.g.
+      //   - Manhattan distance of centroid < X  (aka search for similar nodes)
+      //     (use the distance directly because this give a value in pixels, e.g. X is a threshold in pixels)
+      // TODO
+
+      //   - Topology
+      //     - what do do here? seems to be more important to get this right.
+      //     - mainly look at neighbor nodes,
+      //          (a) same number
+      //          (b) same parents, e.g. how much neighbors match
+      //             (to match based on parent a neighbor needs to have a label assigned, e.g. n0#0 is parent of n0#0#0)
+      //             - we may need multiple passes of this "neighbor detection"
+      //          - What happens if after step (1) we nearly don't have assigned any node labels?
+      //            Then neighbor detection will also be hard.
+      //          --> as a fallback (a modified version of) the initial labelGraph algorithm may be used.
+      type DataContainer = {
+        unlabeledNode: SketchShapeLabelingGraphNode;
+        node: GraphNodeGeom2d;
+        sameNumMatch: boolean;
+        matchCount: number;
+      };
+      const matchMap = new Map<number, DataContainer[]>();
+      for (let i = 0; i < unlabelledNodes.length; i++) {
+        const unlabelledNode = graphNodes[unlabelledNodes[i]];
+        const unlabelledNodeAdjacencyList = graphAdjacencyList[unlabelledNodes[i]];
+
+        for (let j = 0; j < unassignedNodes.length; j++) {
+          const node = prevGraphGeom2d.nodes[unassignedNodes[j]];
+          const adjacencyList = prevGraphGeom2d.adjacencyList[unassignedNodes[j]];
+
+          // a) same number match?
+          const sameNumberMatch = adjacencyList.length === unlabelledNodeAdjacencyList.length;
+          // b) same parents match?
+          let matchCounter = 0;
+          for (let k = 0; k < unlabelledNodeAdjacencyList.length; k++) {
+            const neighborOfUnlabelledNode = graphNodes[unlabelledNodeAdjacencyList[k]];
+            if ('' !== neighborOfUnlabelledNode.label) {
+              for (let l = 0; l < adjacencyList.length; l++) {
+                const neighborOfNode = prevGraphGeom2d.nodes[adjacencyList[l]];
+                if (neighborOfNode.label === neighborOfUnlabelledNode.label) {
+                  // match
+                  matchCounter++;
+                }
+              }
+            }
+          }
+
+          // store the result
+          const dataContainer: DataContainer = {
+            unlabeledNode: unlabelledNode,
+            node: node,
+            sameNumMatch: sameNumberMatch,
+            matchCount: matchCounter,
+          };
+          if (matchMap.has(unlabelledNode.id)) {
+            matchMap.get(unlabelledNode.id)?.push(dataContainer);
+          } else {
+            matchMap.set(unlabelledNode.id, [dataContainer]);
+          }
+        }
+      }
+
+      // TODO interpret the result and assign labels
+      console.log('---matchMap', matchMap);
+
+      // TODO assign labels for all other unassigned ones
+    } else {
+      // TODO - this means we have only new nodes
+      //        assign them new labels
+    }
   }
 };
 

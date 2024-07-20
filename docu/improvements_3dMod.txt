@@ -61,6 +61,8 @@ List of Improvements
 (B011) Debug tool s.t. a current state of application can be saved and later on restored
      (has something to do with serialization - not necesarrily connected to 3dMod tool)
      - need to serialize state of app anyways
+     --> use the Firefox Extension LocalStorage Editor to import/export redux state
+     https://addons.mozilla.org/en-US/firefox/addon/localstorage-editor/
 
 (B012) Creating of 3D objects
      - support of more operations 
@@ -92,8 +94,8 @@ List of Improvements
      - In geom3d.ts a sketch cycle is referenced by [<sketch-id>, <id-of-cycle>]
         - the <sketch-id> is stable
         - but the <id-of-cycle> may change
+        - alternative way will be to use [<sketch-id>, <label-of-cycle>]
      - How will this behave when cycles are added/ removed?
-     - Instead of the <id-of-cycle> it would be better to have a stable name
 
 
 On Hold
