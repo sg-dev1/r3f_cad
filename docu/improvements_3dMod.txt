@@ -1,8 +1,9 @@
 Priority of improvements (my ranking)
-  - B023  // data model, topo naming problem
-  - B012  // improvement, more features (3d geom tools)
-  - B008  // arbitrary plane awareness
-  - B004  [data model] - updated by solving other tickets
+  - B023-A // topo naming SketchCycles
+  - B023   // data model, topo naming problem
+  - B012   // improvement, more features (3d geom tools)
+  - B008   // arbitrary plane awareness
+  - B004   [data model] - updated by solving other tickets
   - B003
 
 
@@ -57,8 +58,6 @@ List of Improvements
           (these rotations should be around origin, an offset may need to be considered separately,
            e.g. need to use the position)
 
-
-
 (B012) Creating of 3D objects
      - support of more operations 
      - 1) Boolean operations like union, cut, intersect etc. (OCCTBooleans)
@@ -78,19 +77,27 @@ List of Improvements
       - Boolean operations (1) should be applied automatically if two geometries (3d bodies) touch
         each other -> need to find out when two bodies are touching
 
-(B023) Topological naming problem
+(B023) Topological naming problem (general case)
   - Implement proper naming of 3d geometry s.t. it can be referenced
   - Need to think how to best solve this for this application
   - May need kind of a diff to do updates: <OLD_STATE> vs <NEW_STATE>, what has changed?
-  Things to do:
-  - Implement topological sorting in algo3d.ts:
-     - Currently we rely on indices as found by the sketch cycle algorithm,
-       need to assure that they are stable (e.g. after anything in the sketch was changed)
-     - In geom3d.ts a sketch cycle is referenced by [<sketch-id>, <id-of-cycle>]
-        - the <sketch-id> is stable
-        - but the <id-of-cycle> may change
-        - alternative way will be to use [<sketch-id>, <label-of-cycle>]
-     - How will this behave when cycles are added/ removed?
+
+(B023-A) Labeling implementation in algo3d.ts for SketchCycles (Toponaming of SketchCycles)
+  Goal:
+    - Goal here is to replace the current referrencing to SketchCycles
+      as [<sketch-id>, <id-of-cycle>], e.g. its index, with [<sketch-id>, <label-of-cycle>]
+  Status of current implementation:
+    - Currently mapping of labels is only done based on geometry (centroids)
+    - If the shape and/or position of sketch cycles changes --> cannot be labelled any more
+    - As fallback to label unlabeled nodes, its index is used
+      (like in the old implementation as how it is refered to the cycle using its index,
+       e.g. by  [<sketch-id>, <id-of-cycle>])
+  What to do:
+    - Some more testing is needed to identify cases
+      - where the labeling breaks
+    - Would need to work with more realistic scenarios of real modelling tasks
+      (e.g. no one will create lots of overlapping circles)
+    - Need to define test cases to model with the app (only 2d shapes with multiple (inner) cycles)
 
 
 On Hold

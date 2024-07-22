@@ -1224,6 +1224,11 @@ export const findCyclesInSketch = (
   //            - kind of structural matching in graph,
   //                e.g. same neighbor nodes
   //
+  // Further detection ideas (questions to ask):
+  //   - Has the shape changed? Or was the shape only moved?
+  //   - Has the area changed, e.g. shape became smaller/bigger?
+  //   - What about neighbor nodes? Have they changed?
+  //
   // Follow up tasks:
   // - comparision with graph from redux --> alternative labeling function
   //
@@ -1471,8 +1476,20 @@ const assignLabelsFromPrevGraph = (
 
       // TODO interpret the result and assign labels
       console.log('---matchMap', matchMap);
+      // - current implementation has unlabelledNodes.length map entries
+      // - each map entry has unassignedNodes.length list entries
+      // --> no filtering at all / matching not effective
 
-      // TODO assign labels for all other unassigned ones
+      // assign labels for all other unassigned ones - goal is to get all nodes assigned a label
+      for (let i = 0; i < unlabelledNodes.length; i++) {
+        const idUnassigned = unassignedNodes.filter((id) => id === unlabelledNodes[i]);
+        if (idUnassigned.length >= 1) {
+          graphNodes[unassignedNodes[i]].label = prevGraphGeom2d.nodes[idUnassigned[0]].label;
+        } else {
+          // TODO - this is like the case below where a new label needs to be generated
+          console.warn('No label for id ' + unlabelledNodes[i] + ' assigned.');
+        }
+      }
     } else {
       // TODO - this means we have only new nodes
       //        assign them new labels
