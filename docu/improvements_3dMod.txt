@@ -1,4 +1,5 @@
 Priority of improvements (my ranking)
+  - B024
   - B023-A // topo naming SketchCycles
   - B023   // data model, topo naming problem
   - B012   // improvement, more features (3d geom tools)
@@ -98,6 +99,8 @@ List of Improvements
     - Would need to work with more realistic scenarios of real modelling tasks
       (e.g. no one will create lots of overlapping circles)
     - Need to define test cases to model with the app (only 2d shapes with multiple (inner) cycles)
+
+(B024) Extruding sketch does not consider inner cycles (issue most likely in algo3d-occ.ts)
 
 
 On Hold

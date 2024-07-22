@@ -3,12 +3,12 @@ import { createSlice } from '@reduxjs/toolkit';
 import { RootState } from '../store';
 
 export interface ModellingToolState {
-  sketchToExtrude: [number, number];
+  sketchToExtrude: [number, string];
   selectedSketch: number;
 }
 
 const initialState: ModellingToolState = {
-  sketchToExtrude: [-1, -1],
+  sketchToExtrude: [-1, ''],
   selectedSketch: -1,
 };
 

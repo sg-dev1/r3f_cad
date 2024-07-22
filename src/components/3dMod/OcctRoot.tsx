@@ -29,9 +29,9 @@ const OcctRoot = () => {
   const geometries3d = useAppSelector(select3dGeometries);
   const [shapes3d, setShapes3d] = useState<Geometry3DType[]>([]);
 
-  const [sketchToExtrude, cycleIndex] = useAppSelector(selectSketchToExtrude);
+  const [sketchToExtrude, labelOfCycle] = useAppSelector(selectSketchToExtrude);
   const shapeToExtrude = sketchShapes.filter(
-    (shape) => shape.sketch.id === sketchToExtrude && shape.index === cycleIndex
+    (shape) => shape.sketch.id === sketchToExtrude && shape.label === labelOfCycle
   );
   const graphGeom2dStateGraphs = useAppSelector(selectStateGraphs);
 
@@ -220,7 +220,7 @@ const OcctRoot = () => {
         // only support one modelling operation
         (shape) =>
           shape.sketch.id === geom.modellingOperations[0].sketchRef[0] &&
-          shape.index === geom.modellingOperations[0].sketchRef[1]
+          shape.label === geom.modellingOperations[0].sketchRef[1]
       );
       const length = geom.modellingOperations[0].distance;
       //console.log('[createGeom3dShapes]', 'filtered-sketchShape', sketchShape);
@@ -360,15 +360,15 @@ const OcctRoot = () => {
                   console.error('Value was Nan. Cannot add constraint');
                   input.value = '';
                   // make the input field disappear
-                  dispatch(setSketchToExtrude([-1, -1]));
+                  dispatch(setSketchToExtrude([-1, '']));
                   return;
                 }
 
                 // Store the value of the extrude (e.g. the 3d model data) in redux,
                 // visualization is done separately
-                dispatch(createGeom3d({ sketchRef: [sketchToExtrude, cycleIndex], distance: value }));
+                dispatch(createGeom3d({ sketchRef: [sketchToExtrude, labelOfCycle], distance: value }));
 
-                dispatch(setSketchToExtrude([-1, -1]));
+                dispatch(setSketchToExtrude([-1, '']));
               }
             },
           }}

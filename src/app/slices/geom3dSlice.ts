@@ -20,7 +20,7 @@ export const geom3dSlice = createSlice({
   reducers: {
     createGeom3d: (state: Geom3dState, { payload }) => {
       const extrudeOp: ModellingOperation = {
-        type: ModellingOperationType.EXTRUDE,
+        type: ModellingOperationType.ADDITIVE_EXTRUDE,
         sketchRef: payload.sketchRef,
         distance: payload.distance,
       };

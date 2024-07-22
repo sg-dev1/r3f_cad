@@ -89,7 +89,7 @@ const SketchCycleObjectNg = ({ sketchCycle }: SketchCycleObjectNgProps) => {
           onPointerOut={() => setHovered(false)}
           onClick={() => {
             if (sketchIsVisible && selectedSketch === sketchCycle.sketch.id) {
-              dispatch(setSketchToExtrude([sketchCycle.sketch.id, sketchCycle.index]));
+              dispatch(setSketchToExtrude([sketchCycle.sketch.id, sketchCycle.label]));
             }
           }}
           visible={sketchIsVisible && selectedSketch === sketchCycle.sketch.id}
