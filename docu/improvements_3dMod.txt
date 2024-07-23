@@ -1,5 +1,4 @@
 Priority of improvements (my ranking)
-  - B024
   - B023-A // topo naming SketchCycles
   - B023   // data model, topo naming problem
   - B012   // improvement, more features (3d geom tools)
@@ -100,7 +99,7 @@ List of Improvements
       (e.g. no one will create lots of overlapping circles)
     - Need to define test cases to model with the app (only 2d shapes with multiple (inner) cycles)
 
-(B024) Extruding sketch does not consider inner cycles (issue most likely in algo3d-occ.ts)
+
 
 
 On Hold
@@ -129,6 +128,8 @@ On Hold
 
 
 Done Improvements
+
+(B024) Extruding sketch does not consider inner cycles (issue most likely in algo3d-occ.ts)
 
 (B011) Debug tool s.t. a current state of application can be saved and later on restored
      (has something to do with serialization - not necesarrily connected to 3dMod tool)

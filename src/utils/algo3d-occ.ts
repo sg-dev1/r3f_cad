@@ -6,6 +6,10 @@ import { CadTool3DShapeSubset, SaveGraphToReduxFunction, SketchCycleType, findCy
 import { Arc, Circle, Segment } from '@flatten-js/core';
 import { convert2DPointTo3D, getNormalVectorForPlane } from './threejs_planes';
 import { GraphGeom2d } from '@/app/slices/graphGeom2dSlice';
+import { GeometryType } from '@/app/types/EntityType';
+import { Line3DInlinePointType } from '@/app/types/Line3DType';
+import { ArcInlinePointType } from '@/app/types/ArcType';
+import { CircleInlinePointType } from '@/app/types/CircleType';
 
 /** Datatype representing a sketch cycle including occt data (the face) */
 export interface SketchCycleTypeOcct {
@@ -66,10 +70,51 @@ export const findCyclesInSketchAndConvertToOcct = async (
       })
     )) as Inputs.OCCT.TopoDSEdgePointer[];
 
+    // 1.1) Inner cycles - may be empty
+    const innerCyclesEdges = (await Promise.all(
+      cycle.innerCycles.map(async (innerCycle) => {
+        return await Promise.all(
+          innerCycle.map(async (cycle) => {
+            if (cycle.t === GeometryType.LINE) {
+              const dto = {
+                start: (cycle as Line3DInlinePointType).start,
+                end: (cycle as Line3DInlinePointType).end,
+              };
+              return await bitbybit.occt.shapes.edge.line(dto);
+            } else if (cycle.t === GeometryType.ARC) {
+              const arc = cycle as ArcInlinePointType;
+              const dto = {
+                start: arc.start,
+                middle: arc.mid_pt,
+                end: arc.end,
+              };
+              return await bitbybit.occt.shapes.edge.arcThroughThreePoints(dto);
+            } else if (cycle.t === GeometryType.CIRCLE) {
+              const circle = cycle as CircleInlinePointType;
+              return await bitbybit.occt.shapes.edge.createCircleEdge({
+                radius: circle.radius,
+                center: circle.mid_pt,
+                direction: getNormalVectorForPlane(sketch.plane),
+              });
+            }
+          })
+        );
+      })
+    )) as Inputs.OCCT.TopoDSEdgePointer[][];
+
     //console.log('edges', edges);
 
     // 2) Convert edges to wires
     const wire = await bitbybit.occt.shapes.wire.combineEdgesAndWiresIntoAWire({ shapes: edges });
+    // inner wires - may be empty
+    let innerWires: Inputs.OCCT.TopoDSWirePointer[] = [];
+    if (innerCyclesEdges.length > 0) {
+      innerWires = await Promise.all(
+        innerCyclesEdges.map(async (edges) => {
+          return await bitbybit.occt.shapes.wire.combineEdgesAndWiresIntoAWire({ shapes: edges });
+        })
+      );
+    }
 
     //console.log('wire', wire);
 
@@ -77,7 +122,14 @@ export const findCyclesInSketchAndConvertToOcct = async (
     //console.log('wire isClosed', isClosed); // returns true - if this is not the case this is an error!
 
     // 3) Convert wires to faces
-    const face = await bitbybit.occt.shapes.face.createFaceFromWire({ shape: wire, planar: true });
+    const createFace = async () => {
+      if (innerWires.length > 0) {
+        return await bitbybit.occt.shapes.face.createFaceFromWires({ shapes: [wire, ...innerWires], planar: true });
+      } else {
+        return await bitbybit.occt.shapes.face.createFaceFromWire({ shape: wire, planar: true });
+      }
+    };
+    const face = await createFace();
 
     result.push({
       cycle: cycle.cycle,
