@@ -11,6 +11,7 @@ import { Point3DInlineType, point3DInlineEquals } from '@/app/types/Point3DType'
 import { GraphGeom2d, GraphNodeGeom2d } from '@/app/slices/graphGeom2dSlice';
 
 const DEBUG_FLAG = false;
+const DEBUG_FLAG_LABELING = false;
 
 type FlattenPointsMapType = { [key: number]: Point };
 type FlattenShapeSubset = Segment | Circle | Arc;
@@ -1342,7 +1343,9 @@ const labelSketchCycles = (
     // labelling
     labelGraph(graphNodes, graphAdjacencyList);
   } else {
-    console.log('--prevGraphGeom2d', prevGraphGeom2d);
+    if (DEBUG_FLAG_LABELING) {
+      console.log('--prevGraphGeom2d', prevGraphGeom2d);
+    }
 
     // label new graph according to old graph
     const visited: number[] = Array(graphNodes.length).fill(0);
@@ -1351,8 +1354,10 @@ const labelSketchCycles = (
     //labelGraph(graphNodes, graphAdjacencyList);
   }
 
-  console.log('graphNodes', graphNodes);
-  console.log('graphAdjacencyList', graphAdjacencyList);
+  if (DEBUG_FLAG_LABELING) {
+    console.log('graphNodes', graphNodes);
+    console.log('graphAdjacencyList', graphAdjacencyList);
+  }
 
   // copy some of the properties of the graph to the sketch cycle
   // (optional properties of the sketch cycle)
@@ -1475,7 +1480,9 @@ const assignLabelsFromPrevGraph = (
       }
 
       // TODO interpret the result and assign labels
-      console.log('---matchMap', matchMap);
+      if (DEBUG_FLAG_LABELING) {
+        console.log('---matchMap', matchMap);
+      }
       // - current implementation has unlabelledNodes.length map entries
       // - each map entry has unassignedNodes.length list entries
       // --> no filtering at all / matching not effective
@@ -1548,7 +1555,9 @@ const labelGraph = (graphNodes: SketchShapeLabelingGraphNode[], graphAdjacencyLi
     }
   } while (startNodeIdx !== -1);
 
-  console.log('visited', visited);
+  if (DEBUG_FLAG_LABELING) {
+    console.log('visited', visited);
+  }
 };
 
 /** Labels (one cluster of) the sketchCycle nodes in the graph in a BFS way */
