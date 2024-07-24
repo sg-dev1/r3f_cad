@@ -1,4 +1,5 @@
 Priority of improvements (my ranking)
+  - B012-A // union tool
   - B023-A // topo naming SketchCycles
   - B023   // data model, topo naming problem
   - B012   // improvement, more features (3d geom tools)
@@ -76,6 +77,17 @@ List of Improvements
       - 3) Fillets (Abrundungen) & Chamfers (Abschrägung am Eck) (OCCTFillets)
       - Boolean operations (1) should be applied automatically if two geometries (3d bodies) touch
         each other -> need to find out when two bodies are touching
+
+(B012-A) Union tool
+  - Improvements to the selection of objects in Union tool:
+    1) Visualization:
+    - Selection of objects: All selected objects should be highlighted  (e.g. use a differnt color as for hover, e.g. cyan)
+    2) The way select works:
+    - Currently after two elements are selected, the union is applied
+    - Shall a union be possible if two objects are not touching?
+      From Occt side this is no problem, the union works (no error message)
+    - Select is currently not limited (e.g. to a selected modelling tool etc.)
+      - it simply add the id of the selected 3D geometry to the list (modellingToolStateSlice->selectedShapeIds)  -  a second click removes it
 
 (B023) Topological naming problem (general case)
   - Implement proper naming of 3d geometry s.t. it can be referenced

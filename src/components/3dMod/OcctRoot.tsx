@@ -1,6 +1,14 @@
 /** This component is the root for (bitbybit) occt. Main entry point for 3D modelling operations. */
 import { useAppDispatch, useAppSelector } from '@/app/hooks';
-import { selectSketchToExtrude, setSketchToExtrude } from '@/app/slices/modellingToolStateSlice';
+import {
+  addOrRemoveSelectedShapeId,
+  clearSelectedShapeIds,
+  ModellingToolStateEnum,
+  selectModellingToolState,
+  selectSelectedShapeIds,
+  selectSketchToExtrude,
+  setSketchToExtrude,
+} from '@/app/slices/modellingToolStateSlice';
 import { BitByBitOCCT, OccStateEnum } from '@bitbybit-dev/occt-worker';
 import React, { useEffect, useRef, useState } from 'react';
 import { selectSketchs } from '@/app/slices/sketchSlice';
@@ -13,11 +21,12 @@ import { getNormalVectorForPlane } from '@/utils/threejs_planes';
 import { SketchType } from '@/app/slices/Sketch';
 import { STLExporter } from 'three/examples/jsm/Addons.js';
 import * as THREE from 'three';
-import { createGeom3d, removeGeometries, select3dGeometries } from '@/app/slices/geom3dSlice';
+import { createGeom3d, createUnion, removeGeometries, select3dGeometries } from '@/app/slices/geom3dSlice';
 import { Geometry3DType } from '@/app/types/Geometry3DType';
 import Occt3dGeometryVisualizer from './Occt3dGeometryVisualizer';
 import { SketchShapeLabelingGraphNode } from '@/utils/algo3d';
 import { selectStateGraphs, setStateGraph } from '@/app/slices/graphGeom2dSlice';
+import { ModellingOperation, ModellingOperationType } from '@/app/slices/geom3d';
 
 const OcctRoot = () => {
   const [bitbybit, setBitbybit] = useState<BitByBitOCCT>();
@@ -28,12 +37,15 @@ const OcctRoot = () => {
   const [sketchShapes, setSketchShapes] = useState<SketchCycleTypeOcct[]>([]);
   const geometries3d = useAppSelector(select3dGeometries);
   const [shapes3d, setShapes3d] = useState<Geometry3DType[]>([]);
+  const selectedShapeIds = useAppSelector(selectSelectedShapeIds);
 
   const [sketchToExtrude, labelOfCycle] = useAppSelector(selectSketchToExtrude);
   const shapeToExtrude = sketchShapes.filter(
     (shape) => shape.sketch.id === sketchToExtrude && shape.label === labelOfCycle
   );
   const graphGeom2dStateGraphs = useAppSelector(selectStateGraphs);
+
+  const toolState = useAppSelector(selectModellingToolState);
 
   /*
   const {gl} = useThree()
@@ -139,6 +151,16 @@ const OcctRoot = () => {
     createGeom3dShapes(bitbybit);
   }, [sketchShapes, geometries3d]);
 
+  useEffect(() => {
+    if (ModellingToolStateEnum.UNION === toolState) {
+      if (selectedShapeIds.length >= 2) {
+        // Note: this only allows two shapes to be part of the union
+        dispatch(createUnion({ geometries: selectedShapeIds }));
+        dispatch(clearSelectedShapeIds());
+      }
+    }
+  }, [selectedShapeIds]);
+
   // ---
 
   /** Save the state graph for sketch shape labeling to redux */
@@ -215,24 +237,35 @@ const OcctRoot = () => {
     const finalShapes: Geometry3DType[] = [];
     const geomIdsToRemove: number[] = [];
     const allGeometries = Object.entries(geometries3d).map(([key, value]) => value);
+    console.log('allGeometries', allGeometries);
     for (const geom of allGeometries) {
-      const sketchShape = sketchShapes.filter(
-        // only support one modelling operation
-        (shape) =>
-          shape.sketch.id === geom.modellingOperations[0].sketchRef[0] &&
-          shape.label === geom.modellingOperations[0].sketchRef[1]
-      );
-      const length = geom.modellingOperations[0].distance;
-      //console.log('[createGeom3dShapes]', 'filtered-sketchShape', sketchShape);
-      //console.log("geom", geom, "sketchShapes", sketchShapes);
-      if (sketchShape.length > 0) {
-        const finalShape = await extrudeSketch(sketchShape[0].occtFace, sketchShape[0].sketch, length);
-        if (finalShape) {
-          finalShapes.push({ geom3d: geom, occtShape: finalShape });
+      for (let i = 0; i < geom.modellingOperations.length; i++) {
+        const modellingOp = geom.modellingOperations[i];
+        switch (modellingOp.type) {
+          case ModellingOperationType.ADDITIVE_EXTRUDE:
+            const finalShape = await findAndExtrudeSketch(modellingOp);
+            if (finalShape) {
+              finalShapes.push({ geom3d: geom, occtShape: finalShape });
+            } else {
+              geomIdsToRemove.push(geom.id);
+            }
+            break;
+          case ModellingOperationType.UNION:
+            const unionShapes: Inputs.OCCT.TopoDSShapePointer[] = [];
+            for (let j = 0; j < modellingOp.geometries.length; j++) {
+              const subGeom = modellingOp.geometries[j];
+              // apply operations to subgeom - for now we assume there is only one which was an extrude
+              const finalShape = await findAndExtrudeSketch(subGeom.modellingOperations[0]);
+              if (finalShape) {
+                unionShapes.push(finalShape);
+              }
+            }
+            const unionShape = await bitbybit.occt.booleans.union({ shapes: unionShapes, keepEdges: false });
+            finalShapes.push({ geom3d: geom, occtShape: unionShape });
+            break;
+          default:
+            console.error('Not implemented for ModellingOperationType ', modellingOp.type);
         }
-      } else {
-        console.warn('Sketchshape was undefined for geom ', geom);
-        geomIdsToRemove.push(geom.id);
       }
     }
 
@@ -276,12 +309,36 @@ const OcctRoot = () => {
 
   // ---
 
+  /** Finds a sketch in sketchShapes and extrudes it using the information given
+   *  by the (ADDITIVE_EXTRUDE) ModellingOperation.
+   *  If the sketch could not be found, null is returned.
+   */
+  const findAndExtrudeSketch = async (
+    modellingOp: ModellingOperation
+  ): Promise<Inputs.OCCT.TopoDSShapePointer | null> => {
+    const sketchShape = sketchShapes.filter(
+      // only support one modelling operation
+      (shape) => shape.sketch.id === modellingOp.sketchRef[0] && shape.label === modellingOp.sketchRef[1]
+    );
+    const length = modellingOp.distance;
+    if (sketchShape.length > 0) {
+      return await extrudeSketch(sketchShape[0].occtFace, sketchShape[0].sketch, length);
+    } else {
+      console.warn('Sketchshape was undefined for modellingOp ', modellingOp);
+      return null;
+    }
+  };
+
   /** Modelling operation that extrudes a sketch given by a 2D face the given length
    *  (may be negative --> 3D shape points into the opposite direction).
    */
-  const extrudeSketch = async (face: Inputs.OCCT.TopoDSFacePointer, sketch: SketchType, length: number) => {
+  const extrudeSketch = async (
+    face: Inputs.OCCT.TopoDSFacePointer,
+    sketch: SketchType,
+    length: number
+  ): Promise<Inputs.OCCT.TopoDSShapePointer | null> => {
     if (!bitbybit) {
-      return;
+      return null;
     }
 
     const directionVectNumbers = getNormalVectorForPlane(sketch.plane);
@@ -336,6 +393,12 @@ const OcctRoot = () => {
   };
   */
 
+  // ---
+
+  const on3dShapeClicked = (shape: Geometry3DType) => {
+    dispatch(addOrRemoveSelectedShapeId(shape.geom3d.id));
+  };
+
   return (
     <>
       {bitbybit &&
@@ -378,7 +441,14 @@ const OcctRoot = () => {
       {/* {bitbybit &&
         shapes3d.map((shape, index) => <TopoDSVisualizer key={index} bitbybitOcct={bitbybit} shape={shape} />)} */}
       {bitbybit &&
-        shapes3d.map((shape, index) => <Occt3dGeometryVisualizer key={index} bitbybitOcct={bitbybit} shape={shape} />)}
+        shapes3d.map((shape, index) => (
+          <Occt3dGeometryVisualizer
+            key={index}
+            bitbybitOcct={bitbybit}
+            shape={shape}
+            on3dShapeClicked={on3dShapeClicked}
+          />
+        ))}
     </>
   );
 };

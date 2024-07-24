@@ -5,17 +5,22 @@ import { BitByBitOCCT } from '@bitbybit-dev/occt-worker';
 import { BufferAttribute, BufferGeometry } from 'three';
 import { Point, Points } from '@react-three/drei';
 import { occtShapeToBufferGeometry } from './occt_visualize';
+import { Geometry3DType } from '@/app/types/Geometry3DType';
 
 const OcctFaceVisualizer = ({
   bitbybitOcct,
   faceShape: faceShape,
   edgePoints,
   visible,
+  shape,
+  on3dShapeClicked,
 }: {
   bitbybitOcct: BitByBitOCCT;
   faceShape: Inputs.OCCT.TopoDSFacePointer;
   edgePoints: [number, number, number][][][][];
   visible: boolean;
+  shape: Geometry3DType;
+  on3dShapeClicked: (shape: Geometry3DType) => void;
 }) => {
   const [hovered, setHovered] = useState(false);
   const [bufferGeom, setBufferGeom] = useState<BufferGeometry | null>(null);
@@ -48,13 +53,22 @@ const OcctFaceVisualizer = ({
         <mesh
           frustumCulled={false}
           geometry={bufferGeom}
-          onPointerOver={() => setHovered(true)}
-          onPointerOut={() => setHovered(false)}
-          //onClick={() => {
-          //  if (sketchIsVisible && selectedSketch === sketchCycle.sketch.id) {
-          //    dispatch(setSketchToExtrude([sketchCycle.sketch.id, sketchCycle.index]));
-          //  }
-          //}}
+          onPointerOver={(e) => {
+            if (!visible) return;
+            e.stopPropagation();
+            setHovered(true);
+          }}
+          onPointerOut={(e) => {
+            if (!visible) return;
+            e.stopPropagation();
+            setHovered(false);
+          }}
+          onClick={(e) => {
+            if (visible) {
+              e.stopPropagation();
+              on3dShapeClicked(shape);
+            }
+          }}
           visible={visible}
         >
           {/* - Use a positive polygonOffset to solve the z-fighting problem with SketchCycleObjectNg.tsx component

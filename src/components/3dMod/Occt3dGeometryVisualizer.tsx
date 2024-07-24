@@ -7,7 +7,15 @@ import { DecomposedOcctShapeDto, occtGetFacesWiresEdgesPoints4Shape } from './oc
 import OcctFaceVisualizer from './OcctFaceVisualizer';
 import OcctEdgeVisualizer from './OcctEdgeVisualizer';
 
-const Occt3dGeometryVisualizer = ({ bitbybitOcct, shape }: { bitbybitOcct: BitByBitOCCT; shape: Geometry3DType }) => {
+const Occt3dGeometryVisualizer = ({
+  bitbybitOcct,
+  shape,
+  on3dShapeClicked,
+}: {
+  bitbybitOcct: BitByBitOCCT;
+  shape: Geometry3DType;
+  on3dShapeClicked: (shape: Geometry3DType) => void;
+}) => {
   const [decomposedOcctShape, setDecomposedOcctShape] = useState<DecomposedOcctShapeDto | null>(null);
 
   useEffect(() => {
@@ -57,6 +65,8 @@ const Occt3dGeometryVisualizer = ({ bitbybitOcct, shape }: { bitbybitOcct: BitBy
             faceShape={face}
             edgePoints={decomposedOcctShape.points[index]}
             visible={shape.geom3d.isVisible}
+            shape={shape}
+            on3dShapeClicked={on3dShapeClicked}
           />
         ))}
     </>

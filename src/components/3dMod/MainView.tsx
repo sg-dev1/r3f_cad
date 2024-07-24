@@ -4,7 +4,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Button, Layout } from 'antd';
 import { createSketch } from '@/app/slices/sketchSlice';
-import { useAppDispatch } from '@/app/hooks';
+import { useAppDispatch, useAppSelector } from '@/app/hooks';
 import SketchTable from './SketchTable';
 import OcctRoot from './OcctRoot';
 import { Canvas } from '@react-three/fiber';
@@ -12,10 +12,19 @@ import { GizmoHelper, GizmoViewport, Grid, OrbitControls } from '@react-three/dr
 import ThreeAxisPlanes from './ThreeAxisPlanes';
 import Geom3DTable from './Geom3DTable';
 import { DirectionalLight } from 'three';
+import {
+  clearSelectedShapeIds,
+  ModellingToolStateEnum,
+  selectModellingToolState,
+  setModellingToolState,
+} from '@/app/slices/modellingToolStateSlice';
 
 const { Header, Content, Sider } = Layout;
 
 const MainView = () => {
+  const [stateIndicator, setStateIndicator] = useState<string>('');
+  const toolState = useAppSelector(selectModellingToolState);
+
   //const activeSketchId = useAppSelector(selectActiveSketchId);
   const dispatch = useAppDispatch();
   // const cameraControlsRef = useRef<CameraControls>(null);
@@ -33,6 +42,22 @@ const MainView = () => {
   // with that you have to zoom very far out to see anything
   //const near = 1000;
   //const far = 3500000;
+
+  // ---
+
+  useEffect(() => {
+    switch (toolState) {
+      case ModellingToolStateEnum.EXTRUDE:
+        setStateIndicator('Extrude Tool');
+        break;
+      case ModellingToolStateEnum.UNION:
+        setStateIndicator('Union Tool');
+        break;
+      default:
+        console.error('Should not get here. Invalid Tool State.');
+    }
+    dispatch(clearSelectedShapeIds());
+  }, [toolState]);
 
   // ---
 
@@ -57,6 +82,24 @@ const MainView = () => {
           <Button type="primary" className="primary-button" onClick={() => onCreateNewSketch()}>
             Create new Sketch
           </Button>
+
+          <Button
+            type="primary"
+            className="primary-button"
+            onClick={() => dispatch(setModellingToolState(ModellingToolStateEnum.EXTRUDE))}
+          >
+            Extrude
+          </Button>
+
+          <Button
+            type="primary"
+            className="primary-button"
+            onClick={() => dispatch(setModellingToolState(ModellingToolStateEnum.UNION))}
+          >
+            Union
+          </Button>
+
+          <div className="white-text">{stateIndicator}</div>
         </Header>
 
         <Layout style={{ height: '93vh' }}>

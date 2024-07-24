@@ -2,14 +2,25 @@
 import { createSlice } from '@reduxjs/toolkit';
 import { RootState } from '../store';
 
+export enum ModellingToolStateEnum {
+  EXTRUDE = 0,
+  UNION = 1,
+}
+
 export interface ModellingToolState {
   sketchToExtrude: [number, string];
   selectedSketch: number;
+
+  toolState: ModellingToolStateEnum;
+  selectedShapeIds: number[];
 }
 
 const initialState: ModellingToolState = {
   sketchToExtrude: [-1, ''],
   selectedSketch: -1,
+
+  toolState: ModellingToolStateEnum.EXTRUDE,
+  selectedShapeIds: [],
 };
 
 export const modellingToolSlice = createSlice({
@@ -23,12 +34,39 @@ export const modellingToolSlice = createSlice({
     setSelectedSketch: (state, { payload }) => {
       state.selectedSketch = payload;
     },
+    setModellingToolState: (state, { payload }) => {
+      state.toolState = payload;
+    },
+    // First click adds the geometry, a second click removes it again from the selectedShapeIds list
+    addOrRemoveSelectedShapeId: (state, { payload }) => {
+      const idx = state.selectedShapeIds.findIndex((value) => value === payload);
+      if (idx === -1) {
+        state.selectedShapeIds.push(payload);
+      } else {
+        state.selectedShapeIds = state.selectedShapeIds.filter((value) => value !== payload);
+      }
+    },
+    removeSelectedShapeId: (state, { payload }) => {
+      state.selectedShapeIds = state.selectedShapeIds.filter((value) => value !== payload);
+    },
+    clearSelectedShapeIds: (state) => {
+      state.selectedShapeIds = [];
+    },
   },
 });
 
-export const { setSketchToExtrude, setSelectedSketch } = modellingToolSlice.actions;
+export const {
+  setSketchToExtrude,
+  setSelectedSketch,
+  setModellingToolState,
+  addOrRemoveSelectedShapeId,
+  removeSelectedShapeId,
+  clearSelectedShapeIds,
+} = modellingToolSlice.actions;
 
 export const selectSketchToExtrude = (state: RootState) => state.modellingTool.sketchToExtrude;
 export const selectSelectedSketch = (state: RootState) => state.modellingTool.selectedSketch;
+export const selectModellingToolState = (state: RootState) => state.modellingTool.toolState;
+export const selectSelectedShapeIds = (state: RootState) => state.modellingTool.selectedShapeIds;
 
 export default modellingToolSlice.reducer;

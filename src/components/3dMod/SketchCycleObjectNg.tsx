@@ -1,6 +1,11 @@
 /** This component contains the drawing functionality for 2D sketches in 3D space. */
 import { useAppDispatch, useAppSelector } from '@/app/hooks';
-import { selectSelectedSketch, setSketchToExtrude } from '@/app/slices/modellingToolStateSlice';
+import {
+  ModellingToolStateEnum,
+  selectModellingToolState,
+  selectSelectedSketch,
+  setSketchToExtrude,
+} from '@/app/slices/modellingToolStateSlice';
 import { RootState } from '@/app/store';
 import { ArcInlinePointType } from '@/app/types/ArcType';
 import { CircleInlinePointType } from '@/app/types/CircleType';
@@ -26,6 +31,7 @@ const SketchCycleObjectNg = ({ sketchCycle }: SketchCycleObjectNgProps) => {
 
   const quaternion = useMemo(() => getRotationForPlaneAsQuaternion(sketchCycle.sketch.plane), [sketchCycle]);
   const dispatch = useAppDispatch();
+  const modellingToolState = useAppSelector(selectModellingToolState);
 
   const arcs = useMemo(
     () => sketchCycle.cycle.filter((shape) => shape.t === GeometryType.ARC) as ArcInlinePointType[],
@@ -88,7 +94,11 @@ const SketchCycleObjectNg = ({ sketchCycle }: SketchCycleObjectNgProps) => {
           }}
           onPointerOut={() => setHovered(false)}
           onClick={() => {
-            if (sketchIsVisible && selectedSketch === sketchCycle.sketch.id) {
+            if (
+              sketchIsVisible &&
+              selectedSketch === sketchCycle.sketch.id &&
+              ModellingToolStateEnum.EXTRUDE === modellingToolState
+            ) {
               dispatch(setSketchToExtrude([sketchCycle.sketch.id, sketchCycle.label]));
             }
           }}

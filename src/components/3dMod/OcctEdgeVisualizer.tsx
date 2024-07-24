@@ -12,9 +12,13 @@ const OcctEdgeVisualizer = ({ points, visible }: { points: [number, number, numb
       lineWidth={hovered ? 4 : 1.5}
       visible={visible}
       onPointerOver={(e) => {
+        if (!visible) return;
+        e.stopPropagation();
         setHovered(true);
       }}
       onPointerOut={(e) => {
+        if (!visible) return;
+        e.stopPropagation();
         setHovered(false);
       }}
     />

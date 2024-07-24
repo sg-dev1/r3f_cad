@@ -13,6 +13,8 @@ export interface ModellingOperation {
   type: ModellingOperationType;
   sketchRef: [number, string]; // sketch id, label of sketch cycle
   distance: number;
+
+  geometries: Geom3dType[];
 }
 
 export enum ModellingOperationType {
