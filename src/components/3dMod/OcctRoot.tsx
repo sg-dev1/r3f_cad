@@ -237,37 +237,46 @@ const OcctRoot = () => {
     const finalShapes: Geometry3DType[] = [];
     const geomIdsToRemove: number[] = [];
     const allGeometries = Object.entries(geometries3d).map(([key, value]) => value);
-    console.log('allGeometries', allGeometries);
+    //console.log('allGeometries', allGeometries);
     for (const geom of allGeometries) {
+      let prevShape: Inputs.OCCT.TopoDSShapePointer | null = null;
       for (let i = 0; i < geom.modellingOperations.length; i++) {
         const modellingOp = geom.modellingOperations[i];
         switch (modellingOp.type) {
           case ModellingOperationType.ADDITIVE_EXTRUDE:
-            const finalShape = await findAndExtrudeSketch(modellingOp);
-            if (finalShape) {
-              finalShapes.push({ geom3d: geom, occtShape: finalShape });
-            } else {
-              geomIdsToRemove.push(geom.id);
+            const extrudedShape = await findAndExtrudeSketch(modellingOp);
+            if (extrudedShape) {
+              prevShape = extrudedShape;
             }
             break;
           case ModellingOperationType.UNION:
             const unionShapes: Inputs.OCCT.TopoDSShapePointer[] = [];
             for (let j = 0; j < modellingOp.geometries.length; j++) {
               const subGeom = modellingOp.geometries[j];
+              if (prevShape) {
+                unionShapes.push(prevShape);
+              }
               // apply operations to subgeom - for now we assume there is only one which was an extrude
-              const finalShape = await findAndExtrudeSketch(subGeom.modellingOperations[0]);
-              if (finalShape) {
-                unionShapes.push(finalShape);
+              const extrudedShape = await findAndExtrudeSketch(subGeom.modellingOperations[0]);
+              if (extrudedShape) {
+                unionShapes.push(extrudedShape);
               }
             }
             const unionShape = await bitbybit.occt.booleans.union({ shapes: unionShapes, keepEdges: false });
-            finalShapes.push({ geom3d: geom, occtShape: unionShape });
+            prevShape = unionShape;
             break;
           default:
             console.error('Not implemented for ModellingOperationType ', modellingOp.type);
         }
       }
+      if (prevShape) {
+        finalShapes.push({ geom3d: geom, occtShape: prevShape });
+      } else {
+        geomIdsToRemove.push(geom.id);
+      }
     }
+
+    //console.log('finalShapes', finalShapes);
 
     if (geomIdsToRemove.length > 0) {
       // clean up all "orphaned geometries" where the sketch was removed
