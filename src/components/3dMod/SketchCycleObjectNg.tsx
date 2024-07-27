@@ -11,7 +11,7 @@ import { ArcInlinePointType } from '@/app/types/ArcType';
 import { CircleInlinePointType } from '@/app/types/CircleType';
 import { GeometryType } from '@/app/types/EntityType';
 import { Point3DInlineType } from '@/app/types/Point3DType';
-import { SketchCycleTypeOcct } from '@/utils/algo3d-occ';
+import { SketchCycleOcctMapType, SketchCycleTypeOcct } from '@/utils/algo3d-occ';
 import { convert2DPointTo3D, getRotationForPlaneAsQuaternion } from '@/utils/threejs_planes';
 import { cadTool3DShapeTo3DPoints, cadTool3DShapeToThreeShape } from '@/utils/threejs_utils';
 import useArcPoints from '@/utils/useArcPoints';
@@ -23,9 +23,10 @@ import * as THREE from 'three';
 
 export interface SketchCycleObjectNgProps {
   sketchCycle: SketchCycleTypeOcct;
+  sketchCycleMap: SketchCycleOcctMapType;
 }
 
-const SketchCycleObjectNg = ({ sketchCycle }: SketchCycleObjectNgProps) => {
+const SketchCycleObjectNg = ({ sketchCycle, sketchCycleMap }: SketchCycleObjectNgProps) => {
   const sketchIsVisible = useSelector((state: RootState) => state.sketchs.sketches[sketchCycle.sketch.id]?.isVisible);
   const selectedSketch = useAppSelector(selectSelectedSketch);
 
@@ -57,8 +58,13 @@ const SketchCycleObjectNg = ({ sketchCycle }: SketchCycleObjectNgProps) => {
       // add the holes
       // after example from
       // https://discourse.threejs.org/t/use-a-shape-as-a-reference-to-make-a-hole/43595
-      sketchCycle.innerCycles.forEach((cycle) => {
-        const holeShape = cadTool3DShapeToThreeShape(cycle, sketchCycle.sketch.plane);
+      sketchCycle.innerCycles.forEach((cycleIndex) => {
+        const cycle = sketchCycleMap[cycleIndex];
+        if (cycle === undefined) {
+          console.log('cycleIndex', cycleIndex, 'not found in cycle map', sketchCycleMap);
+          return;
+        }
+        const holeShape = cadTool3DShapeToThreeShape(cycle.cycle, sketchCycle.sketch.plane);
         threeShape.holes.push(holeShape);
       });
 

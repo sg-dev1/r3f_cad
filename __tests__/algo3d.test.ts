@@ -6,9 +6,24 @@
  *      - simple test scenario with one cluster         (Sketch00)
  *      - more complex scenario with multiple clusters  (Sketch01)
  *      - test scenario with inner cycles               (Sketch02)
+ *      - multiple overlapping line segments in a       (Sketch03)
+ *        single cluster
+ *      - inner cycles and overlapping clusters         (Sketch07)
+ *
+ * Creation of test data as used in expectedResult variabels:
+ *   - Set debug flag DEBUG_FLAG in algo3d.ts to true
+ *   - load specific dataset json in the browser (e.g. 01_sketchShapes_testfile1.json) with redux persist state
+ *   - Examine log and copy data
+ *   - Expected result need to be postprocessed:
+ *      - replace "polygon": {.*}  with "polygon": new Polygon()
+ *      - Use the following regex
+ *            "flattenShapes":\s*\[(?:\s|.)*?\]
+ *        and replace data with
+ *            "flattenShapes":[]
+ *        (e.g. use https://regex101.com/)
  */
 import { SketchType, emptySketch } from '@/app/slices/Sketch';
-import { SketchCycleType, findCyclesInSketch, sketchCycleTypesEquals } from '@/utils/algo3d';
+import { SketchCycleMapType, SketchCycleType, findCyclesInSketch, sketchCycleTypesEquals } from '@/utils/algo3d';
 import { Polygon } from '@flatten-js/core';
 import { describe, expect, test } from '@jest/globals';
 
@@ -29,6 +44,7 @@ describe('SketchCycleType equals tests', () => {
             midPt2d: [-159.5, 67.88750457767067],
           },
         ],
+        isCounterClockwiseOrientation: true,
         innerCycles: [],
         cycleArea: 12231.397355357201,
         sketch: {
@@ -65,6 +81,7 @@ describe('SketchCycleType equals tests', () => {
             midPt2d: [-159.5, 67.88750457767067],
           },
         ],
+        isCounterClockwiseOrientation: true,
         innerCycles: [],
         cycleArea: 12231.397355357201,
         sketch: {
@@ -105,6 +122,7 @@ describe('SketchCycleType equals tests', () => {
             midPt2d: [-159.5, 67.88750457767067],
           },
         ],
+        isCounterClockwiseOrientation: true,
         innerCycles: [],
         cycleArea: 12231.397355357201,
         sketch: {
@@ -152,6 +170,7 @@ describe('SketchCycleType equals tests', () => {
             midPt2d: [-159.5, 67.88750457767067],
           },
         ],
+        isCounterClockwiseOrientation: true,
         innerCycles: [],
         cycleArea: 12231.397355357201,
         sketch: {
@@ -176,6 +195,7 @@ describe('SketchCycleType equals tests', () => {
     expect(sketchCycleTypesEquals(cycleA, cycleB)).toBe(false);
   });
 
+  /* FIXME - this test makes no sense since innerCycles has changed
   test('SketchCycleType.innerCycles[0] clockwise different', () => {
     const cycleA: SketchCycleType[] = [
       {
@@ -279,6 +299,7 @@ describe('SketchCycleType equals tests', () => {
     ];
     expect(sketchCycleTypesEquals(cycleA, cycleB)).toBe(false);
   });
+  */
 
   test('SketchCycleType.innerCycles different length', () => {
     const cycleA: SketchCycleType[] = [
@@ -296,6 +317,7 @@ describe('SketchCycleType equals tests', () => {
             midPt2d: [-159.5, 67.88750457767067],
           },
         ],
+        isCounterClockwiseOrientation: true,
         innerCycles: [],
         cycleArea: 12231.397355357201,
         sketch: {
@@ -332,21 +354,8 @@ describe('SketchCycleType equals tests', () => {
             midPt2d: [-159.5, 67.88750457767067],
           },
         ],
-        innerCycles: [
-          [
-            {
-              t: 3,
-              start: [-98.13620097668618, 0, 102.00105275765623],
-              mid_pt: [-159.5, 0, 67.88750457767067],
-              end: [-198.0056689668677, 0, 9.180065037048138],
-              radius: 70.20861770467958,
-              start_angle: 0.5073792552577117,
-              end_angle: 4.131883746591047,
-              clockwise: false,
-              midPt2d: [-159.5, 67.88750457767067],
-            },
-          ],
-        ],
+        isCounterClockwiseOrientation: true,
+        innerCycles: [1],
         cycleArea: 12231.397355357201,
         sketch: {
           id: 0,
@@ -386,6 +395,7 @@ describe('SketchCycleType equals tests', () => {
             midPt2d: [-159.5, 67.88750457767067],
           },
         ],
+        isCounterClockwiseOrientation: true,
         innerCycles: [],
         cycleArea: 12231.397355357201,
         sketch: {
@@ -422,6 +432,7 @@ describe('SketchCycleType equals tests', () => {
             midPt2d: [-159.5, 67.88750457767067],
           },
         ],
+        isCounterClockwiseOrientation: true,
         innerCycles: [],
         cycleArea: 12230.397355357201,
         sketch: {
@@ -462,6 +473,7 @@ describe('SketchCycleType equals tests', () => {
             midPt2d: [-159.5, 67.88750457767067],
           },
         ],
+        isCounterClockwiseOrientation: true,
         innerCycles: [],
         cycleArea: 12231.397355357201,
         sketch: {
@@ -498,6 +510,7 @@ describe('SketchCycleType equals tests', () => {
             midPt2d: [-159.5, 67.88750457767067],
           },
         ],
+        isCounterClockwiseOrientation: true,
         innerCycles: [],
         cycleArea: 12231.397355357201,
         sketch: {
@@ -526,15 +539,28 @@ describe('SketchCycleType equals tests', () => {
 describe('algo3d test suite', () => {
   test('empty sketch', () => {
     const sketch: SketchType = { ...emptySketch };
-    expect(findCyclesInSketch(sketch)).toEqual([]);
+    const [cyclesInSketch, cyclesInSketchMap] = findCyclesInSketch(sketch);
+    expect(cyclesInSketch).toEqual([]);
+    expect(cyclesInSketchMap).toEqual({});
   });
 
+  /** Checks for the SketchCyclesMap */
+  const checkSketchCyclesMap = (cyclesInSketch: SketchCycleType[], cyclesInSketchMap: SketchCycleMapType) => {
+    cyclesInSketch.forEach((cycle) => {
+      cycle.innerCycles.forEach((innerCycleId) => {
+        const cycle = cyclesInSketchMap[innerCycleId];
+        expect(cycle).not.toBe(undefined);
+      });
+    });
+  };
+
+  // Sketch0 to be taken from 01_sketchShapes_testfile1.json
   test('[Sketch00] simple sketch with single cluster of overlapping circles', () => {
     const sketch: SketchType = {
       id: 0,
       name: 'Sketch0',
       plane: 'xz',
-      isVisible: false,
+      isVisible: true,
       entityIdCounter: 9,
       points: [
         {
@@ -593,7 +619,7 @@ describe('algo3d test suite', () => {
         {
           id: 2,
           mid_pt_id: 1,
-          radius: 70.20861770467958,
+          radius: 77.5,
         },
         {
           id: 4,
@@ -612,30 +638,36 @@ describe('algo3d test suite', () => {
         },
       ],
       lastPoint3D: null,
-      constraintIdCounter: 0,
-      constraints: [],
+      constraintIdCounter: 1,
+      constraints: [
+        {
+          id: 0,
+          t: 100021,
+          v: [155, 0, 0, 2, 0],
+        },
+      ],
     };
     const expectedResult: SketchCycleType[] = [
       {
         cycle: [
           {
             t: 3,
-            start: [-98.13620097668618, 0, 102.00105275765623],
+            start: [-95.46198381689294, 0, 111.53819166655987],
             mid_pt: [-159.5, 0, 67.88750457767067],
-            end: [-198.0056689668677, 0, 9.180065037048138],
-            radius: 70.20861770467958,
-            start_angle: 0.5073792552577117,
-            end_angle: 4.131883746591047,
+            end: [-203.44276123822203, 0, 4.049555560173182],
+            radius: 77.5,
+            start_angle: 0.5982952613781384,
+            end_angle: 4.10952564179245,
             clockwise: false,
             midPt2d: [-159.5, 67.88750457767067],
           },
           {
             t: 3,
-            start: [-198.00566896686774, 0, 9.180065037048138],
+            start: [-203.44276123822206, 0, 4.049555560173168],
             mid_pt: [-116.99999999999999, 0, -82.11249542240436],
             end: [-100.05404071749787, 0, 38.75555024727765],
             radius: 122.05019459227648,
-            start_angle: 2.2965612900540777,
+            start_angle: 2.357820806426225,
             end_angle: 1.4315021315537308,
             clockwise: true,
             midPt2d: [-116.99999999999999, -82.11249542240436],
@@ -644,16 +676,17 @@ describe('algo3d test suite', () => {
             t: 3,
             start: [-100.05404071749791, 0, 38.75555024727768],
             mid_pt: [48.99999999999998, 0, 65.88750457766967],
-            end: [-98.13620097668618, 0, 102.00105275765621],
+            end: [-95.46198381689294, 0, 111.5381916665599],
             radius: 151.503300294086,
             start_angle: 3.321648895360833,
-            end_angle: 2.9009075243079927,
+            end_angle: 2.835517951085071,
             clockwise: true,
             midPt2d: [48.99999999999998, 65.88750457766967],
           },
         ],
+        isCounterClockwiseOrientation: true,
         innerCycles: [],
-        cycleArea: 12231.397355357201,
+        cycleArea: 14150.022758562336,
         sketch: {
           id: 0,
           name: 'Sketch0',
@@ -717,7 +750,7 @@ describe('algo3d test suite', () => {
             {
               id: 2,
               mid_pt_id: 1,
-              radius: 70.20861770467958,
+              radius: 77.5,
             },
             {
               id: 4,
@@ -736,33 +769,41 @@ describe('algo3d test suite', () => {
             },
           ],
           lastPoint3D: null,
-          constraintIdCounter: 0,
-          constraints: [],
+          constraintIdCounter: 1,
+          constraints: [
+            {
+              id: 0,
+              t: 100021,
+              v: [155, 0, 0, 2, 0],
+            },
+          ],
         },
         index: 0,
         flattenShapes: [],
         polygon: new Polygon(),
+        label: 'n0#0#0',
+        centroid: [-159.21248845571458, 72.8767481255727],
       },
       {
         cycle: [
           {
             t: 3,
-            start: [-98.13620097668618, 0, 102.00105275765623],
+            start: [-95.46198381689294, 0, 111.53819166655987],
             mid_pt: [-159.5, 0, 67.88750457767067],
-            end: [-95.92184453274915, 0, 38.103815293367305],
-            radius: 70.20861770467958,
-            start_angle: 0.5073792552577117,
-            end_angle: 5.845088252968944,
+            end: [-88.60159463733191, 0, 36.58788609707577],
+            radius: 77.5,
+            start_angle: 0.5982952613781384,
+            end_angle: 5.86744635776754,
             clockwise: true,
             midPt2d: [-159.5, 67.88750457767067],
           },
           {
             t: 3,
-            start: [-95.92184453274913, 0, 38.10381529336732],
+            start: [-88.60159463733191, 0, 36.58788609707575],
             mid_pt: [-116.99999999999999, 0, -82.11249542240436],
             end: [-3.0523431940744388, 0, -38.383997752674546],
             radius: 122.05019459227648,
-            start_angle: 1.3972254023263264,
+            start_angle: 1.3359658859541788,
             end_angle: 0.36642804416640345,
             clockwise: true,
             midPt2d: [-116.99999999999999, -82.11249542240436],
@@ -782,16 +823,17 @@ describe('algo3d test suite', () => {
             t: 3,
             start: [180.53274896216718, 0, -9.29484674533365],
             mid_pt: [48.99999999999998, 0, 65.88750457766967],
-            end: [-98.13620097668618, 0, 102.00105275765621],
+            end: [-95.46198381689294, 0, 111.5381916665599],
             radius: 151.503300294086,
             start_angle: 5.7639201030138905,
-            end_angle: 2.9009075243079927,
+            end_angle: 2.835517951085071,
             clockwise: false,
             midPt2d: [48.99999999999998, 65.88750457766967],
           },
         ],
+        isCounterClockwiseOrientation: true,
         innerCycles: [],
-        cycleArea: 53520.421629566496,
+        cycleArea: 52991.32731577934,
         sketch: {
           id: 0,
           name: 'Sketch0',
@@ -855,7 +897,7 @@ describe('algo3d test suite', () => {
             {
               id: 2,
               mid_pt_id: 1,
-              radius: 70.20861770467958,
+              radius: 77.5,
             },
             {
               id: 4,
@@ -874,22 +916,30 @@ describe('algo3d test suite', () => {
             },
           ],
           lastPoint3D: null,
-          constraintIdCounter: 0,
-          constraints: [],
+          constraintIdCounter: 1,
+          constraints: [
+            {
+              id: 0,
+              t: 100021,
+              v: [155, 0, 0, 2, 0],
+            },
+          ],
         },
         index: 1,
         flattenShapes: [],
         polygon: new Polygon(),
+        label: 'n0#1#0',
+        centroid: [42.539232253716825, 77.69493049803603],
       },
       {
         cycle: [
           {
             t: 3,
-            start: [-98.13620097668618, 0, 102.00105275765621],
+            start: [-95.46198381689294, 0, 111.5381916665599],
             mid_pt: [48.99999999999998, 0, 65.88750457766967],
             end: [-100.05404071749791, 0, 38.75555024727768],
             radius: 151.503300294086,
-            start_angle: 2.9009075243079927,
+            start_angle: 2.835517951085071,
             end_angle: 3.321648895360833,
             clockwise: false,
             midPt2d: [48.99999999999998, 65.88750457766967],
@@ -898,27 +948,28 @@ describe('algo3d test suite', () => {
             t: 3,
             start: [-100.05404071749787, 0, 38.75555024727765],
             mid_pt: [-116.99999999999999, 0, -82.11249542240436],
-            end: [-95.92184453274913, 0, 38.10381529336732],
+            end: [-88.60159463733191, 0, 36.58788609707575],
             radius: 122.05019459227648,
             start_angle: 1.4315021315537308,
-            end_angle: 1.3972254023263264,
+            end_angle: 1.3359658859541788,
             clockwise: true,
             midPt2d: [-116.99999999999999, -82.11249542240436],
           },
           {
             t: 3,
-            start: [-95.92184453274915, 0, 38.103815293367305],
+            start: [-88.60159463733191, 0, 36.58788609707577],
             mid_pt: [-159.5, 0, 67.88750457767067],
-            end: [-98.13620097668618, 0, 102.00105275765623],
-            radius: 70.20861770467958,
-            start_angle: 5.845088252968944,
-            end_angle: 0.5073792552577117,
+            end: [-95.46198381689294, 0, 111.53819166655987],
+            radius: 77.5,
+            start_angle: 5.86744635776754,
+            end_angle: 0.5982952613781384,
             clockwise: false,
             midPt2d: [-159.5, 67.88750457767067],
           },
         ],
+        isCounterClockwiseOrientation: true,
         innerCycles: [],
-        cycleArea: 604.4419925444842,
+        cycleArea: 1133.5363063316377,
         sketch: {
           id: 0,
           name: 'Sketch0',
@@ -982,7 +1033,7 @@ describe('algo3d test suite', () => {
             {
               id: 2,
               mid_pt_id: 1,
-              radius: 70.20861770467958,
+              radius: 77.5,
             },
             {
               id: 4,
@@ -1001,33 +1052,41 @@ describe('algo3d test suite', () => {
             },
           ],
           lastPoint3D: null,
-          constraintIdCounter: 0,
-          constraints: [],
+          constraintIdCounter: 1,
+          constraints: [
+            {
+              id: 0,
+              t: 100021,
+              v: [155, 0, 0, 2, 0],
+            },
+          ],
         },
         index: 2,
         flattenShapes: [],
         polygon: new Polygon(),
+        label: 'n0#0#0#0',
+        centroid: [-93.19884709378293, 69.18604871113894],
       },
       {
         cycle: [
           {
             t: 3,
-            start: [-198.0056689668677, 0, 9.180065037048138],
+            start: [-203.44276123822203, 0, 4.049555560173182],
             mid_pt: [-159.5, 0, 67.88750457767067],
-            end: [-98.80188878495642, 0, 32.60309874551801],
-            radius: 70.20861770467958,
-            start_angle: 4.131883746591047,
-            end_angle: 5.756621988021889,
+            end: [-96.31111356386094, 0, 23.016415545190952],
+            radius: 77.5,
+            start_angle: 4.10952564179245,
+            end_angle: 5.665705981901462,
             clockwise: false,
             midPt2d: [-159.5, 67.88750457767067],
           },
           {
             t: 3,
-            start: [-98.80188878495645, 0, 32.60309874551811],
+            start: [-96.3111135638609, 0, 23.01641554519101],
             mid_pt: [48.99999999999998, 0, 65.88750457766967],
             end: [-100.05404071749791, 0, 38.75555024727768],
             radius: 151.503300294086,
-            start_angle: 3.363093718971608,
+            start_angle: 3.42848329219453,
             end_angle: 3.321648895360833,
             clockwise: true,
             midPt2d: [48.99999999999998, 65.88750457766967],
@@ -1036,16 +1095,17 @@ describe('algo3d test suite', () => {
             t: 3,
             start: [-100.05404071749787, 0, 38.75555024727765],
             mid_pt: [-116.99999999999999, 0, -82.11249542240436],
-            end: [-198.00566896686774, 0, 9.180065037048138],
+            end: [-203.44276123822206, 0, 4.049555560173168],
             radius: 122.05019459227648,
             start_angle: 1.4315021315537308,
-            end_angle: 2.2965612900540777,
+            end_angle: 2.357820806426225,
             clockwise: false,
             midPt2d: [-116.99999999999999, -82.11249542240436],
           },
         ],
+        isCounterClockwiseOrientation: true,
         innerCycles: [],
-        cycleArea: 2637.0822721289146,
+        cycleArea: 3492.048493998609,
         sketch: {
           id: 0,
           name: 'Sketch0',
@@ -1109,7 +1169,7 @@ describe('algo3d test suite', () => {
             {
               id: 2,
               mid_pt_id: 1,
-              radius: 70.20861770467958,
+              radius: 77.5,
             },
             {
               id: 4,
@@ -1128,22 +1188,30 @@ describe('algo3d test suite', () => {
             },
           ],
           lastPoint3D: null,
-          constraintIdCounter: 0,
-          constraints: [],
+          constraintIdCounter: 1,
+          constraints: [
+            {
+              id: 0,
+              t: 100021,
+              v: [155, 0, 0, 2, 0],
+            },
+          ],
         },
         index: 4,
         flattenShapes: [],
         polygon: new Polygon(),
+        label: 'n0#0',
+        centroid: [-144.9311247377747, 15.985024313702052],
       },
       {
         cycle: [
           {
             t: 3,
-            start: [-198.00566896686774, 0, 9.180065037048138],
+            start: [-203.44276123822206, 0, 4.049555560173168],
             mid_pt: [-116.99999999999999, 0, -82.11249542240436],
             end: [-30.84273045959621, 0, -168.56002231215854],
             radius: 122.05019459227648,
-            start_angle: 2.2965612900540777,
+            start_angle: 2.357820806426225,
             end_angle: 5.496105515682863,
             clockwise: false,
             midPt2d: [-116.99999999999999, -82.11249542240436],
@@ -1163,27 +1231,28 @@ describe('algo3d test suite', () => {
             t: 3,
             start: [-22.148523184935712, 0, -67.8702527622419],
             mid_pt: [48.99999999999998, 0, 65.88750457766967],
-            end: [-98.80188878495645, 0, 32.60309874551811],
+            end: [-96.3111135638609, 0, 23.01641554519101],
             radius: 151.503300294086,
             start_angle: 4.2235320811462245,
-            end_angle: 3.363093718971608,
+            end_angle: 3.42848329219453,
             clockwise: true,
             midPt2d: [48.99999999999998, 65.88750457766967],
           },
           {
             t: 3,
-            start: [-98.80188878495642, 0, 32.60309874551801],
+            start: [-96.31111356386094, 0, 23.016415545190952],
             mid_pt: [-159.5, 0, 67.88750457767067],
-            end: [-198.0056689668677, 0, 9.180065037048138],
-            radius: 70.20861770467958,
-            start_angle: 5.756621988021889,
-            end_angle: 4.131883746591047,
+            end: [-203.44276123822203, 0, 4.049555560173182],
+            radius: 77.5,
+            start_angle: 5.665705981901462,
+            end_angle: 4.10952564179245,
             clockwise: true,
             midPt2d: [-159.5, 67.88750457767067],
           },
         ],
+        isCounterClockwiseOrientation: true,
         innerCycles: [],
-        cycleArea: 35982.847770644934,
+        cycleArea: 35127.88154877523,
         sketch: {
           id: 0,
           name: 'Sketch0',
@@ -1247,7 +1316,7 @@ describe('algo3d test suite', () => {
             {
               id: 2,
               mid_pt_id: 1,
-              radius: 70.20861770467958,
+              radius: 77.5,
             },
             {
               id: 4,
@@ -1266,33 +1335,41 @@ describe('algo3d test suite', () => {
             },
           ],
           lastPoint3D: null,
-          constraintIdCounter: 0,
-          constraints: [],
+          constraintIdCounter: 1,
+          constraints: [
+            {
+              id: 0,
+              t: 100021,
+              v: [155, 0, 0, 2, 0],
+            },
+          ],
         },
         index: 5,
         flattenShapes: [],
         polygon: new Polygon(),
+        label: 'n0',
+        centroid: [-121.30321661276942, -86.96590868286533],
       },
       {
         cycle: [
           {
             t: 3,
-            start: [-98.80188878495642, 0, 32.60309874551801],
+            start: [-96.31111356386094, 0, 23.016415545190952],
             mid_pt: [-159.5, 0, 67.88750457767067],
-            end: [-95.92184453274915, 0, 38.103815293367305],
-            radius: 70.20861770467958,
-            start_angle: 5.756621988021889,
-            end_angle: 5.845088252968944,
+            end: [-88.60159463733191, 0, 36.58788609707577],
+            radius: 77.5,
+            start_angle: 5.665705981901462,
+            end_angle: 5.86744635776754,
             clockwise: false,
             midPt2d: [-159.5, 67.88750457767067],
           },
           {
             t: 3,
-            start: [-95.92184453274913, 0, 38.10381529336732],
+            start: [-88.60159463733191, 0, 36.58788609707575],
             mid_pt: [-116.99999999999999, 0, -82.11249542240436],
             end: [-100.05404071749787, 0, 38.75555024727765],
             radius: 122.05019459227648,
-            start_angle: 1.3972254023263264,
+            start_angle: 1.3359658859541788,
             end_angle: 1.4315021315537308,
             clockwise: false,
             midPt2d: [-116.99999999999999, -82.11249542240436],
@@ -1301,16 +1378,17 @@ describe('algo3d test suite', () => {
             t: 3,
             start: [-100.05404071749791, 0, 38.75555024727768],
             mid_pt: [48.99999999999998, 0, 65.88750457766967],
-            end: [-98.80188878495645, 0, 32.60309874551811],
+            end: [-96.3111135638609, 0, 23.01641554519101],
             radius: 151.503300294086,
             start_angle: 3.321648895360833,
-            end_angle: 3.363093718971608,
+            end_angle: 3.42848329219453,
             clockwise: false,
             midPt2d: [48.99999999999998, 65.88750457766967],
           },
         ],
+        isCounterClockwiseOrientation: true,
         innerCycles: [],
-        cycleArea: 12.77396768269054,
+        cycleArea: 93.58331673111422,
         sketch: {
           id: 0,
           name: 'Sketch0',
@@ -1374,7 +1452,7 @@ describe('algo3d test suite', () => {
             {
               id: 2,
               mid_pt_id: 1,
-              radius: 70.20861770467958,
+              radius: 77.5,
             },
             {
               id: 4,
@@ -1393,22 +1471,30 @@ describe('algo3d test suite', () => {
             },
           ],
           lastPoint3D: null,
-          constraintIdCounter: 0,
-          constraints: [],
+          constraintIdCounter: 1,
+          constraints: [
+            {
+              id: 0,
+              t: 100021,
+              v: [155, 0, 0, 2, 0],
+            },
+          ],
         },
         index: 6,
         flattenShapes: [],
         polygon: new Polygon(),
+        label: 'n0#0#1',
+        centroid: [-94.95647062103419, 32.69146550649274],
       },
       {
         cycle: [
           {
             t: 3,
-            start: [-98.80188878495645, 0, 32.60309874551811],
+            start: [-96.3111135638609, 0, 23.01641554519101],
             mid_pt: [48.99999999999998, 0, 65.88750457766967],
             end: [-22.148523184935712, 0, -67.8702527622419],
             radius: 151.503300294086,
-            start_angle: 3.363093718971608,
+            start_angle: 3.42848329219453,
             end_angle: 4.2235320811462245,
             clockwise: false,
             midPt2d: [48.99999999999998, 65.88750457766967],
@@ -1428,27 +1514,28 @@ describe('algo3d test suite', () => {
             t: 3,
             start: [-3.0523431940744388, 0, -38.383997752674546],
             mid_pt: [-116.99999999999999, 0, -82.11249542240436],
-            end: [-95.92184453274913, 0, 38.10381529336732],
+            end: [-88.60159463733191, 0, 36.58788609707575],
             radius: 122.05019459227648,
             start_angle: 0.36642804416640345,
-            end_angle: 1.3972254023263264,
+            end_angle: 1.3359658859541788,
             clockwise: false,
             midPt2d: [-116.99999999999999, -82.11249542240436],
           },
           {
             t: 3,
-            start: [-95.92184453274915, 0, 38.103815293367305],
+            start: [-88.60159463733191, 0, 36.58788609707577],
             mid_pt: [-159.5, 0, 67.88750457767067],
-            end: [-98.80188878495642, 0, 32.60309874551801],
-            radius: 70.20861770467958,
-            start_angle: 5.845088252968944,
-            end_angle: 5.756621988021889,
+            end: [-96.31111356386094, 0, 23.016415545190952],
+            radius: 77.5,
+            start_angle: 5.86744635776754,
+            end_angle: 5.665705981901462,
             clockwise: true,
             midPt2d: [-159.5, 67.88750457767067],
           },
         ],
+        isCounterClockwiseOrientation: true,
         innerCycles: [],
-        cycleArea: 4892.480187475946,
+        cycleArea: 4811.670838427529,
         sketch: {
           id: 0,
           name: 'Sketch0',
@@ -1512,7 +1599,7 @@ describe('algo3d test suite', () => {
             {
               id: 2,
               mid_pt_id: 1,
-              radius: 70.20861770467958,
+              radius: 77.5,
             },
             {
               id: 4,
@@ -1531,12 +1618,20 @@ describe('algo3d test suite', () => {
             },
           ],
           lastPoint3D: null,
-          constraintIdCounter: 0,
-          constraints: [],
+          constraintIdCounter: 1,
+          constraints: [
+            {
+              id: 0,
+              t: 100021,
+              v: [155, 0, 0, 2, 0],
+            },
+          ],
         },
         index: 7,
         flattenShapes: [],
         polygon: new Polygon(),
+        label: 'n0#1',
+        centroid: [-48.99161644970393, -14.531967583713726],
       },
       {
         cycle: [
@@ -1574,6 +1669,7 @@ describe('algo3d test suite', () => {
             midPt2d: [105.49999999999999, -129.61249542242814],
           },
         ],
+        isCounterClockwiseOrientation: true,
         innerCycles: [],
         cycleArea: 596.3816171413414,
         sketch: {
@@ -1639,7 +1735,7 @@ describe('algo3d test suite', () => {
             {
               id: 2,
               mid_pt_id: 1,
-              radius: 70.20861770467958,
+              radius: 77.5,
             },
             {
               id: 4,
@@ -1658,12 +1754,20 @@ describe('algo3d test suite', () => {
             },
           ],
           lastPoint3D: null,
-          constraintIdCounter: 0,
-          constraints: [],
+          constraintIdCounter: 1,
+          constraints: [
+            {
+              id: 0,
+              t: 100021,
+              v: [155, 0, 0, 2, 0],
+            },
+          ],
         },
         index: 8,
         flattenShapes: [],
         polygon: new Polygon(),
+        label: 'n0#1#1',
+        centroid: [-6.438732095503508, -61.50052335596097],
       },
       {
         cycle: [
@@ -1701,6 +1805,7 @@ describe('algo3d test suite', () => {
             midPt2d: [48.99999999999998, 65.88750457766967],
           },
         ],
+        isCounterClockwiseOrientation: true,
         innerCycles: [],
         cycleArea: 2676.383751002567,
         sketch: {
@@ -1766,7 +1871,7 @@ describe('algo3d test suite', () => {
             {
               id: 2,
               mid_pt_id: 1,
-              radius: 70.20861770467958,
+              radius: 77.5,
             },
             {
               id: 4,
@@ -1785,12 +1890,20 @@ describe('algo3d test suite', () => {
             },
           ],
           lastPoint3D: null,
-          constraintIdCounter: 0,
-          constraints: [],
+          constraintIdCounter: 1,
+          constraints: [
+            {
+              id: 0,
+              t: 100021,
+              v: [155, 0, 0, 2, 0],
+            },
+          ],
         },
         index: 9,
         flattenShapes: [],
         polygon: new Polygon(),
+        label: 'n0#2',
+        centroid: [-17.4941770548119, -111.90324099932943],
       },
       {
         cycle: [
@@ -1828,6 +1941,7 @@ describe('algo3d test suite', () => {
             midPt2d: [-116.99999999999999, -82.11249542240436],
           },
         ],
+        isCounterClockwiseOrientation: true,
         innerCycles: [],
         cycleArea: 12483.262181598946,
         sketch: {
@@ -1893,7 +2007,7 @@ describe('algo3d test suite', () => {
             {
               id: 2,
               mid_pt_id: 1,
-              radius: 70.20861770467958,
+              radius: 77.5,
             },
             {
               id: 4,
@@ -1912,12 +2026,20 @@ describe('algo3d test suite', () => {
             },
           ],
           lastPoint3D: null,
-          constraintIdCounter: 0,
-          constraints: [],
+          constraintIdCounter: 1,
+          constraints: [
+            {
+              id: 0,
+              t: 100021,
+              v: [155, 0, 0, 2, 0],
+            },
+          ],
         },
         index: 10,
         flattenShapes: [],
         polygon: new Polygon(),
+        label: 'n0#1#0#0',
+        centroid: [80.38609259084612, -36.46257785976427],
       },
       {
         cycle: [
@@ -1955,6 +2077,7 @@ describe('algo3d test suite', () => {
             midPt2d: [48.99999999999998, 65.88750457766967],
           },
         ],
+        isCounterClockwiseOrientation: true,
         innerCycles: [],
         cycleArea: 47409.61974151063,
         sketch: {
@@ -2020,7 +2143,7 @@ describe('algo3d test suite', () => {
             {
               id: 2,
               mid_pt_id: 1,
-              radius: 70.20861770467958,
+              radius: 77.5,
             },
             {
               id: 4,
@@ -2039,17 +2162,28 @@ describe('algo3d test suite', () => {
             },
           ],
           lastPoint3D: null,
-          constraintIdCounter: 0,
-          constraints: [],
+          constraintIdCounter: 1,
+          constraints: [
+            {
+              id: 0,
+              t: 100021,
+              v: [155, 0, 0, 2, 0],
+            },
+          ],
         },
         index: 11,
         flattenShapes: [],
         polygon: new Polygon(),
+        label: 'n0#2#0',
+        centroid: [103.05726872930167, -137.24615189565765],
       },
     ];
-    expect(sketchCycleTypesEquals(findCyclesInSketch(sketch), expectedResult)).toBe(true);
+    const [cyclesInSketch, cyclesInSketchMap] = findCyclesInSketch(sketch);
+    expect(sketchCycleTypesEquals(cyclesInSketch, expectedResult)).toBe(true);
+    checkSketchCyclesMap(cyclesInSketch, cyclesInSketchMap);
   });
 
+  // Sketch1 to be taken from 01_sketchShapes_testfile1.json
   test('[Sketch01] sketch with multiple unconnected clusters', () => {
     const sketch: SketchType = {
       id: 1,
@@ -2354,6 +2488,7 @@ describe('algo3d test suite', () => {
             midPt2d: [-175, 116.88750457763673],
           },
         ],
+        isCounterClockwiseOrientation: true,
         innerCycles: [],
         cycleArea: 5502.393911878353,
         sketch: {
@@ -2614,6 +2749,8 @@ describe('algo3d test suite', () => {
         index: 0,
         flattenShapes: [],
         polygon: new Polygon(),
+        label: 'n0#0#0',
+        centroid: [-260.78184478308646, 106.9342161093822],
       },
       {
         cycle: [
@@ -2673,6 +2810,7 @@ describe('algo3d test suite', () => {
             midPt2d: [-175, 116.88750457763673],
           },
         ],
+        isCounterClockwiseOrientation: true,
         innerCycles: [],
         cycleArea: 7523.188772038413,
         sketch: {
@@ -2933,6 +3071,8 @@ describe('algo3d test suite', () => {
         index: 1,
         flattenShapes: [],
         polygon: new Polygon(),
+        label: 'n0#0#0#1#0',
+        centroid: [-173.83389035705093, 115.84828301640489],
       },
       {
         cycle: [
@@ -2970,6 +3110,7 @@ describe('algo3d test suite', () => {
             midPt2d: [-260.5, 107.38750457763675],
           },
         ],
+        isCounterClockwiseOrientation: true,
         innerCycles: [],
         cycleArea: 513.0966430924866,
         sketch: {
@@ -3230,6 +3371,8 @@ describe('algo3d test suite', () => {
         index: 2,
         flattenShapes: [],
         polygon: new Polygon(),
+        label: 'n0#0#0#1',
+        centroid: [-221.7188621900767, 111.79066760025424],
       },
       {
         cycle: [
@@ -3267,6 +3410,7 @@ describe('algo3d test suite', () => {
             midPt2d: [-286, 34.88750457763673],
           },
         ],
+        isCounterClockwiseOrientation: true,
         innerCycles: [],
         cycleArea: 385.0952670217302,
         sketch: {
@@ -3527,6 +3671,8 @@ describe('algo3d test suite', () => {
         index: 4,
         flattenShapes: [],
         polygon: new Polygon(),
+        label: 'n0#0',
+        centroid: [-273.8383206059412, 69.23301967283768],
       },
       {
         cycle: [
@@ -3564,6 +3710,7 @@ describe('algo3d test suite', () => {
             midPt2d: [-260.5, 107.38750457763675],
           },
         ],
+        isCounterClockwiseOrientation: true,
         innerCycles: [],
         cycleArea: 4618.897702838088,
         sketch: {
@@ -3824,6 +3971,8 @@ describe('algo3d test suite', () => {
         index: 5,
         flattenShapes: [],
         polygon: new Polygon(),
+        label: 'n0',
+        centroid: [-285.8340894603399, 36.21467176362868],
       },
       {
         cycle: [
@@ -3861,6 +4010,7 @@ describe('algo3d test suite', () => {
             midPt2d: [-205, 34.88750457763673],
           },
         ],
+        isCounterClockwiseOrientation: true,
         innerCycles: [],
         cycleArea: 5.409852691257291,
         sketch: {
@@ -4121,6 +4271,8 @@ describe('algo3d test suite', () => {
         index: 6,
         flattenShapes: [],
         polygon: new Polygon(),
+        label: 'n0#0#1',
+        centroid: [-254.35528742646653, 62.134224473851106],
       },
       {
         cycle: [
@@ -4158,6 +4310,7 @@ describe('algo3d test suite', () => {
             midPt2d: [-260.5, 107.38750457763675],
           },
         ],
+        isCounterClockwiseOrientation: true,
         innerCycles: [],
         cycleArea: 759.3466876031803,
         sketch: {
@@ -4418,6 +4571,8 @@ describe('algo3d test suite', () => {
         index: 7,
         flattenShapes: [],
         polygon: new Polygon(),
+        label: 'n0#1',
+        centroid: [-253.34971611969004, 35.091639366941855],
       },
       {
         cycle: [
@@ -4466,6 +4621,7 @@ describe('algo3d test suite', () => {
             midPt2d: [-286, 34.88750457763673],
           },
         ],
+        isCounterClockwiseOrientation: true,
         innerCycles: [],
         cycleArea: 407.49268983847713,
         sketch: {
@@ -4726,6 +4882,8 @@ describe('algo3d test suite', () => {
         index: 8,
         flattenShapes: [],
         polygon: new Polygon(),
+        label: 'n0#0#0#0',
+        centroid: [-236.37476981569915, 75.40775143368974],
       },
       {
         cycle: [
@@ -4818,6 +4976,7 @@ describe('algo3d test suite', () => {
             midPt2d: [-260.5, 107.38750457763675],
           },
         ],
+        isCounterClockwiseOrientation: true,
         innerCycles: [],
         cycleArea: 6400.421671401481,
         sketch: {
@@ -5078,6 +5237,8 @@ describe('algo3d test suite', () => {
         index: 9,
         flattenShapes: [],
         polygon: new Polygon(),
+        label: 'n0#1#0',
+        centroid: [-204.98719702514052, 31.821069150861415],
       },
       {
         cycle: [
@@ -5115,6 +5276,7 @@ describe('algo3d test suite', () => {
             midPt2d: [-175, 116.88750457763673],
           },
         ],
+        isCounterClockwiseOrientation: true,
         innerCycles: [],
         cycleArea: 13.192471728310457,
         sketch: {
@@ -5375,6 +5537,8 @@ describe('algo3d test suite', () => {
         index: 10,
         flattenShapes: [],
         polygon: new Polygon(),
+        label: 'n0#0#0#0#0',
+        centroid: [-219.34295506379138, 88.80445180132877],
       },
       {
         cycle: [
@@ -5412,6 +5576,7 @@ describe('algo3d test suite', () => {
             midPt2d: [-260.5, 107.38750457763675],
           },
         ],
+        isCounterClockwiseOrientation: true,
         innerCycles: [],
         cycleArea: 1142.3610267847612,
         sketch: {
@@ -5672,6 +5837,8 @@ describe('algo3d test suite', () => {
         index: 11,
         flattenShapes: [],
         polygon: new Polygon(),
+        label: 'n0#1#0#2',
+        centroid: [-189.58148103498942, 77.59515282767356],
       },
       {
         cycle: [
@@ -5709,6 +5876,7 @@ describe('algo3d test suite', () => {
             midPt2d: [-175, 116.88750457763673],
           },
         ],
+        isCounterClockwiseOrientation: true,
         innerCycles: [],
         cycleArea: 9.338906017917312,
         sketch: {
@@ -5969,6 +6137,8 @@ describe('algo3d test suite', () => {
         index: 12,
         flattenShapes: [],
         polygon: new Polygon(),
+        label: 'n0#1#0#5',
+        centroid: [-154.25087593847417, 65.64928201702553],
       },
       {
         cycle: [
@@ -5995,6 +6165,7 @@ describe('algo3d test suite', () => {
             midPt2d: [-100.5, 27.387504577636733],
           },
         ],
+        isCounterClockwiseOrientation: true,
         innerCycles: [],
         cycleArea: 47.58508056361316,
         sketch: {
@@ -6255,6 +6426,8 @@ describe('algo3d test suite', () => {
         index: 13,
         flattenShapes: [],
         polygon: new Polygon(),
+        label: 'n0#1#0#4#0',
+        centroid: [-141.2247849784919, 76.3119106927389],
       },
       {
         cycle: [
@@ -6303,6 +6476,7 @@ describe('algo3d test suite', () => {
             midPt2d: [-175, 116.88750457763673],
           },
         ],
+        isCounterClockwiseOrientation: true,
         innerCycles: [],
         cycleArea: 12473.274461284604,
         sketch: {
@@ -6563,6 +6737,8 @@ describe('algo3d test suite', () => {
         index: 14,
         flattenShapes: [],
         polygon: new Polygon(),
+        label: 'n0#1#0#4',
+        centroid: [-112.41964870205564, 32.829718023210226],
       },
       {
         cycle: [
@@ -6589,6 +6765,7 @@ describe('algo3d test suite', () => {
             midPt2d: [-205, 34.88750457763673],
           },
         ],
+        isCounterClockwiseOrientation: true,
         innerCycles: [],
         cycleArea: 755.5110122222486,
         sketch: {
@@ -6849,6 +7026,8 @@ describe('algo3d test suite', () => {
         index: 15,
         flattenShapes: [],
         polygon: new Polygon(),
+        label: 'n0#1#0#3',
+        centroid: [-156.7458503008975, 31.424288092055203],
       },
       {
         cycle: [
@@ -6875,6 +7054,7 @@ describe('algo3d test suite', () => {
             midPt2d: [-217, -56.61249542236331],
           },
         ],
+        isCounterClockwiseOrientation: true,
         innerCycles: [],
         cycleArea: 874.8809647792344,
         sketch: {
@@ -7135,6 +7315,8 @@ describe('algo3d test suite', () => {
         index: 16,
         flattenShapes: [],
         polygon: new Polygon(),
+        label: 'n0#1#0#1',
+        centroid: [-211.172520967154, -12.177967796911867],
       },
       {
         cycle: [
@@ -7161,6 +7343,7 @@ describe('algo3d test suite', () => {
             midPt2d: [-205, 34.88750457763673],
           },
         ],
+        isCounterClockwiseOrientation: true,
         innerCycles: [],
         cycleArea: 8610.372654571765,
         sketch: {
@@ -7421,6 +7604,8 @@ describe('algo3d test suite', () => {
         index: 17,
         flattenShapes: [],
         polygon: new Polygon(),
+        label: 'n0#1#0#0',
+        centroid: [-215.93590200522357, -48.49874821219269],
       },
       {
         cycle: [
@@ -7458,6 +7643,7 @@ describe('algo3d test suite', () => {
             midPt2d: [235.50000000000003, 116.88750457763673],
           },
         ],
+        isCounterClockwiseOrientation: true,
         innerCycles: [],
         cycleArea: 1467.110446661428,
         sketch: {
@@ -7718,6 +7904,8 @@ describe('algo3d test suite', () => {
         index: 18,
         flattenShapes: [],
         polygon: new Polygon(),
+        label: 'n2#0#0#0',
+        centroid: [146.64037485309512, 104.78554623478142],
       },
       {
         cycle: [
@@ -7766,6 +7954,7 @@ describe('algo3d test suite', () => {
             midPt2d: [235.50000000000003, 116.88750457763673],
           },
         ],
+        isCounterClockwiseOrientation: true,
         innerCycles: [],
         cycleArea: 11381.266085423485,
         sketch: {
@@ -8026,6 +8215,8 @@ describe('algo3d test suite', () => {
         index: 19,
         flattenShapes: [],
         polygon: new Polygon(),
+        label: 'n2#0#1#0',
+        centroid: [229.6096178304797, 124.92622002491578],
       },
       {
         cycle: [
@@ -8063,6 +8254,7 @@ describe('algo3d test suite', () => {
             midPt2d: [148.49999999999997, 102.88750457763672],
           },
         ],
+        isCounterClockwiseOrientation: true,
         innerCycles: [],
         cycleArea: 255.08713253993798,
         sketch: {
@@ -8323,6 +8515,8 @@ describe('algo3d test suite', () => {
         index: 20,
         flattenShapes: [],
         polygon: new Polygon(),
+        label: 'n2#0#0#0#0',
+        centroid: [167.89000897911896, 106.68245204216646],
       },
       {
         cycle: [
@@ -8360,6 +8554,7 @@ describe('algo3d test suite', () => {
             midPt2d: [166.49999999999997, 41.88750457763673],
           },
         ],
+        isCounterClockwiseOrientation: true,
         innerCycles: [],
         cycleArea: 351.7466507643869,
         sketch: {
@@ -8620,6 +8815,8 @@ describe('algo3d test suite', () => {
         index: 22,
         flattenShapes: [],
         polygon: new Polygon(),
+        label: 'n2#0#0',
+        centroid: [153.2971704199447, 85.18885430205754],
       },
       {
         cycle: [
@@ -8690,6 +8887,7 @@ describe('algo3d test suite', () => {
             midPt2d: [148.49999999999997, 102.88750457763672],
           },
         ],
+        isCounterClockwiseOrientation: true,
         innerCycles: [],
         cycleArea: 4540.450460047228,
         sketch: {
@@ -8950,6 +9148,8 @@ describe('algo3d test suite', () => {
         index: 23,
         flattenShapes: [],
         polygon: new Polygon(),
+        label: 'n2#0',
+        centroid: [161.43407961950084, 46.562658520403104],
       },
       {
         cycle: [
@@ -8987,6 +9187,7 @@ describe('algo3d test suite', () => {
             midPt2d: [235.50000000000003, 116.88750457763673],
           },
         ],
+        isCounterClockwiseOrientation: true,
         innerCycles: [],
         cycleArea: 18.35647732505528,
         sketch: {
@@ -9247,6 +9448,8 @@ describe('algo3d test suite', () => {
         index: 24,
         flattenShapes: [],
         polygon: new Polygon(),
+        label: 'n2#0#0#1',
+        centroid: [169.29068009091455, 91.00792450004965],
       },
       {
         cycle: [
@@ -9295,6 +9498,7 @@ describe('algo3d test suite', () => {
             midPt2d: [148.49999999999997, 102.88750457763672],
           },
         ],
+        isCounterClockwiseOrientation: true,
         innerCycles: [],
         cycleArea: 977.5497905801192,
         sketch: {
@@ -9555,6 +9759,8 @@ describe('algo3d test suite', () => {
         index: 25,
         flattenShapes: [],
         polygon: new Polygon(),
+        label: 'n2#0#1',
+        centroid: [192.7200800338457, 71.61152229925543],
       },
       {
         cycle: [
@@ -9592,6 +9798,7 @@ describe('algo3d test suite', () => {
             midPt2d: [295.5, 22.387504577636733],
           },
         ],
+        isCounterClockwiseOrientation: true,
         innerCycles: [],
         cycleArea: 57.031441832448536,
         sketch: {
@@ -9852,6 +10059,8 @@ describe('algo3d test suite', () => {
         index: 26,
         flattenShapes: [],
         polygon: new Polygon(),
+        label: 'n2#0#1#1',
+        centroid: [214.05779299807432, 51.81300584413011],
       },
       {
         cycle: [
@@ -9889,6 +10098,7 @@ describe('algo3d test suite', () => {
             midPt2d: [235.50000000000003, 116.88750457763673],
           },
         ],
+        isCounterClockwiseOrientation: true,
         innerCycles: [],
         cycleArea: 293.903236449072,
         sketch: {
@@ -10149,6 +10359,8 @@ describe('algo3d test suite', () => {
         index: 27,
         flattenShapes: [],
         polygon: new Polygon(),
+        label: 'n2#0#2',
+        centroid: [211.34245355959126, 32.27340744465343],
       },
       {
         cycle: [
@@ -10186,6 +10398,7 @@ describe('algo3d test suite', () => {
             midPt2d: [166.49999999999997, 41.88750457763673],
           },
         ],
+        isCounterClockwiseOrientation: true,
         innerCycles: [],
         cycleArea: 4012.2010169456876,
         sketch: {
@@ -10446,6 +10659,8 @@ describe('algo3d test suite', () => {
         index: 28,
         flattenShapes: [],
         polygon: new Polygon(),
+        label: 'n2#3#0',
+        centroid: [260.0895323381579, 77.61072387575946],
       },
       {
         cycle: [
@@ -10505,6 +10720,7 @@ describe('algo3d test suite', () => {
             midPt2d: [235.50000000000003, 116.88750457763673],
           },
         ],
+        isCounterClockwiseOrientation: true,
         innerCycles: [],
         cycleArea: 20214.315744790918,
         sketch: {
@@ -10765,6 +10981,8 @@ describe('algo3d test suite', () => {
         index: 29,
         flattenShapes: [],
         polygon: new Polygon(),
+        label: 'n2#3',
+        centroid: [289.81071325040307, 17.701989621438393],
       },
       {
         cycle: [
@@ -10791,6 +11009,7 @@ describe('algo3d test suite', () => {
             midPt2d: [158, -57.612495422363274],
           },
         ],
+        isCounterClockwiseOrientation: true,
         innerCycles: [],
         cycleArea: 2017.852834799075,
         sketch: {
@@ -11051,6 +11270,8 @@ describe('algo3d test suite', () => {
         index: 30,
         flattenShapes: [],
         polygon: new Polygon(),
+        label: 'n2#1',
+        centroid: [163.7473283231389, 9.665053772027104],
       },
       {
         cycle: [
@@ -11099,6 +11320,7 @@ describe('algo3d test suite', () => {
             midPt2d: [166.49999999999997, 41.88750457763673],
           },
         ],
+        isCounterClockwiseOrientation: true,
         innerCycles: [],
         cycleArea: 18950.69404440774,
         sketch: {
@@ -11359,6 +11581,8 @@ describe('algo3d test suite', () => {
         index: 31,
         flattenShapes: [],
         polygon: new Polygon(),
+        label: 'n2',
+        centroid: [165.3341579231075, -49.361195430854565],
       },
       {
         cycle: [
@@ -11396,6 +11620,7 @@ describe('algo3d test suite', () => {
             midPt2d: [166.49999999999997, 41.88750457763673],
           },
         ],
+        isCounterClockwiseOrientation: true,
         innerCycles: [],
         cycleArea: 0.2788014980473967,
         sketch: {
@@ -11656,6 +11881,8 @@ describe('algo3d test suite', () => {
         index: 32,
         flattenShapes: [],
         polygon: new Polygon(),
+        label: 'n2#2',
+        centroid: [206.71794565960772, 9.693123226755208],
       },
       {
         cycle: [
@@ -11682,6 +11909,7 @@ describe('algo3d test suite', () => {
             midPt2d: [158, -57.612495422363274],
           },
         ],
+        isCounterClockwiseOrientation: true,
         innerCycles: [],
         cycleArea: 590.6327060531376,
         sketch: {
@@ -11942,6 +12170,8 @@ describe('algo3d test suite', () => {
         index: 33,
         flattenShapes: [],
         polygon: new Polygon(),
+        label: 'n2#4',
+        centroid: [223.7893195397716, -19.335073144678056],
       },
       {
         cycle: [
@@ -11979,6 +12209,7 @@ describe('algo3d test suite', () => {
             midPt2d: [-10.500000000000012, -106.61249542236331],
           },
         ],
+        isCounterClockwiseOrientation: true,
         innerCycles: [],
         cycleArea: 1507.9525128947118,
         sketch: {
@@ -12239,6 +12470,8 @@ describe('algo3d test suite', () => {
         index: 34,
         flattenShapes: [],
         polygon: new Polygon(),
+        label: 'n1',
+        centroid: [-65.33000687490944, -98.28488750617096],
       },
       {
         cycle: [
@@ -12276,6 +12509,7 @@ describe('algo3d test suite', () => {
             midPt2d: [-10.500000000000012, -106.61249542236331],
           },
         ],
+        isCounterClockwiseOrientation: true,
         innerCycles: [],
         cycleArea: 4808.218426214619,
         sketch: {
@@ -12536,6 +12770,8 @@ describe('algo3d test suite', () => {
         index: 35,
         flattenShapes: [],
         polygon: new Polygon(),
+        label: 'n1#1#0',
+        centroid: [-16.63121231324323, -108.21600571609049],
       },
       {
         cycle: [
@@ -12573,6 +12809,7 @@ describe('algo3d test suite', () => {
             midPt2d: [-63.99999999999999, -99.11249542236331],
           },
         ],
+        isCounterClockwiseOrientation: true,
         innerCycles: [],
         cycleArea: 313.67689802999416,
         sketch: {
@@ -12833,6 +13070,8 @@ describe('algo3d test suite', () => {
         index: 36,
         flattenShapes: [],
         polygon: new Polygon(),
+        label: 'n1#1',
+        centroid: [-45.416727970811756, -101.49782657460707],
       },
       {
         cycle: [
@@ -12870,6 +13109,7 @@ describe('algo3d test suite', () => {
             midPt2d: [-59.49999999999999, -140.1124954223633],
           },
         ],
+        isCounterClockwiseOrientation: true,
         innerCycles: [],
         cycleArea: 228.9512144003442,
         sketch: {
@@ -13130,6 +13370,8 @@ describe('algo3d test suite', () => {
         index: 38,
         flattenShapes: [],
         polygon: new Polygon(),
+        label: 'n1#0',
+        centroid: [-62.14703066918432, -119.09030903057742],
       },
       {
         cycle: [
@@ -13167,6 +13409,7 @@ describe('algo3d test suite', () => {
             midPt2d: [-63.99999999999999, -99.11249542236331],
           },
         ],
+        isCounterClockwiseOrientation: true,
         innerCycles: [],
         cycleArea: 1820.466494633463,
         sketch: {
@@ -13427,6 +13670,8 @@ describe('algo3d test suite', () => {
         index: 39,
         flattenShapes: [],
         polygon: new Polygon(),
+        label: 'n1#0#0',
+        centroid: [-58.782967835122385, -139.44654350802074],
       },
       {
         cycle: [
@@ -13464,6 +13709,7 @@ describe('algo3d test suite', () => {
             midPt2d: [-10.500000000000012, -106.61249542236331],
           },
         ],
+        isCounterClockwiseOrientation: true,
         innerCycles: [],
         cycleArea: 11.874951756646716,
         sketch: {
@@ -13724,6 +13970,8 @@ describe('algo3d test suite', () => {
         index: 40,
         flattenShapes: [],
         polygon: new Polygon(),
+        label: 'n1#0#1',
+        centroid: [-48.628804609663106, -117.41540381083084],
       },
       {
         cycle: [
@@ -13761,6 +14009,7 @@ describe('algo3d test suite', () => {
             midPt2d: [-63.99999999999999, -99.11249542236331],
           },
         ],
+        isCounterClockwiseOrientation: true,
         innerCycles: [],
         cycleArea: 166.88192876810916,
         sketch: {
@@ -14021,11 +14270,16 @@ describe('algo3d test suite', () => {
         index: 41,
         flattenShapes: [],
         polygon: new Polygon(),
+        label: 'n1#0#0#0',
+        centroid: [-40.87245569231397, -128.05555697443262],
       },
     ];
-    expect(sketchCycleTypesEquals(findCyclesInSketch(sketch), expectedResult)).toBe(true);
+    const [cyclesInSketch, cyclesInSketchMap] = findCyclesInSketch(sketch);
+    expect(sketchCycleTypesEquals(cyclesInSketch, expectedResult)).toBe(true);
+    checkSketchCyclesMap(cyclesInSketch, cyclesInSketchMap);
   });
 
+  // Sketch2 to be taken from 01_sketchShapes_testfile1.json
   test('[Sketch02] sketch with inner cycles', () => {
     const sketch: SketchType = {
       id: 2,
@@ -14294,6 +14548,7 @@ describe('algo3d test suite', () => {
             midPt2d: [-148.49999999999997, -63.11249542239486],
           },
         ],
+        isCounterClockwiseOrientation: true,
         innerCycles: [],
         cycleArea: 176.71458676448873,
         sketch: {
@@ -14556,6 +14811,8 @@ describe('algo3d test suite', () => {
         index: 0,
         flattenShapes: [],
         polygon: new Polygon(),
+        label: 'n3',
+        centroid: [-148.49999999999997, -63.11249542239486],
       },
       {
         cycle: [
@@ -14566,6 +14823,7 @@ describe('algo3d test suite', () => {
             midPt2d: [142.5, -83.11249542240485],
           },
         ],
+        isCounterClockwiseOrientation: true,
         innerCycles: [],
         cycleArea: 240.33183799979645,
         sketch: {
@@ -14828,6 +15086,8 @@ describe('algo3d test suite', () => {
         index: 1,
         flattenShapes: [],
         polygon: new Polygon(),
+        label: 'n4',
+        centroid: [142.5, -83.11249542240485],
       },
       {
         cycle: [
@@ -14838,6 +15098,7 @@ describe('algo3d test suite', () => {
             midPt2d: [154.99999999999997, 73.38750457767344],
           },
         ],
+        isCounterClockwiseOrientation: true,
         innerCycles: [],
         cycleArea: 145.29866022853963,
         sketch: {
@@ -15100,6 +15361,8 @@ describe('algo3d test suite', () => {
         index: 2,
         flattenShapes: [],
         polygon: new Polygon(),
+        label: 'n5',
+        centroid: [154.99999999999997, 73.38750457767344],
       },
       {
         cycle: [
@@ -15110,6 +15373,7 @@ describe('algo3d test suite', () => {
             midPt2d: [-159.5, 56.38750457766493],
           },
         ],
+        isCounterClockwiseOrientation: true,
         innerCycles: [],
         cycleArea: 196.34954084942652,
         sketch: {
@@ -15372,6 +15636,8 @@ describe('algo3d test suite', () => {
         index: 3,
         flattenShapes: [],
         polygon: new Polygon(),
+        label: 'n2',
+        centroid: [-159.5, 56.38750457766493],
       },
       {
         cycle: [
@@ -15396,30 +15662,8 @@ describe('algo3d test suite', () => {
             end: [-224.00000000000003, 0, -92.6124954224096],
           },
         ],
-        innerCycles: [
-          [
-            {
-              t: 1,
-              start: [-179.00000000000003, 0, 72.88750457767316],
-              end: [199.99999999999997, 0, 93.88750457768367],
-            },
-            {
-              t: 1,
-              start: [199.99999999999997, 0, 93.88750457768367],
-              end: [161.99999999999997, 0, -105.11249542241583],
-            },
-            {
-              t: 1,
-              start: [161.99999999999997, 0, -105.11249542241583],
-              end: [-181.00000000000003, 0, -78.61249542240259],
-            },
-            {
-              t: 1,
-              start: [-181.00000000000003, 0, -78.61249542240259],
-              end: [-179.00000000000003, 0, 72.88750457767316],
-            },
-          ],
-        ],
+        isCounterClockwiseOrientation: true,
+        innerCycles: [6],
         cycleArea: 90349.87500004518,
         sketch: {
           id: 2,
@@ -15681,6 +15925,8 @@ describe('algo3d test suite', () => {
         index: 5,
         flattenShapes: [],
         polygon: new Polygon(),
+        label: 'n0',
+        centroid: [11.149018145662414, -7.465838698529075],
       },
       {
         cycle: [
@@ -15705,40 +15951,8 @@ describe('algo3d test suite', () => {
             end: [161.99999999999997, 0, -105.11249542241583],
           },
         ],
-        innerCycles: [
-          [
-            {
-              t: 2,
-              mid_pt: [-148.49999999999997, 0, -63.11249542239486],
-              radius: 7.500000000001338,
-              midPt2d: [-148.49999999999997, -63.11249542239486],
-            },
-          ],
-          [
-            {
-              t: 2,
-              mid_pt: [142.5, 0, -83.11249542240485],
-              radius: 8.746427842271167,
-              midPt2d: [142.5, -83.11249542240485],
-            },
-          ],
-          [
-            {
-              t: 2,
-              mid_pt: [154.99999999999997, 0, 73.38750457767344],
-              radius: 6.800735254368006,
-              midPt2d: [154.99999999999997, 73.38750457767344],
-            },
-          ],
-          [
-            {
-              t: 2,
-              mid_pt: [-159.5, 0, 56.38750457766493],
-              radius: 7.905694150422249,
-              midPt2d: [-159.5, 56.38750457766493],
-            },
-          ],
-        ],
+        isCounterClockwiseOrientation: true,
+        innerCycles: [0, 1, 2, 3],
         cycleArea: 63320.250000031665,
         sketch: {
           id: 2,
@@ -16000,17 +16214,22 @@ describe('algo3d test suite', () => {
         index: 7,
         flattenShapes: [],
         polygon: new Polygon(),
+        label: 'n1',
+        centroid: [8.834835617357768, -3.0639149919337862],
       },
     ];
-    expect(sketchCycleTypesEquals(findCyclesInSketch(sketch), expectedResult)).toBe(true);
+    const [cyclesInSketch, cyclesInSketchMap] = findCyclesInSketch(sketch);
+    expect(sketchCycleTypesEquals(cyclesInSketch, expectedResult)).toBe(true);
+    checkSketchCyclesMap(cyclesInSketch, cyclesInSketchMap);
   });
 
+  // Sketch3 to be taken from 01_sketchShapes_testfile1.json
   test('[Sketch03] sketch with multiple overlapping line segments in a single cluster', () => {
     const sketch: SketchType = {
       id: 3,
       name: 'Sketch3',
       plane: 'xz',
-      isVisible: true,
+      isVisible: false,
       entityIdCounter: 37,
       points: [
         {
@@ -16418,13 +16637,14 @@ describe('algo3d test suite', () => {
             end: [-205.30709357863086, 0, -41.970270210528675],
           },
         ],
+        isCounterClockwiseOrientation: true,
         innerCycles: [],
         cycleArea: 36207.637174168995,
         sketch: {
           id: 3,
           name: 'Sketch3',
           plane: 'xz',
-          isVisible: true,
+          isVisible: false,
           entityIdCounter: 37,
           points: [
             {
@@ -16781,6 +17001,8 @@ describe('algo3d test suite', () => {
         index: 1,
         flattenShapes: [],
         polygon: new Polygon(),
+        label: 'n0#0#0',
+        centroid: [-45.57749114352207, -16.025913303582648],
       },
       {
         cycle: [
@@ -16815,13 +17037,14 @@ describe('algo3d test suite', () => {
             end: [137, 0, 88.81250000004442],
           },
         ],
+        isCounterClockwiseOrientation: true,
         innerCycles: [],
         cycleArea: 19601.001863600344,
         sketch: {
           id: 3,
           name: 'Sketch3',
           plane: 'xz',
-          isVisible: true,
+          isVisible: false,
           entityIdCounter: 37,
           points: [
             {
@@ -17178,6 +17401,8 @@ describe('algo3d test suite', () => {
         index: 2,
         flattenShapes: [],
         polygon: new Polygon(),
+        label: 'n0#0#0#0#0',
+        centroid: [98.78508395973006, 91.07473953669161],
       },
       {
         cycle: [
@@ -17202,13 +17427,14 @@ describe('algo3d test suite', () => {
             end: [-104.00000000000003, 0, 14.31250000000716],
           },
         ],
+        isCounterClockwiseOrientation: true,
         innerCycles: [],
         cycleArea: 16706.998136417817,
         sketch: {
           id: 3,
           name: 'Sketch3',
           plane: 'xz',
-          isVisible: true,
+          isVisible: false,
           entityIdCounter: 37,
           points: [
             {
@@ -17565,6 +17791,8 @@ describe('algo3d test suite', () => {
         index: 3,
         flattenShapes: [],
         polygon: new Polygon(),
+        label: 'n0#0#0#0',
+        centroid: [21.55488894155368, 49.75030895218363],
       },
       {
         cycle: [
@@ -17599,13 +17827,14 @@ describe('algo3d test suite', () => {
             end: [157.5, 0, -92.18750000004611],
           },
         ],
+        isCounterClockwiseOrientation: true,
         innerCycles: [],
         cycleArea: 8031.21550931867,
         sketch: {
           id: 3,
           name: 'Sketch3',
           plane: 'xz',
-          isVisible: true,
+          isVisible: false,
           entityIdCounter: 37,
           points: [
             {
@@ -17962,6 +18191,8 @@ describe('algo3d test suite', () => {
         index: 4,
         flattenShapes: [],
         polygon: new Polygon(),
+        label: 'n0#0#0#1#0',
+        centroid: [160.23261701056475, -96.34439746887469],
       },
       {
         cycle: [
@@ -17986,13 +18217,14 @@ describe('algo3d test suite', () => {
             end: [85.5, 0, -42.1875000000211],
           },
         ],
+        isCounterClockwiseOrientation: true,
         innerCycles: [],
         cycleArea: 3473.784490687086,
         sketch: {
           id: 3,
           name: 'Sketch3',
           plane: 'xz',
-          isVisible: true,
+          isVisible: false,
           entityIdCounter: 37,
           points: [
             {
@@ -18349,6 +18581,8 @@ describe('algo3d test suite', () => {
         index: 5,
         flattenShapes: [],
         polygon: new Polygon(),
+        label: 'n0#0#0#1',
+        centroid: [119.95784346554697, -67.41239459178466],
       },
       {
         cycle: [
@@ -18383,13 +18617,14 @@ describe('algo3d test suite', () => {
             end: [-204.00000000000003, 0, -90.18750000004513],
           },
         ],
+        isCounterClockwiseOrientation: true,
         innerCycles: [],
         cycleArea: 15168.919801253276,
         sketch: {
           id: 3,
           name: 'Sketch3',
           plane: 'xz',
-          isVisible: true,
+          isVisible: false,
           entityIdCounter: 37,
           points: [
             {
@@ -18746,6 +18981,8 @@ describe('algo3d test suite', () => {
         index: 6,
         flattenShapes: [],
         polygon: new Polygon(),
+        label: 'n0',
+        centroid: [-211.4399675419827, -106.11414420527521],
       },
       {
         cycle: [
@@ -18770,13 +19007,14 @@ describe('algo3d test suite', () => {
             end: [-107.00000000000001, 0, -36.18750000001808],
           },
         ],
+        isCounterClockwiseOrientation: true,
         innerCycles: [],
         cycleArea: 5012.580198756821,
         sketch: {
           id: 3,
           name: 'Sketch3',
           plane: 'xz',
-          isVisible: true,
+          isVisible: false,
           entityIdCounter: 37,
           points: [
             {
@@ -19133,17 +19371,22 @@ describe('algo3d test suite', () => {
         index: 7,
         flattenShapes: [],
         polygon: new Polygon(),
+        label: 'n0#0',
+        centroid: [-154.89226947510073, -64.66997205096466],
       },
     ];
-    expect(sketchCycleTypesEquals(findCyclesInSketch(sketch), expectedResult)).toBe(true);
+    const [cyclesInSketch, cyclesInSketchMap] = findCyclesInSketch(sketch);
+    expect(sketchCycleTypesEquals(cyclesInSketch, expectedResult)).toBe(true);
+    checkSketchCyclesMap(cyclesInSketch, cyclesInSketchMap);
   });
 
+  // Sketch7 to be taken from 01_sketchShapes_testfile1.json
   test('[Sketch04] sketch with inner cycles and overlapping clusters', () => {
     const sketch: SketchType = {
       id: 7,
       name: 'Sketch7',
       plane: 'xy',
-      isVisible: true,
+      isVisible: false,
       entityIdCounter: 37,
       points: [
         {
@@ -19440,13 +19683,14 @@ describe('algo3d test suite', () => {
             midPt2d: [-196.99999999999994, 47.45832824707031],
           },
         ],
+        isCounterClockwiseOrientation: true,
         innerCycles: [],
         cycleArea: 402.12385965949215,
         sketch: {
           id: 7,
           name: 'Sketch7',
           plane: 'xy',
-          isVisible: true,
+          isVisible: false,
           entityIdCounter: 37,
           points: [
             {
@@ -19736,6 +19980,8 @@ describe('algo3d test suite', () => {
         index: 0,
         flattenShapes: [],
         polygon: new Polygon(),
+        label: 'n2',
+        centroid: [-196.99999999999994, 47.45832824707031],
       },
       {
         cycle: [
@@ -19746,13 +19992,14 @@ describe('algo3d test suite', () => {
             midPt2d: [-165.99999999999997, -37.541671752929666],
           },
         ],
+        isCounterClockwiseOrientation: true,
         innerCycles: [],
         cycleArea: 455.530934770521,
         sketch: {
           id: 7,
           name: 'Sketch7',
           plane: 'xy',
-          isVisible: true,
+          isVisible: false,
           entityIdCounter: 37,
           points: [
             {
@@ -20042,6 +20289,8 @@ describe('algo3d test suite', () => {
         index: 1,
         flattenShapes: [],
         polygon: new Polygon(),
+        label: 'n3',
+        centroid: [-165.99999999999997, -37.541671752929666],
       },
       {
         cycle: [
@@ -20052,13 +20301,14 @@ describe('algo3d test suite', () => {
             midPt2d: [146.99999999999994, -36.541671752929695],
           },
         ],
+        isCounterClockwiseOrientation: true,
         innerCycles: [],
         cycleArea: 679.369411338788,
         sketch: {
           id: 7,
           name: 'Sketch7',
           plane: 'xy',
-          isVisible: true,
+          isVisible: false,
           entityIdCounter: 37,
           points: [
             {
@@ -20348,6 +20598,8 @@ describe('algo3d test suite', () => {
         index: 2,
         flattenShapes: [],
         polygon: new Polygon(),
+        label: 'n5',
+        centroid: [146.99999999999994, -36.541671752929695],
       },
       {
         cycle: [
@@ -20372,84 +20624,14 @@ describe('algo3d test suite', () => {
             end: [-221.49999999999994, -86.04167175292967, 0],
           },
         ],
-        innerCycles: [
-          [
-            {
-              t: 3,
-              start: [-13.045646620997708, 37.00639171449397, 0],
-              mid_pt: [3.50000000000003, -4.541671752929685, 0],
-              end: [32.41180347009085, 29.577349629678032, 0],
-              radius: 44.721359549995775,
-              start_angle: 1.9497751073313487,
-              end_angle: 0.8678248126148386,
-              clockwise: true,
-              midPt2d: [3.50000000000003, -4.541671752929685],
-            },
-            {
-              t: 3,
-              start: [32.41180347009086, 29.577349629678032, 0],
-              mid_pt: [77.99999999999997, 25.45832824707031, 0],
-              end: [47.988064752071104, -9.103699220572864, 0],
-              radius: 45.77390086064325,
-              start_angle: 3.0514845212567923,
-              end_angle: 3.997337809363758,
-              clockwise: true,
-              midPt2d: [77.99999999999997, 25.45832824707031],
-            },
-            {
-              t: 3,
-              start: [47.98806475207109, -9.10369922057287, 0],
-              mid_pt: [3.50000000000003, -4.541671752929685, 0],
-              end: [0.884515070833733, -49.18648375371318, 0],
-              radius: 44.721359549995775,
-              start_angle: 6.180997518005712,
-              end_angle: 4.6538715684043614,
-              clockwise: true,
-              midPt2d: [3.50000000000003, -4.541671752929685],
-            },
-            {
-              t: 3,
-              start: [0.8845150708337446, -49.186483753713176, 0],
-              mid_pt: [-46.00000000000001, -12.541671752929677, 0],
-              end: [-13.045646620997697, 37.00639171449398, 0],
-              radius: 59.50630218724739,
-              start_angle: 5.619766662304235,
-              end_angle: 0.9838800134314755,
-              clockwise: true,
-              midPt2d: [-46.00000000000001, -12.541671752929677],
-            },
-          ],
-          [
-            {
-              t: 2,
-              mid_pt: [-196.99999999999994, 47.45832824707031, 0],
-              radius: 11.31370849898475,
-              midPt2d: [-196.99999999999994, 47.45832824707031],
-            },
-          ],
-          [
-            {
-              t: 2,
-              mid_pt: [-165.99999999999997, -37.541671752929666, 0],
-              radius: 12.0415945787923,
-              midPt2d: [-165.99999999999997, -37.541671752929666],
-            },
-          ],
-          [
-            {
-              t: 2,
-              mid_pt: [146.99999999999994, -36.541671752929695, 0],
-              radius: 14.705441169852696,
-              midPt2d: [146.99999999999994, -36.541671752929695],
-            },
-          ],
-        ],
+        isCounterClockwiseOrientation: true,
+        innerCycles: [9, 0, 1, 2],
         cycleArea: 80883.99999999997,
         sketch: {
           id: 7,
           name: 'Sketch7',
           plane: 'xy',
-          isVisible: true,
+          isVisible: false,
           entityIdCounter: 37,
           points: [
             {
@@ -20739,6 +20921,8 @@ describe('algo3d test suite', () => {
         index: 4,
         flattenShapes: [],
         polygon: new Polygon(),
+        label: 'n1',
+        centroid: [-3.155366533142117, 1.1929384089482287],
       },
       {
         cycle: [
@@ -20763,36 +20947,14 @@ describe('algo3d test suite', () => {
             end: [235.49999999999991, 140.95832824707028, 0],
           },
         ],
-        innerCycles: [
-          [
-            {
-              t: 1,
-              start: [202.49999999999994, 103.4583282470703, 0],
-              end: [229.99999999999991, -90.54167175292967, 0],
-            },
-            {
-              t: 1,
-              start: [229.99999999999991, -90.54167175292967, 0],
-              end: [-221.49999999999994, -86.04167175292967, 0],
-            },
-            {
-              t: 1,
-              start: [-221.49999999999994, -86.04167175292967, 0],
-              end: [-249.99999999999997, 76.4583282470703, 0],
-            },
-            {
-              t: 1,
-              start: [-249.99999999999997, 76.4583282470703, 0],
-              end: [202.49999999999994, 103.4583282470703, 0],
-            },
-          ],
-        ],
+        isCounterClockwiseOrientation: false,
+        innerCycles: [3],
         cycleArea: 116599.87499999996,
         sketch: {
           id: 7,
           name: 'Sketch7',
           plane: 'xy',
-          isVisible: true,
+          isVisible: false,
           entityIdCounter: 37,
           points: [
             {
@@ -21082,6 +21244,8 @@ describe('algo3d test suite', () => {
         index: 6,
         flattenShapes: [],
         polygon: new Polygon(),
+        label: 'n0',
+        centroid: [-0.7824579571804862, 6.713987111770357],
       },
       {
         cycle: [
@@ -21108,13 +21272,14 @@ describe('algo3d test suite', () => {
             midPt2d: [3.50000000000003, -4.541671752929685],
           },
         ],
+        isCounterClockwiseOrientation: true,
         innerCycles: [],
         cycleArea: 7692.735165361673,
         sketch: {
           id: 7,
           name: 'Sketch7',
           plane: 'xy',
-          isVisible: true,
+          isVisible: false,
           entityIdCounter: 37,
           points: [
             {
@@ -21404,6 +21569,8 @@ describe('algo3d test suite', () => {
         index: 7,
         flattenShapes: [],
         polygon: new Polygon(),
+        label: 'n4',
+        centroid: [-50.49104126343336, -13.267496603585572],
       },
       {
         cycle: [
@@ -21452,13 +21619,14 @@ describe('algo3d test suite', () => {
             midPt2d: [3.50000000000003, -4.541671752929685],
           },
         ],
+        isCounterClockwiseOrientation: true,
         innerCycles: [],
         cycleArea: 2565.141722339563,
         sketch: {
           id: 7,
           name: 'Sketch7',
           plane: 'xy',
-          isVisible: true,
+          isVisible: false,
           entityIdCounter: 37,
           points: [
             {
@@ -21748,6 +21916,8 @@ describe('algo3d test suite', () => {
         index: 8,
         flattenShapes: [],
         polygon: new Polygon(),
+        label: 'n4#1',
+        centroid: [19.709037158621896, -1.6969282956630296],
       },
       {
         cycle: [
@@ -21774,13 +21944,14 @@ describe('algo3d test suite', () => {
             midPt2d: [-46.00000000000001, -12.541671752929677],
           },
         ],
+        isCounterClockwiseOrientation: true,
         innerCycles: [],
         cycleArea: 3431.6444209997953,
         sketch: {
           id: 7,
           name: 'Sketch7',
           plane: 'xy',
-          isVisible: true,
+          isVisible: false,
           entityIdCounter: 37,
           points: [
             {
@@ -22070,6 +22241,8 @@ describe('algo3d test suite', () => {
         index: 10,
         flattenShapes: [],
         polygon: new Polygon(),
+        label: 'n4#0',
+        centroid: [-11.328336929351968, -6.938170650602731],
       },
       {
         cycle: [
@@ -22096,13 +22269,14 @@ describe('algo3d test suite', () => {
             midPt2d: [3.50000000000003, -4.541671752929685],
           },
         ],
+        isCounterClockwiseOrientation: true,
         innerCycles: [],
         cycleArea: 286.39916384022274,
         sketch: {
           id: 7,
           name: 'Sketch7',
           plane: 'xy',
-          isVisible: true,
+          isVisible: false,
           entityIdCounter: 37,
           points: [
             {
@@ -22392,6 +22566,8 @@ describe('algo3d test suite', () => {
         index: 11,
         flattenShapes: [],
         polygon: new Polygon(),
+        label: 'n4#1#0',
+        centroid: [40.24119349069292, 10.253439719832558],
       },
       {
         cycle: [
@@ -22418,13 +22594,14 @@ describe('algo3d test suite', () => {
             midPt2d: [77.99999999999997, 25.45832824707031],
           },
         ],
+        isCounterClockwiseOrientation: false,
         innerCycles: [],
         cycleArea: 6296.022843593782,
         sketch: {
           id: 7,
           name: 'Sketch7',
           plane: 'xy',
-          isVisible: true,
+          isVisible: false,
           entityIdCounter: 37,
           points: [
             {
@@ -22714,8 +22891,12 @@ describe('algo3d test suite', () => {
         index: 12,
         flattenShapes: [],
         polygon: new Polygon(),
+        label: 'n4#1#1',
+        centroid: [68.54824692065776, 21.652253181563385],
       },
     ];
-    expect(sketchCycleTypesEquals(findCyclesInSketch(sketch), expectedResult)).toBe(true);
+    const [cyclesInSketch, cyclesInSketchMap] = findCyclesInSketch(sketch);
+    expect(sketchCycleTypesEquals(cyclesInSketch, expectedResult)).toBe(true);
+    checkSketchCyclesMap(cyclesInSketch, cyclesInSketchMap);
   });
 });

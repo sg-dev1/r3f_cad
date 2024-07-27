@@ -10,13 +10,11 @@ import { GeometryType } from '@/app/types/EntityType';
 import { Line3DInlinePointType } from '@/app/types/Line3DType';
 import { ArcInlinePointType } from '@/app/types/ArcType';
 import { CircleInlinePointType } from '@/app/types/CircleType';
-import { floatNumbersEqual } from './utils';
 
 /** Datatype representing a sketch cycle including occt data (the face) */
 export interface SketchCycleTypeOcct {
   cycle: CadTool3DShapeSubset[]; // the (outer) cycle
-  innerCycles: CadTool3DShapeSubset[][]; // inner cycles (e.g. holes) if there are any
-  cycleArea: number; // area of the cycle
+  innerCycles: number[]; // ids (SketchCycleTypeOcct.index) of inner cycles
   sketch: SketchType; // the Sketch this cycle belongs to. One Sketch may have multiple cycles.
   index: number; // index of this cycle for the given sketch
   occtFace: Inputs.OCCT.TopoDSFacePointer; // the cycle as occt face
@@ -25,6 +23,12 @@ export interface SketchCycleTypeOcct {
   label?: string; // label of the sketch cycle
   centroid?: [number, number];
 }
+export type SketchCycleOcctMapType = { [cycleIndex: number]: SketchCycleTypeOcct };
+// Result type of the findCyclesInSketchAndConvertToOcct function to have a container for cycles and map
+export interface SketchCyclesOcctContainer {
+  cycles: SketchCycleTypeOcct[];
+  map: SketchCycleOcctMapType;
+}
 
 /** Finds all cycles in a sketch and adds occt data to it. */
 export const findCyclesInSketchAndConvertToOcct = async (
@@ -32,8 +36,8 @@ export const findCyclesInSketchAndConvertToOcct = async (
   bitbybit: BitByBitOCCT,
   saveGraphGeom2d: SaveGraphToReduxFunction,
   prevGraphGeom2d: GraphGeom2d | null
-) => {
-  const cyclesInSketch = findCyclesInSketch(sketch, saveGraphGeom2d, prevGraphGeom2d);
+): Promise<SketchCyclesOcctContainer> => {
+  const [cyclesInSketch, cyclesInSketchMap] = findCyclesInSketch(sketch, saveGraphGeom2d, prevGraphGeom2d);
 
   /*
   cyclesInSketch.sort((a: SketchCycleType, b: SketchCycleType) =>
@@ -80,8 +84,9 @@ export const findCyclesInSketchAndConvertToOcct = async (
     // 1.1) Inner cycles - may be empty
     const innerCyclesEdges = (await Promise.all(
       cycle.innerCycles.map(async (innerCycle) => {
+        const cycleForInnerCycle = cyclesInSketchMap[innerCycle];
         return await Promise.all(
-          innerCycle.map(async (cycle) => {
+          cycleForInnerCycle.cycle.map(async (cycle) => {
             if (cycle.t === GeometryType.LINE) {
               const dto = {
                 start: (cycle as Line3DInlinePointType).start,
@@ -129,12 +134,17 @@ export const findCyclesInSketchAndConvertToOcct = async (
         innerCyclesEdges.map(async (edges, index) => {
           let tmpWire = await bitbybit.occt.shapes.wire.combineEdgesAndWiresIntoAWire({ shapes: edges });
           // not sure if this reversing logic is complete ...
-          if (cycle.isCounterClockwiseOrientation && cycle.innerCyclesCcwOrientation[index] && edges.length > 1) {
+          const cycleForInnerCycle = cyclesInSketchMap[cycle.innerCycles[index]];
+          if (
+            cycle.isCounterClockwiseOrientation &&
+            cycleForInnerCycle.isCounterClockwiseOrientation &&
+            edges.length > 1
+          ) {
             // edges.length > 1 --> do not reverse a Circle which already has the correct orientation
             //if (sketch.name === 'Sketch13') console.log('Reversing inner wire for Sketch13!');
             //if (sketch.name === 'Sketch2') console.log('(A) Reversing inner wire for Sketch2!');
             tmpWire = await bitbybit.occt.shapes.wire.reversedWire({ shape: tmpWire });
-          } else if (!cycle.isCounterClockwiseOrientation && !cycle.innerCyclesCcwOrientation[index]) {
+          } else if (!cycle.isCounterClockwiseOrientation && !cycleForInnerCycle.isCounterClockwiseOrientation) {
             tmpWire = await bitbybit.occt.shapes.wire.reversedWire({ shape: tmpWire });
             //if (sketch.name === 'Sketch2') console.log('(B) Reversing inner wire for Sketch2!');
           }
@@ -178,7 +188,6 @@ export const findCyclesInSketchAndConvertToOcct = async (
     result.push({
       cycle: cycle.cycle,
       innerCycles: cycle.innerCycles,
-      cycleArea: cycle.cycleArea,
       sketch: cycle.sketch,
       index: cycle.index,
       occtFace: face,
@@ -187,5 +196,25 @@ export const findCyclesInSketchAndConvertToOcct = async (
     });
   }
 
-  return result;
+  const resultMap: SketchCycleOcctMapType = {};
+  for (const [key, sketchCycle] of Object.entries(cyclesInSketchMap)) {
+    const sketchCycleOcctResultList = result.filter((sketchCycle) => sketchCycle.index === Number(key));
+    if (sketchCycleOcctResultList.length > 0) {
+      const sketchCycleOcct = sketchCycleOcctResultList[0];
+      resultMap[sketchCycleOcct.index] = sketchCycleOcct;
+    } else {
+      // create a new element
+      resultMap[sketchCycle.index] = {
+        cycle: sketchCycle.cycle,
+        innerCycles: sketchCycle.innerCycles,
+        sketch: sketchCycle.sketch,
+        index: sketchCycle.index,
+        occtFace: { hash: 0, type: '' }, // just a dummy entry - must not be used
+        label: sketchCycle.label,
+        centroid: sketchCycle.centroid,
+      };
+    }
+  }
+
+  return { cycles: result, map: resultMap };
 };

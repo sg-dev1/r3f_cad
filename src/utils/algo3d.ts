@@ -865,11 +865,12 @@ const dfs_cycle = (graph: number[][], u: number, p: number, color: number[], par
 export interface SketchCycleType {
   cycle: CadTool3DShapeSubset[]; // the (outer) cycle
   isCounterClockwiseOrientation: boolean;
-  innerCycles: CadTool3DShapeSubset[][]; // inner cycles (e.g. holes) if there are any
-  innerCyclesCcwOrientation: boolean[];
-  cycleArea: number; // area of the cycle
+  innerCycles: number[];
   sketch: SketchType; // the Sketch this cycle belongs to. One Sketch may have multiple cycles.
   index: number; // index of this cycle for the given sketch
+
+  cycleArea: number; // area of the cycle (only for internal use,
+  //                    not updated with inner cycles, e.g. represents area of shape without holes)
   flattenShapes: FlattenShapeSubset[]; // flatten shapes (used internally)
   polygon: Polygon; // flatten polygon (used internally)
 
@@ -877,6 +878,7 @@ export interface SketchCycleType {
   label?: string;
   centroid?: Point2dInlineType;
 }
+export type SketchCycleMapType = { [cycleIndex: number]: SketchCycleType };
 
 export type SaveGraphToReduxFunction = (
   sketchId: number,
@@ -896,7 +898,7 @@ export const findCyclesInSketch = (
   sketch: SketchType,
   saveGraphGeom2d: SaveGraphToReduxFunction = dummySaveGraphToRedux,
   prevGraphGeom2d: GraphGeom2d | null = null
-) => {
+): [SketchCycleType[], SketchCycleMapType] => {
   if (DEBUG_FLAG) {
     console.log('sketch', sketch);
   }
@@ -909,19 +911,13 @@ export const findCyclesInSketch = (
   let cycleIndex = 0;
   cyclesInSketch.forEach((cycle) => {
     let polygon: Polygon;
-    let reversedCycle: FlattenShapeSubsetNoCircle[] | null = null;
     if (cycle[0] instanceof Circle) {
       polygon = new Polygon(cycle[0]);
     } else {
       polygon = new Polygon(cycle as FlattenShapeSubsetNoCircle[]);
     }
 
-    let cycleToUse = cycle;
-    if (reversedCycle !== null) {
-      cycleToUse = reversedCycle;
-    }
-
-    const cycleIn3D: CadTool3DShapeSubset[] = cycleToUse.map((shape) => {
+    const cycleIn3D: CadTool3DShapeSubset[] = cycle.map((shape) => {
       if (shape instanceof Segment) {
         const segment = shape as Segment;
         return {
@@ -961,18 +957,18 @@ export const findCyclesInSketch = (
       cycle: cycleIn3D,
       isCounterClockwiseOrientation: Array.from(polygon.faces.values())[0].orientation() === ORIENTATION.CCW,
       innerCycles: [], // init empty array (search for holes in later step)
-      innerCyclesCcwOrientation: [],
+      //innerCyclesCcwOrientation: [],
       cycleArea: polygon.area(),
       sketch: sketch,
       index: cycleIndex,
-      flattenShapes: cycleToUse,
+      flattenShapes: cycle,
       polygon: polygon,
       label: '',
     });
 
     cycleIndex++;
 
-    if (!(cycleToUse[0] instanceof Circle)) {
+    if (!(cycle[0] instanceof Circle)) {
       // from here down we can safely use FlattenShapeSubsetNoCircle for all cluster stuff
       let clusterIndex = -1;
       for (const [key, cycleIds] of Object.entries(clusters)) {
@@ -981,9 +977,9 @@ export const findCyclesInSketch = (
           const cycleToCompareShapes = sketchCycle[cycleIds[i]].flattenShapes;
           for (let j = 0; j < cycleToCompareShapes.length; j++) {
             const toCompareShape = cycleToCompareShapes[j] as FlattenShapeSubsetNoCircle;
-            for (let k = 0; k < cycleToUse.length; k++) {
+            for (let k = 0; k < cycle.length; k++) {
               // here it is clear that thisShape cannot be a cycle
-              const thisShape = cycleToUse[k] as FlattenShapeSubsetNoCircle;
+              const thisShape = cycle[k] as FlattenShapeSubsetNoCircle;
               const intersect = toCompareShape.intersect(thisShape);
               if (intersect.length > 0) {
                 clusterIndex = Number(key);
@@ -1017,6 +1013,7 @@ export const findCyclesInSketch = (
   // --- Remove from each cluster the element with the maximum area
 
   const allCircles = sketchCycle.filter((cycle) => cycle.cycle[0].t === GeometryType.CIRCLE);
+  // The array of sketch cycles (a RESULT of this function)
   const sketchCycleNew: SketchCycleType[] = [...allCircles];
   const clustersComplete: { [clusterIndex: number]: SketchCycleType[] } = {};
   for (const [key, cycleIds] of Object.entries(clusters)) {
@@ -1035,18 +1032,27 @@ export const findCyclesInSketch = (
     );
   }
 
-  if (DEBUG_FLAG) {
-    console.log('sketchCycleNew', sketchCycleNew, 'sketchCycle', sketchCycle, 'clusters', clusters);
-    console.log('---clustersComplete', clustersComplete);
-  }
-
-  // ---
+  // build the sketch cycle map (a RESULT of this function)
+  const sketchCycleMap: SketchCycleMapType = {};
+  // use the original sketchCycle array to have all cycles in the array
+  // (including the cycle of the whole cluster)
+  sketchCycle.forEach((sketchCycle) => {
+    sketchCycleMap[sketchCycle.index] = sketchCycle;
+  });
 
   // add all circles to clustersComplete
   allCircles.forEach((circle) => {
     clustersComplete[nextClusterIndex] = [circle];
     nextClusterIndex++;
   });
+
+  if (DEBUG_FLAG) {
+    console.log('sketchCycleNew', sketchCycleNew, 'sketchCycle', sketchCycle, 'clusters', clusters);
+    console.log('---clustersComplete', clustersComplete);
+    console.log('sketchCycleMap', sketchCycleMap);
+  }
+
+  // ---
 
   //
   // Step 1 (of B018 implementation - support for "inner cycles")
@@ -1128,23 +1134,13 @@ export const findCyclesInSketch = (
   //
   // Step 2 (of B018 implementation - support for "inner cycles")
   //
-  // build an update map and apply the final result
-  type UpdateMapType = { cycle: CadTool3DShapeSubset[]; isCcwOrientation: boolean };
-  const updateMap: { [cycleIndex: number]: UpdateMapType[] } = {};
+  // Add the indices of the inner cycles to SketchCycleType.innerCycles array
   for (const [clusterIndex, cyclesOfCluster] of Object.entries(insideMap)) {
     const cycleIndices = clusters[Number(clusterIndex)];
     for (const insideMapCycle of cyclesOfCluster) {
       if (cycleIndices.includes(insideMapCycle.outerCycleIndex)) {
-        const obj = {
-          cycle: insideMapCycle.cycle.cycle,
-          isCcwOrientation:
-            Array.from(insideMapCycle.cycle.polygon.faces.values())[0].orientation() === ORIENTATION.CCW,
-        };
-        if (insideMapCycle.outerCycleIndex in updateMap) {
-          updateMap[insideMapCycle.outerCycleIndex].push(obj);
-        } else {
-          updateMap[insideMapCycle.outerCycleIndex] = [obj];
-        }
+        // add the cycle index to the innerCycles array
+        sketchCycleMap[insideMapCycle.outerCycleIndex].innerCycles.push(insideMapCycle.cycle.index);
       } else {
         // This check should be normally not needed, only to be sure that this condition does not happen
         console.warn(
@@ -1157,54 +1153,7 @@ export const findCyclesInSketch = (
   }
 
   if (DEBUG_FLAG) {
-    console.log('updateMap', updateMap);
-  }
-
-  for (const [cycleIndex, data] of Object.entries(updateMap)) {
-    const sketchCycleToUpdate = sketchCycleNew.find((elem) => elem.index === Number(cycleIndex));
-    if (sketchCycleToUpdate) {
-      sketchCycleToUpdate.innerCycles = data.map((element) => element.cycle);
-      sketchCycleToUpdate.innerCyclesCcwOrientation = data.map((element) => element.isCcwOrientation);
-      /* Calculating the correct cycle area by substracting the inner areas - breaks test cases
-      sketchCycleToUpdate.innerCycles.forEach((cycle) => {
-        let polygon: Polygon | null = null;
-        if (cycle[0].t === GeometryType.CIRCLE) {
-          const circle = cycle[0] as CircleInlinePointType;
-          polygon = new Polygon(new Circle(new Point(circle.midPt2d[0], circle.midPt2d[1]), circle.radius));
-        } else {
-          const shapesNoCircle: FlattenShapeSubsetNoCircle[] = [];
-          cycle.forEach((element) => {
-            if (element.t === GeometryType.LINE) {
-              const line = element as Line3DInlinePointType;
-              const start2d = convert3dPointTo2d(sketch.plane, line.start);
-              const end2d = convert3dPointTo2d(sketch.plane, line.end);
-              shapesNoCircle.push(new Segment(new Point(start2d[0], start2d[1]), new Point(end2d[0], end2d[1])));
-            } else if (element.t === GeometryType.ARC) {
-              const arc = element as ArcInlinePointType;
-              shapesNoCircle.push(
-                new Arc(
-                  new Point(arc.midPt2d[0], arc.midPt2d[1]),
-                  arc.radius,
-                  arc.start_angle,
-                  arc.end_angle,
-                  !arc.clockwise
-                )
-              );
-            }
-          });
-          polygon = new Polygon(shapesNoCircle);
-        }
-        const area = polygon.area();
-        sketchCycleToUpdate.cycleArea -= area;
-      });
-      */
-    } else {
-      console.warn('Sketch cycle was not found for index', cycleIndex);
-    }
-  }
-
-  if (DEBUG_FLAG) {
-    console.log('result', sketchCycleNew);
+    console.log('result', sketchCycleNew, sketchCycleMap);
   }
 
   // ---
@@ -1288,7 +1237,7 @@ export const findCyclesInSketch = (
 
   // ---
 
-  return sketchCycleNew;
+  return [sketchCycleNew, sketchCycleMap];
 };
 
 // ---
@@ -1340,8 +1289,8 @@ export const sketchCycleTypeEquals = (a: SketchCycleType, b: SketchCycleType) =>
   const innerCyclesEq =
     a.innerCycles.length === b.innerCycles.length &&
     a.innerCycles
-      .map((shape, i) => [shape, b.innerCycles[i]])
-      .reduce((equals, shapes, i, arr) => equals && cadToolShapeArraysEqual(shapes[0], shapes[1]), true);
+      .map((cycleIndex, i) => [cycleIndex, b.innerCycles[i]])
+      .reduce((equals, cycleIndices, i, arr) => equals && cycleIndices[0] === cycleIndices[1], true);
   const areaEq = floatNumbersEqual(a.cycleArea, b.cycleArea);
   const indexEq = a.index === b.index;
 

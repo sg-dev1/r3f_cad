@@ -10,9 +10,9 @@ import {
   setSketchToExtrude,
 } from '@/app/slices/modellingToolStateSlice';
 import { BitByBitOCCT, OccStateEnum } from '@bitbybit-dev/occt-worker';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { selectSketchs } from '@/app/slices/sketchSlice';
-import { SketchCycleTypeOcct, findCyclesInSketchAndConvertToOcct } from '@/utils/algo3d-occ';
+import { SketchCyclesOcctContainer, findCyclesInSketchAndConvertToOcct } from '@/utils/algo3d-occ';
 import useKeyboard from '@/utils/useKeyboard';
 import SketchCycleObjectNg from './SketchCycleObjectNg';
 import R3fHtmlInput from '../Utils/R3fHtmlInput';
@@ -34,18 +34,24 @@ const OcctRoot = () => {
   const firstRender = useRef(true);
   const dispatch = useAppDispatch();
   const sketchs = useAppSelector(selectSketchs);
-  const [sketchShapes, setSketchShapes] = useState<SketchCycleTypeOcct[]>([]);
+  const [sketchCycleOcctContainers, setSketchCycleOcctContainers] = useState<SketchCyclesOcctContainer[]>([]);
   const geometries3d = useAppSelector(select3dGeometries);
   const [shapes3d, setShapes3d] = useState<Geometry3DType[]>([]);
   const selectedShapeIds = useAppSelector(selectSelectedShapeIds);
 
   const [sketchToExtrude, labelOfCycle] = useAppSelector(selectSketchToExtrude);
+  const graphGeom2dStateGraphs = useAppSelector(selectStateGraphs);
+  const toolState = useAppSelector(selectModellingToolState);
+
+  // ---
+
+  const sketchShapes = useMemo(() => {
+    return sketchCycleOcctContainers.map((container) => container.cycles).flat(1);
+  }, [sketchCycleOcctContainers]);
+
   const shapeToExtrude = sketchShapes.filter(
     (shape) => shape.sketch.id === sketchToExtrude && shape.label === labelOfCycle
   );
-  const graphGeom2dStateGraphs = useAppSelector(selectStateGraphs);
-
-  const toolState = useAppSelector(selectModellingToolState);
 
   /*
   const {gl} = useThree()
@@ -108,7 +114,7 @@ const OcctRoot = () => {
   // Most likely this is because this component needs to be mounted again
   useEffect(() => {
     console.log('---bitbybit', bitbybit);
-    console.log('---sketchShapes', sketchShapes);
+    console.log('---sketchShapes', sketchCycleOcctContainers);
     const occt = init();
 
     // we need to terminate the worker thread else there are more and more threads
@@ -126,30 +132,36 @@ const OcctRoot = () => {
     }
     console.log('---useEffect sketchs', bitbybit);
     const sketchIds = Object.keys(sketchs).map((key) => Number(key));
-    const sketchShapesFiltered = sketchShapes.filter((shape) => sketchIds.includes(shape.sketch.id));
+    const sketchContainersFiltered = sketchCycleOcctContainers.filter((container) =>
+      sketchIds.includes(container.cycles[0].sketch.id)
+    );
     //console.log('sketchShapesFiltered', sketchShapesFiltered);
-    setSketchShapes(sketchShapesFiltered);
+    setSketchCycleOcctContainers(sketchContainersFiltered);
 
     let active = true;
-    cleanup();
+    //cleanup();
     return () => {
       active = false;
     };
 
+    /* 2024-07-27: Disabled cleanup operations - caused issues accessing deleted objects
     async function cleanup() {
       if (!active) {
         return;
       }
-      const sketchShapesToRemove = sketchShapes.filter((shape) => !sketchIds.includes(shape.sketch.id));
+      const containersToRemove = sketchCycleOcctContainers.filter((container) =>
+        sketchIds.includes(container.cycles[0].sketch.id)
+      );
       await bitbybit?.occt.deleteShapes({
-        shapes: sketchShapesToRemove.map((sketchCycle) => sketchCycle.occtFace),
+        shapes: containersToRemove.map((container) => container.cycles.map((cycle) => cycle.occtFace)).flat(1),
       });
     }
+    */
   }, [sketchs]);
 
   useEffect(() => {
     createGeom3dShapes(bitbybit);
-  }, [sketchShapes, geometries3d]);
+  }, [sketchCycleOcctContainers, geometries3d]);
 
   useEffect(() => {
     if (ModellingToolStateEnum.UNION === toolState) {
@@ -199,30 +211,31 @@ const OcctRoot = () => {
     // Occt lib occassionally behaves a bit strange ...
     // Update 2024-07-04: Enabled it again for now - handling of bitbybit needs to be improved any
     //   also find out if there are any memory leaks ...
-    if (sketchShapes.length > 0) {
-      console.log('Deleting previous sketchShapes ', sketchShapes);
+    if (sketchCycleOcctContainers.length > 0) {
+      console.log('Deleting previous sketchShapes ', sketchCycleOcctContainers);
       await bitbybit.occt.deleteShapes({
-        shapes: sketchShapes.map((sketchCycle) => sketchCycle.occtFace),
+        shapes: sketchCycleOcctContainers.map((container) => container.cycles.map((cycle) => cycle.occtFace)).flat(1),
       });
     }
 
-    const shapes: SketchCycleTypeOcct[] = [];
+    const shapes: SketchCyclesOcctContainer[] = [];
     const allSketchs = Object.entries(sketchs).map(([key, value]) => value);
     for (const sketch of allSketchs) {
-      const sketchCycle = await findCyclesInSketchAndConvertToOcct(
+      const sketchCycleContainer = await findCyclesInSketchAndConvertToOcct(
         sketch,
         bitbybit,
         saveGraphGeom2dToRedux,
         graphGeom2dStateGraphs[sketch.id]
       );
+      //console.log('---sketchCycleContainer', sketch.id, sketchCycleContainer);
       //console.log('faces', faces, faces.length);
-      shapes.push(...sketchCycle);
+      shapes.push(sketchCycleContainer);
     }
 
     //console.log('newGroups', newGroups);
     //console.log('shapes', shapes);
 
-    setSketchShapes(shapes);
+    setSketchCycleOcctContainers(shapes);
   };
 
   /** Converts 3D geometry from redux store (resulting from modelling operations) to objects
@@ -330,6 +343,9 @@ const OcctRoot = () => {
       (shape) => shape.sketch.id === modellingOp.sketchRef[0] && shape.label === modellingOp.sketchRef[1]
     );
     const length = modellingOp.distance;
+
+    //console.log('modellingOp', modellingOp, 'sketchShape', sketchShape);
+
     if (sketchShape.length > 0) {
       return await extrudeSketch(sketchShape[0].occtFace, sketchShape[0].sketch, length);
     } else {
@@ -353,6 +369,8 @@ const OcctRoot = () => {
     const directionVectNumbers = getNormalVectorForPlane(sketch.plane);
     const directionVect = new THREE.Vector3(directionVectNumbers[0], directionVectNumbers[1], directionVectNumbers[2]);
     directionVect.setLength(length);
+
+    //console.log('call extrude with shape', face);
 
     const extrude = await bitbybit.occt.operations.extrude({
       shape: face,
@@ -411,10 +429,16 @@ const OcctRoot = () => {
   return (
     <>
       {bitbybit &&
-        sketchShapes.map((sketchCycle, index) => {
-          return (
-            <SketchCycleObjectNg key={sketchCycle.sketch.id + '-' + sketchCycle.index} sketchCycle={sketchCycle} />
-          );
+        sketchCycleOcctContainers.map((sketchCycleContainer, index) => {
+          return sketchCycleContainer.cycles.map((sketchCycle) => {
+            return (
+              <SketchCycleObjectNg
+                key={sketchCycle.sketch.id + '-' + sketchCycle.index}
+                sketchCycle={sketchCycle}
+                sketchCycleMap={sketchCycleContainer.map}
+              />
+            );
+          });
         })}
 
       {bitbybit && shapeToExtrude.length > 0 && (
