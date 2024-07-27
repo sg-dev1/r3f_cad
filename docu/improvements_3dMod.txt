@@ -1,4 +1,5 @@
 Priority of improvements (my ranking)
+  - B025   // bug with inner cycles and occt face
   - B012-A // union tool
   - B023-A // topo naming SketchCycles
   - B023   // data model, topo naming problem
@@ -111,7 +112,11 @@ List of Improvements
       (e.g. no one will create lots of overlapping circles)
     - Need to define test cases to model with the app (only 2d shapes with multiple (inner) cycles)
 
-
+(B025) Bug when extruding sketches with inner cycles
+  - create test cases triggering these bugs --> if it is fixed they should be all green
+  - it seems that wires need to be reversed in some occasions
+  - so in some cases inner cycles work fine, in others not
+  - it depends on how the lines were drawn
 
 
 On Hold

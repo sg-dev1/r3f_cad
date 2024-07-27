@@ -10,6 +10,7 @@ import { GeometryType } from '@/app/types/EntityType';
 import { Line3DInlinePointType } from '@/app/types/Line3DType';
 import { ArcInlinePointType } from '@/app/types/ArcType';
 import { CircleInlinePointType } from '@/app/types/CircleType';
+import { floatNumbersEqual } from './utils';
 
 /** Datatype representing a sketch cycle including occt data (the face) */
 export interface SketchCycleTypeOcct {
@@ -33,6 +34,12 @@ export const findCyclesInSketchAndConvertToOcct = async (
   prevGraphGeom2d: GraphGeom2d | null
 ) => {
   const cyclesInSketch = findCyclesInSketch(sketch, saveGraphGeom2d, prevGraphGeom2d);
+
+  /*
+  cyclesInSketch.sort((a: SketchCycleType, b: SketchCycleType) =>
+    a.label === undefined ? -1 : b.label === undefined ? 1 : a.label.localeCompare(b.label)
+  );
+  */
 
   const result: SketchCycleTypeOcct[] = [];
   for (const cycle of cyclesInSketch) {
@@ -105,13 +112,33 @@ export const findCyclesInSketchAndConvertToOcct = async (
     //console.log('edges', edges);
 
     // 2) Convert edges to wires
+
+    // fixes all of B025, but
+    //  - inner part of Sketch07
+    //      - most likely caused due to the complex inner shape of the one cluster
+    // --> acceptable as fix for B025, but very hacky ...
+    //     especially the "special check" for circles below (edges.length > 1)
+    //     - the default orientation of flatten polygon and occt face for Circles seem to differ
     const wire = await bitbybit.occt.shapes.wire.combineEdgesAndWiresIntoAWire({ shapes: edges });
+    // do not reverse the first wire
+
     // inner wires - may be empty
     let innerWires: Inputs.OCCT.TopoDSWirePointer[] = [];
     if (innerCyclesEdges.length > 0) {
       innerWires = await Promise.all(
-        innerCyclesEdges.map(async (edges) => {
-          return await bitbybit.occt.shapes.wire.combineEdgesAndWiresIntoAWire({ shapes: edges });
+        innerCyclesEdges.map(async (edges, index) => {
+          let tmpWire = await bitbybit.occt.shapes.wire.combineEdgesAndWiresIntoAWire({ shapes: edges });
+          // not sure if this reversing logic is complete ...
+          if (cycle.isCounterClockwiseOrientation && cycle.innerCyclesCcwOrientation[index] && edges.length > 1) {
+            // edges.length > 1 --> do not reverse a Circle which already has the correct orientation
+            //if (sketch.name === 'Sketch13') console.log('Reversing inner wire for Sketch13!');
+            //if (sketch.name === 'Sketch2') console.log('(A) Reversing inner wire for Sketch2!');
+            tmpWire = await bitbybit.occt.shapes.wire.reversedWire({ shape: tmpWire });
+          } else if (!cycle.isCounterClockwiseOrientation && !cycle.innerCyclesCcwOrientation[index]) {
+            tmpWire = await bitbybit.occt.shapes.wire.reversedWire({ shape: tmpWire });
+            //if (sketch.name === 'Sketch2') console.log('(B) Reversing inner wire for Sketch2!');
+          }
+          return tmpWire;
         })
       );
     }
@@ -124,12 +151,29 @@ export const findCyclesInSketchAndConvertToOcct = async (
     // 3) Convert wires to faces
     const createFace = async () => {
       if (innerWires.length > 0) {
-        return await bitbybit.occt.shapes.face.createFaceFromWires({ shapes: [wire, ...innerWires], planar: true });
+        const shapes = [wire, ...innerWires];
+        //console.log('....shapes', shapes, sketch, cycle, Array.from(cycle.polygon.faces.values())[0].orientation());
+        return await bitbybit.occt.shapes.face.createFaceFromWires({ shapes: shapes, planar: true });
       } else {
         return await bitbybit.occt.shapes.face.createFaceFromWire({ shape: wire, planar: true });
       }
     };
-    const face = await createFace();
+    let face = await createFace();
+
+    /* facearea is calculated wrongly anyways (inner faces not considered)
+    const faceArea = await bitbybit.occt.shapes.face.getFaceArea({ shape: face });
+    if (!floatNumbersEqual(faceArea, cycle.cycleArea)) {
+      // if both faces do not match it indicates an issue
+      // - it seems for occt to create a face properly, (inner) wires need to be reversed
+      //   (but not always - it depends on how the are drawn)
+      // - need a way to find out if list of (edge) shapes is clockwise
+      //   or counterclockwise  (-> could use 2d geom library for that)
+      console.log('faceArea (occt vs cycleArea)', faceArea, cycle.cycleArea);
+      // simply reversing the face does not fix the issue
+      //const reverseFace = await bitbybit.occt.shapes.face.reversedFace({ shape: face });
+      //face = reverseFace;
+    }
+    */
 
     result.push({
       cycle: cycle.cycle,
