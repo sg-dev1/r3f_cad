@@ -1,5 +1,4 @@
 Priority of improvements (my ranking)
-  - B026   // testing
   - B027   // improvement occt root
   - B012-A // union tool
   - B023-A // topo naming SketchCycles
@@ -112,8 +111,14 @@ List of Improvements
     - Would need to work with more realistic scenarios of real modelling tasks
       (e.g. no one will create lots of overlapping circles)
     - Need to define test cases to model with the app (only 2d shapes with multiple (inner) cycles)
+	 
+(B027) Improvement of occt root
+  - create and handling of shapes and proper delete --> "shape lifecycle"
 
-(B026) Testing
+
+On Hold
+
+(B026) Testing of algo3d-occ.ts
   - Create new test cases for (B025)
     --> need to test the algo3d-occ.ts library
 	- need to find a way to programatically check if occt faces are properly created
@@ -121,12 +126,29 @@ List of Improvements
   - main issue with occt tests is that they need a browser environment, e.g. for the web worker
   - Improve the test creation and handling for algo3d.ts
      - move test data in own files in subfolder?
-	 
-(B027) Improvement of occt root
-  - create and handling of shapes and proper delete --> "shape lifecycle"
-
-
-On Hold
+  - Could use
+    playwright
+    https://nextjs.org/docs/app/building-your-application/testing/playwright
+    cypress
+    https://nextjs.org/docs/app/building-your-application/testing/cypress
+    - more to interact with real browser, e.g. have page as input and then call goto
+      to navigate to an url, e.g. await page.goto('http://localhost:3000/')
+    - https://www.browserstack.com/guide/playwright-vs-cypress  
+    jest-puppeteer: 
+    https://github.com/argos-ci/jest-puppeteer
+    - not sure if this is the right tool since it has the api to navigate to real web page
+    - I would just need to be able to run my code (from algo3d-occ) in browser context and 
+       check on some of the results
+    - I would need something where I can just call findCyclesInSketchAndConvertToOcct()
+    - Will also need some setup to create the bitbybit instance with the WebWorker
+    Karma test runner:
+    https://github.com/tom-sherman/blog/blob/main/posts/02-running-jest-tests-in-a-browser.md#the-good-stuff
+    https://karma-runner.github.io/latest/index.html
+    - Can be configured to run with different command (e.g. yarn browser-tests instead of yarn tests)
+    - Are real integration tests
+    - Then we would have two set of tests: (1) unit tests with jest, (2) browser tests with karma
+    - deprecated since April 2023, so not an option
+    https://github.com/karma-runner/karma/commit/450fdfdac5b999967daec1020f1ac69cf9b854ab
 
 (B022)  More testing / bug fixing:
        - combine "inner shape" test case with intersection point test case, e.g.
