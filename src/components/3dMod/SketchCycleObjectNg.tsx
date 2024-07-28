@@ -61,7 +61,7 @@ const SketchCycleObjectNg = ({ sketchCycle, sketchCycleMap }: SketchCycleObjectN
       sketchCycle.innerCycles.forEach((cycleIndex) => {
         const cycle = sketchCycleMap[cycleIndex];
         if (cycle === undefined) {
-          console.log('cycleIndex', cycleIndex, 'not found in cycle map', sketchCycleMap);
+          console.warn('cycleIndex', cycleIndex, 'not found in cycle map', sketchCycleMap);
           return;
         }
         const holeShape = cadTool3DShapeToThreeShape(cycle.cycle, sketchCycle.sketch.plane);

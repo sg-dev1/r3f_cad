@@ -1,7 +1,6 @@
 Priority of improvements (my ranking)
   - B026   // testing
   - B027   // improvement occt root
-  - B025   // bug with inner cycles and occt face
   - B012-A // union tool
   - B023-A // topo naming SketchCycles
   - B023   // data model, topo naming problem
@@ -114,30 +113,12 @@ List of Improvements
       (e.g. no one will create lots of overlapping circles)
     - Need to define test cases to model with the app (only 2d shapes with multiple (inner) cycles)
 
-(B025) Bug when extruding sketches with inner cycles
-  - issue with circle wires (unknown if the are clockwise/ counterclockwise)
-  - seem to depend on the direction parameter which is the direction of the
-    local coordinate system of the circle
-  - I set it to the normal vector of the plane (which is most likely wrong)
-  - (1) Once way to fix it would be using the correct direction parameter
-        (I don't know what that is)
-    OR
-  - (2) Fix by calculating the face area
-      - compare face area calculated with flatten lib and face area of occt face
-      - for this the face area of the flatten face needs to be updated
-        (substracting all areas of inner cycles aka holes)
-      - if flatten lib area and occt area do not match
-         --> all inner wires need to be reversed
-  ----
-  - create test cases triggering these bugs --> if it is fixed they should be all green
-  - it seems that wires need to be reversed in some occasions
-  - so in some cases inner cycles work fine, in others not
-  - it depends on how the lines were drawn
-
 (B026) Testing
   - Create new test cases for (B025)
     --> need to test the algo3d-occ.ts library
 	- need to find a way to programatically check if occt faces are properly created
+      --> use area comparision flatten vs occt
+  - main issue with occt tests is that they need a browser environment, e.g. for the web worker
   - Improve the test creation and handling for algo3d.ts
      - move test data in own files in subfolder?
 	 
@@ -171,6 +152,26 @@ On Hold
 
 
 Done Improvements
+
+(B025) Bug when extruding sketches with inner cycles
+  - issue with circle wires (unknown if the are clockwise/ counterclockwise)
+  - seem to depend on the direction parameter which is the direction of the
+    local coordinate system of the circle
+  - I set it to the normal vector of the plane (which is most likely wrong)
+  - (1) Once way to fix it would be using the correct direction parameter
+        (I don't know what that is)
+    OR
+  - (2) Fix by calculating the face area
+      - compare face area calculated with flatten lib and face area of occt face
+      - for this the face area of the flatten face needs to be updated
+        (substracting all areas of inner cycles aka holes)
+      - if flatten lib area and occt area do not match
+         --> all inner wires need to be reversed
+  ----
+  - it seems that wires need to be reversed in some occasions
+  - so in some cases inner cycles work fine, in others not
+  - it depends on how the lines were drawn
+  - most issues with circles
 
 (B024) Extruding sketch does not consider inner cycles (issue most likely in algo3d-occ.ts)
 

@@ -46,10 +46,8 @@ export const findCyclesInSketchAndConvertToOcct = async (
   );
   */
 
-  const result: SketchCycleTypeOcct[] = [];
-  for (const cycle of cyclesInSketch) {
-    // 1) Convert shapes to edges
-    const edges = (await Promise.all(
+  const buildEdges = async (cycle: SketchCycleType): Promise<Inputs.OCCT.TopoDSEdgePointer[]> => {
+    return (await Promise.all(
       cycle.flattenShapes.map(async (shape) => {
         if (shape instanceof Segment) {
           const segment = shape as Segment;
@@ -81,37 +79,18 @@ export const findCyclesInSketchAndConvertToOcct = async (
         console.error('Must not get here ...', shape);
       })
     )) as Inputs.OCCT.TopoDSEdgePointer[];
+  };
+
+  const result: SketchCycleTypeOcct[] = [];
+  for (const cycle of cyclesInSketch) {
+    // 1) Convert shapes to edges
+    const edges = await buildEdges(cycle);
 
     // 1.1) Inner cycles - may be empty
     const innerCyclesEdges = (await Promise.all(
       cycle.innerCycles.map(async (innerCycle) => {
         const cycleForInnerCycle = cyclesInSketchMap[innerCycle];
-        return await Promise.all(
-          cycleForInnerCycle.cycle.map(async (cycle) => {
-            if (cycle.t === GeometryType.LINE) {
-              const dto = {
-                start: (cycle as Line3DInlinePointType).start,
-                end: (cycle as Line3DInlinePointType).end,
-              };
-              return await bitbybit.occt.shapes.edge.line(dto);
-            } else if (cycle.t === GeometryType.ARC) {
-              const arc = cycle as ArcInlinePointType;
-              const dto = {
-                start: arc.start,
-                middle: arc.mid_pt,
-                end: arc.end,
-              };
-              return await bitbybit.occt.shapes.edge.arcThroughThreePoints(dto);
-            } else if (cycle.t === GeometryType.CIRCLE) {
-              const circle = cycle as CircleInlinePointType;
-              return await bitbybit.occt.shapes.edge.createCircleEdge({
-                radius: circle.radius,
-                center: circle.mid_pt,
-                direction: getNormalVectorForPlane(sketch.plane),
-              });
-            }
-          })
-        );
+        return buildEdges(cycleForInnerCycle);
       })
     )) as Inputs.OCCT.TopoDSEdgePointer[][];
 
@@ -119,12 +98,6 @@ export const findCyclesInSketchAndConvertToOcct = async (
 
     // 2) Convert edges to wires
 
-    // fixes all of B025, but
-    //  - inner part of Sketch07
-    //      - most likely caused due to the complex inner shape of the one cluster
-    // --> acceptable as fix for B025, but very hacky ...
-    //     especially the "special check" for circles below (edges.length > 1)
-    //     - the default orientation of flatten polygon and occt face for Circles seem to differ
     const wire = await bitbybit.occt.shapes.wire.combineEdgesAndWiresIntoAWire({ shapes: edges });
     // do not reverse the first wire
 
@@ -133,9 +106,10 @@ export const findCyclesInSketchAndConvertToOcct = async (
     if (innerCyclesEdges.length > 0) {
       innerWires = await Promise.all(
         innerCyclesEdges.map(async (edges, index) => {
+          const cycleForInnerCycle = cyclesInSketchMap[cycle.innerCycles[index]];
+
           let tmpWire = await bitbybit.occt.shapes.wire.combineEdgesAndWiresIntoAWire({ shapes: edges });
           // not sure if this reversing logic is complete ...
-          const cycleForInnerCycle = cyclesInSketchMap[cycle.innerCycles[index]];
           if (
             cycle.isCounterClockwiseOrientation &&
             cycleForInnerCycle.isCounterClockwiseOrientation &&
@@ -175,9 +149,19 @@ export const findCyclesInSketchAndConvertToOcct = async (
     if (!floatNumbersEqual(faceArea, cycle.cycleArea)) {
       // If the area does not match it means we have to reverse at least one wire before creating
       // the face.
-      //console.log('faceArea (occt vs cycleArea)', faceArea, cycle.cycleArea, cycle);
-      const revWire = await bitbybit.occt.shapes.wire.reversedWire({ shape: wire });
-      face = await bitbybit.occt.shapes.face.createFaceFromWires({ shapes: [revWire, ...innerWires], planar: true });
+      console.log('faceArea (occt vs cycleArea)', faceArea, cycle.cycleArea, cycle);
+      const innerWiresMod = await Promise.all(
+        innerWires.map(async (innerWire, index) => {
+          const cycleForInnerCycle = cyclesInSketchMap[cycle.innerCycles[index]];
+          // idea here is to reverse only inner Circles (since these are causing problems)
+          if (cycleForInnerCycle.cycle.length === 1) {
+            return await bitbybit.occt.shapes.wire.reversedWire({ shape: innerWire });
+          } else {
+            return innerWire;
+          }
+        })
+      );
+      face = await bitbybit.occt.shapes.face.createFaceFromWires({ shapes: [wire, ...innerWiresMod], planar: true });
     }
 
     result.push({
