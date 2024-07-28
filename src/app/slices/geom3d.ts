@@ -8,6 +8,7 @@ export interface Geom3dType {
   // history of all modelling operations applied to a 3D Geometry
   modellingOperations: ModellingOperation[];
 }
+export type Geom3dTypeMap = { [geomId: number]: Geom3dType };
 
 export interface ModellingOperation {
   type: ModellingOperationType;

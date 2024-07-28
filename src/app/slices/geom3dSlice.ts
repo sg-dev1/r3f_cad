@@ -1,11 +1,11 @@
 /** This redux slice holds state information for 3D geometry created by different modelling operations. */
 import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 import { RootState } from '../store';
-import { Geom3dType, ModellingOperation, ModellingOperationType } from './geom3d';
+import { Geom3dTypeMap, ModellingOperation, ModellingOperationType } from './geom3d';
 
 export interface Geom3dState {
   geomIdCount: number;
-  geometries: { [key: number]: Geom3dType };
+  geometries: Geom3dTypeMap;
 }
 
 const initialState: Geom3dState = {

@@ -26,7 +26,7 @@ import { Geometry3DType } from '@/app/types/Geometry3DType';
 import Occt3dGeometryVisualizer from './Occt3dGeometryVisualizer';
 import { SketchShapeLabelingGraphNode } from '@/utils/algo3d';
 import { selectStateGraphs, setStateGraph } from '@/app/slices/graphGeom2dSlice';
-import { ModellingOperation, ModellingOperationType } from '@/app/slices/geom3d';
+import { createGeom3dShapes, createSketchCycleContainers } from '@/utils/occ_utils';
 
 const OcctRoot = () => {
   const [bitbybit, setBitbybit] = useState<BitByBitOCCT>();
@@ -160,8 +160,20 @@ const OcctRoot = () => {
   }, [sketchs]);
 
   useEffect(() => {
-    createGeom3dShapes(bitbybit);
-  }, [sketchCycleOcctContainers, geometries3d]);
+    let active = true;
+    doWork();
+    return () => {
+      active = false;
+    };
+
+    async function doWork() {
+      if (!active || !bitbybit || sketchShapes.length === 0) {
+        return;
+      }
+      const finalShapes = await createGeom3dShapes(bitbybit, dispatch, sketchShapes, geometries3d);
+      setShapes3d(finalShapes);
+    }
+  }, [bitbybit, sketchShapes, geometries3d]);
 
   useEffect(() => {
     if (ModellingToolStateEnum.UNION === toolState) {
@@ -198,107 +210,6 @@ const OcctRoot = () => {
     );
   };
 
-  /** Converts the sketchs from redux store to objects that can be displayed in 3D space.
-   *  Output type is list of SketchCycleType.
-   */
-  const createSketchShapes = async (bitbybit?: BitByBitOCCT) => {
-    if (!bitbybit) {
-      return;
-    }
-
-    // Disabled this since it created issues on rerender, e.g.
-    // after deleting a sketch
-    // Occt lib occassionally behaves a bit strange ...
-    // Update 2024-07-04: Enabled it again for now - handling of bitbybit needs to be improved any
-    //   also find out if there are any memory leaks ...
-    if (sketchCycleOcctContainers.length > 0) {
-      console.log('Deleting previous sketchShapes ', sketchCycleOcctContainers);
-      await bitbybit.occt.deleteShapes({
-        shapes: sketchCycleOcctContainers.map((container) => container.cycles.map((cycle) => cycle.occtFace)).flat(1),
-      });
-    }
-
-    const shapes: SketchCyclesOcctContainer[] = [];
-    const allSketchs = Object.entries(sketchs).map(([key, value]) => value);
-    for (const sketch of allSketchs) {
-      const sketchCycleContainer = await findCyclesInSketchAndConvertToOcct(
-        sketch,
-        bitbybit,
-        saveGraphGeom2dToRedux,
-        graphGeom2dStateGraphs[sketch.id]
-      );
-      //console.log('---sketchCycleContainer', sketch.id, sketchCycleContainer);
-      //console.log('faces', faces, faces.length);
-      shapes.push(sketchCycleContainer);
-    }
-
-    //console.log('newGroups', newGroups);
-    //console.log('shapes', shapes);
-
-    setSketchCycleOcctContainers(shapes);
-  };
-
-  /** Converts 3D geometry from redux store (resulting from modelling operations) to objects
-   *  that can be displayed in 3D space.
-   *  Output type is list of Inputs.OCCT.TopoDSShapePointer.
-   */
-  const createGeom3dShapes = async (bitbybit?: BitByBitOCCT) => {
-    if (!bitbybit) {
-      return;
-    }
-
-    const finalShapes: Geometry3DType[] = [];
-    const geomIdsToRemove: number[] = [];
-    const allGeometries = Object.entries(geometries3d).map(([key, value]) => value);
-    //console.log('allGeometries', allGeometries);
-    for (const geom of allGeometries) {
-      let prevShape: Inputs.OCCT.TopoDSShapePointer | null = null;
-      for (let i = 0; i < geom.modellingOperations.length; i++) {
-        const modellingOp = geom.modellingOperations[i];
-        switch (modellingOp.type) {
-          case ModellingOperationType.ADDITIVE_EXTRUDE:
-            const extrudedShape = await findAndExtrudeSketch(modellingOp);
-            if (extrudedShape) {
-              prevShape = extrudedShape;
-            }
-            break;
-          case ModellingOperationType.UNION:
-            const unionShapes: Inputs.OCCT.TopoDSShapePointer[] = [];
-            for (let j = 0; j < modellingOp.geometries.length; j++) {
-              const subGeom = modellingOp.geometries[j];
-              if (prevShape) {
-                unionShapes.push(prevShape);
-              }
-              // apply operations to subgeom - for now we assume there is only one which was an extrude
-              const extrudedShape = await findAndExtrudeSketch(subGeom.modellingOperations[0]);
-              if (extrudedShape) {
-                unionShapes.push(extrudedShape);
-              }
-            }
-            const unionShape = await bitbybit.occt.booleans.union({ shapes: unionShapes, keepEdges: false });
-            prevShape = unionShape;
-            break;
-          default:
-            console.error('Not implemented for ModellingOperationType ', modellingOp.type);
-        }
-      }
-      if (prevShape) {
-        finalShapes.push({ geom3d: geom, occtShape: prevShape });
-      } else {
-        geomIdsToRemove.push(geom.id);
-      }
-    }
-
-    //console.log('finalShapes', finalShapes);
-
-    if (geomIdsToRemove.length > 0) {
-      // clean up all "orphaned geometries" where the sketch was removed
-      dispatch(removeGeometries({ ids: geomIdsToRemove }));
-    }
-
-    setShapes3d(finalShapes);
-  };
-
   const init = () => {
     //console.log('Started init()');
     let bitbybit = new BitByBitOCCT();
@@ -317,7 +228,14 @@ const OcctRoot = () => {
     bitbybit.occtWorkerManager.occWorkerState$.subscribe(async (s) => {
       if (s.state === OccStateEnum.initialised) {
         // Launch the function converting Sketches to be visualized in 3D
-        await createSketchShapes(bitbybit);
+        const sketchCycleContainers = await createSketchCycleContainers(
+          bitbybit,
+          sketchs,
+          sketchCycleOcctContainers,
+          saveGraphGeom2dToRedux,
+          graphGeom2dStateGraphs
+        );
+        setSketchCycleOcctContainers(sketchCycleContainers);
         // disabled the animation loop because it make f.e. the GizmoHelper disappear
         //gl.setAnimationLoop(animation);
         console.log('Occt init completed');
@@ -330,77 +248,6 @@ const OcctRoot = () => {
   };
 
   // ---
-
-  /** Finds a sketch in sketchShapes and extrudes it using the information given
-   *  by the (ADDITIVE_EXTRUDE) ModellingOperation.
-   *  If the sketch could not be found, null is returned.
-   */
-  const findAndExtrudeSketch = async (
-    modellingOp: ModellingOperation
-  ): Promise<Inputs.OCCT.TopoDSShapePointer | null> => {
-    const sketchShape = sketchShapes.filter(
-      // only support one modelling operation
-      (shape) => shape.sketch.id === modellingOp.sketchRef[0] && shape.label === modellingOp.sketchRef[1]
-    );
-    const length = modellingOp.distance;
-
-    //console.log('modellingOp', modellingOp, 'sketchShape', sketchShape);
-
-    if (sketchShape.length > 0) {
-      return await extrudeSketch(sketchShape[0].occtFace, sketchShape[0].sketch, length);
-    } else {
-      console.warn('Sketchshape was undefined for modellingOp ', modellingOp);
-      return null;
-    }
-  };
-
-  /** Modelling operation that extrudes a sketch given by a 2D face the given length
-   *  (may be negative --> 3D shape points into the opposite direction).
-   */
-  const extrudeSketch = async (
-    face: Inputs.OCCT.TopoDSFacePointer,
-    sketch: SketchType,
-    length: number
-  ): Promise<Inputs.OCCT.TopoDSShapePointer | null> => {
-    if (!bitbybit) {
-      return null;
-    }
-
-    const directionVectNumbers = getNormalVectorForPlane(sketch.plane);
-    const directionVect = new THREE.Vector3(directionVectNumbers[0], directionVectNumbers[1], directionVectNumbers[2]);
-    directionVect.setLength(length);
-
-    //console.log('call extrude with shape', face);
-
-    const extrude = await bitbybit.occt.operations.extrude({
-      shape: face,
-      direction: [directionVect.x, directionVect.y, directionVect.z],
-    });
-
-    /*
-    const extrudeFace = await bitbybit.occt.shapes.face.getFace({ shape: extrude, index: 0 });
-    const shell = await bitbybit.occt.shapes.shell.sewFaces({ shapes: [extrudeFace, face], tolerance: 1e-7 });
-    const thick = await bitbybit.occt.operations.makeThickSolidSimple({ shape: shell, offset: -0.01 });
-    */
-    //console.log(extrude);
-
-    //await downloadStep(extrude);
-    return extrude;
-  };
-
-  /** Provides functionality to download a given shape as STEP file. */
-  const downloadStep = async (shape: Inputs.OCCT.TopoDSShapePointer) => {
-    if (!bitbybit) {
-      return;
-    }
-
-    await bitbybit.occt.io.saveShapeSTEP({
-      shape: shape,
-      fileName: 'shape.stp',
-      adjustYtoZ: false,
-      tryDownload: true,
-    });
-  };
 
   /*
   const downloadSTL = () => {

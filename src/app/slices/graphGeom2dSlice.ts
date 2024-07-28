@@ -21,9 +21,9 @@ export interface GraphGeom2d {
   nodes: GraphNodeGeom2d[];
   adjacencyList: number[][];
 }
-
+export type GraphGeom2dMap = { [sketchIdAsKey: number]: GraphGeom2d };
 export interface GraphGeom2dState {
-  stateGraphs: { [sketchIdAsKey: number]: GraphGeom2d };
+  stateGraphs: GraphGeom2dMap;
 }
 
 const initialState: GraphGeom2dState = {

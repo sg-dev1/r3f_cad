@@ -25,6 +25,7 @@ import {
 } from './Sketch';
 import { CircleType } from '../types/CircleType';
 
+export type SketchTypeMap = { [key: number]: SketchType };
 // Define a type for the slice state
 export interface SketchState {
   isSolverRequestPending: boolean;
@@ -35,7 +36,7 @@ export interface SketchState {
 
   sketchIdCount: number;
   activeSketchId: number;
-  sketches: { [key: number]: SketchType };
+  sketches: SketchTypeMap;
 }
 
 // Define the initial state using that type
