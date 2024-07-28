@@ -15664,7 +15664,7 @@ describe('algo3d test suite', () => {
         ],
         isCounterClockwiseOrientation: true,
         innerCycles: [6],
-        cycleArea: 90349.87500004518,
+        cycleArea: 27029.62500001352,
         sketch: {
           id: 2,
           name: 'Sketch2',
@@ -15953,7 +15953,7 @@ describe('algo3d test suite', () => {
         ],
         isCounterClockwiseOrientation: true,
         innerCycles: [0, 1, 2, 3],
-        cycleArea: 63320.250000031665,
+        cycleArea: 62561.55537418942,
         sketch: {
           id: 2,
           name: 'Sketch2',
@@ -20626,7 +20626,7 @@ describe('algo3d test suite', () => {
         ],
         isCounterClockwiseOrientation: true,
         innerCycles: [9, 0, 1, 2],
-        cycleArea: 80883.99999999997,
+        cycleArea: 59075.03247809613,
         sketch: {
           id: 7,
           name: 'Sketch7',
@@ -20949,7 +20949,7 @@ describe('algo3d test suite', () => {
         ],
         isCounterClockwiseOrientation: false,
         innerCycles: [3],
-        cycleArea: 116599.87499999996,
+        cycleArea: 35715.874999999985,
         sketch: {
           id: 7,
           name: 'Sketch7',

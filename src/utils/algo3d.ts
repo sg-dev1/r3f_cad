@@ -1152,6 +1152,13 @@ export const findCyclesInSketch = (
     }
   }
 
+  // update area
+  sketchCycleNew.forEach((cycle) => {
+    cycle.innerCycles.forEach((innerCycleId) => {
+      cycle.cycleArea -= sketchCycleMap[innerCycleId].cycleArea;
+    });
+  });
+
   if (DEBUG_FLAG) {
     console.log('result', sketchCycleNew, sketchCycleMap);
   }

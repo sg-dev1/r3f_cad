@@ -10,6 +10,7 @@ import { GeometryType } from '@/app/types/EntityType';
 import { Line3DInlinePointType } from '@/app/types/Line3DType';
 import { ArcInlinePointType } from '@/app/types/ArcType';
 import { CircleInlinePointType } from '@/app/types/CircleType';
+import { floatNumbersEqual } from './utils';
 
 /** Datatype representing a sketch cycle including occt data (the face) */
 export interface SketchCycleTypeOcct {
@@ -170,20 +171,14 @@ export const findCyclesInSketchAndConvertToOcct = async (
     };
     let face = await createFace();
 
-    /* facearea is calculated wrongly anyways (inner faces not considered)
     const faceArea = await bitbybit.occt.shapes.face.getFaceArea({ shape: face });
     if (!floatNumbersEqual(faceArea, cycle.cycleArea)) {
-      // if both faces do not match it indicates an issue
-      // - it seems for occt to create a face properly, (inner) wires need to be reversed
-      //   (but not always - it depends on how the are drawn)
-      // - need a way to find out if list of (edge) shapes is clockwise
-      //   or counterclockwise  (-> could use 2d geom library for that)
-      console.log('faceArea (occt vs cycleArea)', faceArea, cycle.cycleArea);
-      // simply reversing the face does not fix the issue
-      //const reverseFace = await bitbybit.occt.shapes.face.reversedFace({ shape: face });
-      //face = reverseFace;
+      // If the area does not match it means we have to reverse at least one wire before creating
+      // the face.
+      //console.log('faceArea (occt vs cycleArea)', faceArea, cycle.cycleArea, cycle);
+      const revWire = await bitbybit.occt.shapes.wire.reversedWire({ shape: wire });
+      face = await bitbybit.occt.shapes.face.createFaceFromWires({ shapes: [revWire, ...innerWires], planar: true });
     }
-    */
 
     result.push({
       cycle: cycle.cycle,
