@@ -46,6 +46,61 @@ For lines could use Segments (instead of current implementation)
 // Downside is that for each line with have to render a new mesh (compared to the approach with Segments)
 
 ---------
+# threejs planes
+
+arbitrary_plane_test([0, 0, 1], [0, -1, 0]);  // note the target normal vector for xz plane is [0, -1, 0]  (not [0, 1, 0])
+                                              // therefore the negative signs, e.g. in getCameraPositionForPlane
+console.log(getRotationForPlaneAsQuaternion('xz'));
+//const quaternion1 = new THREE.Quaternion();
+//console.log(quaternion1.setFromAxisAngle(new THREE.Vector3(1, 0, 0), -Math.PI / 2)); // sign swapped (-pi/2 <-- pi/2)
+arbitrary_plane_test([0, 0, 1], [-1, 0, 0]);  // note the target normal vector for yz plane is [-1, 0, 0]  (not [1, 0, 0])
+                                              // therefore the negative signs, e.g. in getCameraPositionForPlane
+console.log(getRotationForPlaneAsQuaternion('yz'));
+//const quaternion2 = new THREE.Quaternion();
+//console.log(quaternion2.setFromAxisAngle(new THREE.Vector3(0, 1, 0), Math.PI / 2)); // sign swapped (pi/2 <-- -pi/2)
+
+export const arbitrary_plane_test = (input: [number, number, number], target: [number, number, number]) => {
+  const quaternion = new THREE.Quaternion();
+  const v1 = new THREE.Vector3(...input).normalize();
+  const v2 = new THREE.Vector3(...target).normalize();
+  quaternion.setFromUnitVectors(v1, v2);
+
+  console.log('...quaternion for', input, 'to', target, ':', quaternion);
+
+  /* same as the implementation above
+  const a = v1.cross(v2);
+  const w = Math.sqrt(v1.lengthSq() * v2.lengthSq()) + v1.dot(v2);
+  const quaternion2 = new THREE.Quaternion(a.x, a.y, a.z, w);
+  quaternion2.normalize();
+
+  console.log('...quaternion2 for', input, 'to', target, ':', quaternion2);
+  */
+};
+
+## Notes to the axes
+
+- threejs and occt use per default the Y axis as up
+- my implementation currently also does this
+- it may be changed by adding the following to each React component with a Canvas:
+  THREE.Object3D.DEFAULT_UP = new THREE.Vector3(0, 0, 1); // sets Z axis as up
+  https://stackoverflow.com/a/77977030
+- Change would need to be applied to:
+  - src/app/slices/Sketch.ts                 --> see "beware of correct y (= v) and z (= u) since y goes up in three.js" line
+                                                 (to interpret result from solver backend correctly)
+  - solver backend                           --> change of u and v parameters in addPoint() method
+  - src/components/3dMod/MainView.tsx        --> Canvas used
+  - src/components/Sketcher/SketcherView.tsx --> Canvas used
+  - src/components/3dMod/occt_visualize.ts   --> changed adjustYtoZ parameter to true
+  - src/utils/occ_utils.ts                   --> changed adjustYtoZ parameter to true
+  - src/utils/threejs_planes.ts              --> most of the changes will be here
+- Tried this out and result was:
+  - one test in the Sketch.test.ts tests failed   --> easy to fix
+  - errors by occt when reloading the app         --> most likely the change is incompatibel with the current serialized sketch data ????
+                                                      Error was, that it was tried to access a deleted shape, maybe indicates also some other bug
+                                                      (some race condition?)
+
+
+---------
 
 Antd styling and theme customization
 

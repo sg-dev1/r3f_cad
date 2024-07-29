@@ -86,10 +86,12 @@ export const getCameraPositionForPlane = (plane: string): [number, number, numbe
   if (plane === 'xy') {
     return [0, 0, 100];
   } else if (plane === 'xz') {
-    // do not understand why the coordinate needs to be negative ...
+    // y coordinate is negative because we look on the "negative side" of the y axis on this plane
+    // so we look from the bottom at the plane
     return [0, -100, 0];
   } else if (plane === 'yz') {
-    // ... but if it is positive one axis is rotated in the wrong direction
+    // x coordinate is negative because we look on the "negative side" of the x axis on this plane
+    // so we look from the right on the plane
     return [-100, 0, 0];
   } else {
     console.error('[getRotationForPlane] Invalid plane given: ' + plane);

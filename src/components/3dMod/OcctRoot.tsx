@@ -17,7 +17,6 @@ import useKeyboard from '@/utils/useKeyboard';
 import SketchCycleObjectNg from './SketchCycleObjectNg';
 import R3fHtmlInput from '../Utils/R3fHtmlInput';
 import { Inputs } from '@bitbybit-dev/occt';
-import { getNormalVectorForPlane } from '@/utils/threejs_planes';
 import { SketchType } from '@/app/slices/Sketch';
 import { STLExporter } from 'three/examples/jsm/Addons.js';
 import * as THREE from 'three';
