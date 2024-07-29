@@ -26,7 +26,7 @@ import { Geometry3DType } from '@/app/types/Geometry3DType';
 import Occt3dGeometryVisualizer from './Occt3dGeometryVisualizer';
 import { SketchShapeLabelingGraphNode } from '@/utils/algo3d';
 import { selectStateGraphs, setStateGraph } from '@/app/slices/graphGeom2dSlice';
-import { createGeom3dShapes, createSketchCycleContainers } from '@/utils/occ_utils';
+import { createGeom3dShapes, createSketchCycleContainers, occ_init } from '@/utils/occ_utils';
 
 const OcctRoot = () => {
   const [bitbybit, setBitbybit] = useState<BitByBitOCCT>();
@@ -115,7 +115,8 @@ const OcctRoot = () => {
   useEffect(() => {
     console.log('---bitbybit', bitbybit);
     console.log('---sketchShapes', sketchCycleOcctContainers);
-    const occt = init();
+    const [occt, newBitBybit] = occ_init(onOcctIntialized);
+    setBitbybit(newBitBybit);
 
     // we need to terminate the worker thread else there are more and more threads
     return () => occt.terminate();
@@ -139,24 +140,22 @@ const OcctRoot = () => {
     setSketchCycleOcctContainers(sketchContainersFiltered);
 
     let active = true;
-    //cleanup();
+    cleanup();
     return () => {
       active = false;
     };
 
-    /* 2024-07-27: Disabled cleanup operations - caused issues accessing deleted objects
     async function cleanup() {
       if (!active) {
         return;
       }
-      const containersToRemove = sketchCycleOcctContainers.filter((container) =>
-        sketchIds.includes(container.cycles[0].sketch.id)
+      const containersToRemove = sketchCycleOcctContainers.filter(
+        (container) => !sketchIds.includes(container.cycles[0].sketch.id)
       );
       await bitbybit?.occt.deleteShapes({
         shapes: containersToRemove.map((container) => container.cycles.map((cycle) => cycle.occtFace)).flat(1),
       });
     }
-    */
   }, [sketchs]);
 
   useEffect(() => {
@@ -210,41 +209,20 @@ const OcctRoot = () => {
     );
   };
 
-  const init = () => {
-    //console.log('Started init()');
-    let bitbybit = new BitByBitOCCT();
-    setBitbybit(bitbybit);
-    const occt = new Worker(new URL('./occ.worker', import.meta.url), { name: 'OCC', type: 'module' });
-    bitbybit.init(occt);
-    //console.log('bitbybit.init(occt) finished');
-
-    /*
-    const animation = (time: number) => {
-      gl.render(scene, camera);
-      //controls.update();
-    };
-    */
-
-    bitbybit.occtWorkerManager.occWorkerState$.subscribe(async (s) => {
-      if (s.state === OccStateEnum.initialised) {
-        // Launch the function converting Sketches to be visualized in 3D
-        const sketchCycleContainers = await createSketchCycleContainers(
-          bitbybit,
-          sketchs,
-          sketchCycleOcctContainers,
-          saveGraphGeom2dToRedux,
-          graphGeom2dStateGraphs
-        );
-        setSketchCycleOcctContainers(sketchCycleContainers);
-        // disabled the animation loop because it make f.e. the GizmoHelper disappear
-        //gl.setAnimationLoop(animation);
-        console.log('Occt init completed');
-      } else if (s.state === OccStateEnum.computing) {
-      } else if (s.state === OccStateEnum.loaded) {
-      }
-    });
-
-    return occt;
+  /** Callback to be called when occt has been initialized. */
+  const onOcctIntialized = async (bitbybit: BitByBitOCCT) => {
+    // Launch the function converting Sketches to be visualized in 3D
+    const sketchCycleContainers = await createSketchCycleContainers(
+      bitbybit,
+      sketchs,
+      sketchCycleOcctContainers,
+      saveGraphGeom2dToRedux,
+      graphGeom2dStateGraphs
+    );
+    setSketchCycleOcctContainers(sketchCycleContainers);
+    // disabled the animation loop because it make f.e. the GizmoHelper disappear
+    //gl.setAnimationLoop(animation);
+    console.log('Occt init completed');
   };
 
   // ---
@@ -269,6 +247,7 @@ const OcctRoot = () => {
 
   // ---
 
+  /** Callback to be called when a 3d shape was clicked. */
   const on3dShapeClicked = (shape: Geometry3DType) => {
     dispatch(addOrRemoveSelectedShapeId(shape.geom3d.id));
   };

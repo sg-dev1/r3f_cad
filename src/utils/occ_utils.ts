@@ -1,7 +1,7 @@
 /** This library contains helper functionality for @bitbybit-dev/occt. */
 import { SketchType } from '@/app/slices/Sketch';
 import { Inputs } from '@bitbybit-dev/occt';
-import { BitByBitOCCT } from '@bitbybit-dev/occt-worker';
+import { BitByBitOCCT, OccStateEnum } from '@bitbybit-dev/occt-worker';
 import * as THREE from 'three';
 import { getNormalVectorForPlane } from './threejs_planes';
 import { SketchTypeMap } from '@/app/slices/sketchSlice';
@@ -11,6 +11,25 @@ import { GraphGeom2dMap } from '@/app/slices/graphGeom2dSlice';
 import { Geometry3DType } from '@/app/types/Geometry3DType';
 import { Geom3dTypeMap, ModellingOperation, ModellingOperationType } from '@/app/slices/geom3d';
 import { removeGeometries } from '@/app/slices/geom3dSlice';
+
+/** Initializes the bitbybit occt. */
+export const occ_init = (onInitialized: (bitbybit: BitByBitOCCT) => Promise<void>): [Worker, BitByBitOCCT] => {
+  //console.log('Started init()');
+  let bitbybit = new BitByBitOCCT();
+  const occt = new Worker(new URL('./occ.worker', import.meta.url), { name: 'OCC', type: 'module' });
+  bitbybit.init(occt);
+  //console.log('bitbybit.init(occt) finished');
+
+  bitbybit.occtWorkerManager.occWorkerState$.subscribe(async (s) => {
+    if (s.state === OccStateEnum.initialised) {
+      await onInitialized(bitbybit);
+    } else if (s.state === OccStateEnum.computing) {
+    } else if (s.state === OccStateEnum.loaded) {
+    }
+  });
+
+  return [occt, bitbybit];
+};
 
 /** Converts the sketchs from redux store to objects that can be displayed in 3D space.
  *  Output type is list of SketchCycleType.
@@ -110,6 +129,7 @@ export const createGeom3dShapes = async (
 
   if (geomIdsToRemove.length > 0) {
     // clean up all "orphaned geometries" where the sketch was removed
+    console.info('clean up orphaned shapes', geomIdsToRemove);
     dispatch(removeGeometries({ ids: geomIdsToRemove }));
   }
 

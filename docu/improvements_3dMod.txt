@@ -1,5 +1,5 @@
 Priority of improvements (my ranking)
-  - B027   // improvement occt root
+  - B008-2 // add plane offsets to sketches
   - B012-A // union tool
   - B023-A // topo naming SketchCycles
   - B023   // data model, topo naming problem
@@ -111,9 +111,6 @@ List of Improvements
     - Would need to work with more realistic scenarios of real modelling tasks
       (e.g. no one will create lots of overlapping circles)
     - Need to define test cases to model with the app (only 2d shapes with multiple (inner) cycles)
-	 
-(B027) Improvement of occt root
-  - create and handling of shapes and proper delete --> "shape lifecycle"
 
 
 On Hold
@@ -174,6 +171,12 @@ On Hold
 
 
 Done Improvements
+
+(B027) Improvement of occt root
+  - init() function from occt root to be moved to occ_utils.ts --> e.g. occ_init(initCodeAfterInitialized)
+    (use lambda for the logic to run when cleanup is completed)
+  - proper delete of occt shapes --> "shape lifecycle"
+  - some manual smoke testing (in browser) of changes
 
 (B025) Bug when extruding sketches with inner cycles
   - issue with circle wires (unknown if the are clockwise/ counterclockwise)
