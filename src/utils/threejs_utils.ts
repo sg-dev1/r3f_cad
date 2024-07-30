@@ -7,6 +7,7 @@ import { GeometryType } from '@/app/types/EntityType';
 import { Line3DInlinePointType } from '@/app/types/Line3DType';
 import { ArcInlinePointType } from '@/app/types/ArcType';
 import { CircleInlinePointType } from '@/app/types/CircleType';
+import { SketchPlaneType } from '@/app/slices/Sketch';
 
 /**
  * Calculates the intersection of a ray casted from the camera to a specific plane.
@@ -22,13 +23,13 @@ import { CircleInlinePointType } from '@/app/types/CircleType';
 export const calcIntersectionWithPlane = (
   raycaster: THREE.Raycaster,
   camera: THREE.Camera,
-  planeStr: string,
+  plane: SketchPlaneType,
   xCoord: number,
   yCoord: number,
   target: HTMLElement
 ) => {
   const rect = target.getBoundingClientRect();
-  return calcIntersectionWithPlaneFromRect(raycaster, camera, planeStr, xCoord, yCoord, rect);
+  return calcIntersectionWithPlaneFromRect(raycaster, camera, plane, xCoord, yCoord, rect);
 };
 
 export interface RectType {
@@ -53,7 +54,7 @@ export interface RectType {
 export const calcIntersectionWithPlaneFromRect = (
   raycaster: THREE.Raycaster,
   camera: THREE.Camera,
-  planeStr: string,
+  plane: SketchPlaneType,
   xCoord: number,
   yCoord: number,
   rect: RectType
@@ -71,15 +72,15 @@ export const calcIntersectionWithPlaneFromRect = (
   // UPDATE: Do not intersect with object on screen but with a plane!
 
   let planeIntersection: THREE.Vector3 = new THREE.Vector3(0, 0, 0);
-  const plane = SKETCH_PLANE_MAP[planeStr];
-  const result = raycaster.ray.intersectPlane(plane, planeIntersection);
+  const planeObj = SKETCH_PLANE_MAP[plane.plane];
+  const result = raycaster.ray.intersectPlane(planeObj, planeIntersection);
   //console.log('Plane intersection:', out);
 
   return result;
 };
 
 /** Convert a CadTool3DShapeSubset array to a THREE.Shape using the given plane. */
-export const cadTool3DShapeToThreeShape = (shapesFromCycle: CadTool3DShapeSubset[], plane: string) => {
+export const cadTool3DShapeToThreeShape = (shapesFromCycle: CadTool3DShapeSubset[], plane: SketchPlaneType) => {
   // https://threejs.org/docs/index.html?q=shape#api/en/extras/core/Shape
   const threeShape = new THREE.Shape();
 

@@ -14,6 +14,7 @@ import {
   sketchDeleteConstraint,
   sketchDeleteConstraintById,
   sketchDeleteLengthConstraintForLine,
+  SketchPlaneType,
   sketchRemoveEntity,
   sketchResetLastPoint,
   SketchType,
@@ -53,14 +54,14 @@ const initialState: SketchState = {
 };
 
 export const buildSolverRequestType = (input: {
-  workplane: string;
+  workplane: SketchPlaneType;
   points: Point3DType[];
   lines: Line3DType[];
   circles: CircleType[];
   constraints: ConstraintType[];
 }): SolverRequestType => {
   return {
-    workplane: input.workplane,
+    workplane: input.workplane.plane,
     entities: input.points
       .map<SolverEntityType>((p) => ({
         id: p.id,

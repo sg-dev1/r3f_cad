@@ -10,10 +10,17 @@ import { Line3DType } from '../types/Line3DType';
 import { Point3DMapType, Point3DType } from '../types/Point3DType';
 import { SolverEntityType } from '../types/SolverTypes';
 
+export interface SketchPlaneType {
+  plane: string;
+  normalVector: [number, number, number];
+  offset: number;
+}
+
 export interface SketchType {
   id: number;
   name: string;
-  plane: string;
+  //plane: string;
+  plane: SketchPlaneType;
   isVisible: boolean;
 
   entityIdCounter: number;
@@ -32,7 +39,12 @@ export interface SketchType {
 export const emptySketch: SketchType = {
   id: -1,
   name: '',
-  plane: '',
+  //plane: '',
+  plane: {
+    plane: '',
+    normalVector: [0, 0, 0],
+    offset: 0,
+  },
   isVisible: true,
 
   entityIdCounter: 1,

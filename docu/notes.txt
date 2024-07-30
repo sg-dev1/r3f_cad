@@ -93,11 +93,24 @@ export const arbitrary_plane_test = (input: [number, number, number], target: [n
   - src/components/3dMod/occt_visualize.ts   --> changed adjustYtoZ parameter to true
   - src/utils/occ_utils.ts                   --> changed adjustYtoZ parameter to true
   - src/utils/threejs_planes.ts              --> most of the changes will be here
+
 - Tried this out and result was:
   - one test in the Sketch.test.ts tests failed   --> easy to fix
   - errors by occt when reloading the app         --> most likely the change is incompatibel with the current serialized sketch data ????
                                                       Error was, that it was tried to access a deleted shape, maybe indicates also some other bug
                                                       (some race condition?)
+  - The errors can be fixed by setting the adjustYtoZ parameter to false again
+    (however, then the 3d objects are wrong)
+    Reason is that it is deleting the original shape, and outside I am still referencing
+    the old shape --> need to patch the library (don't delete the shape)
+  - Additionally, there is an error where xz and yz plane sketches are rotated
+    (all 3d shapes that use the Quaternion - so there seems to be an issue with that)
+    Seems that the shape needs to be mirrored as well!
+  - Some minor inconvenience is that all xz and yz plane sketches are rotated
+    (they were created with rotated axes and 3d points are saved in redux persist)
+  - Text was also rotated by 180 degree in the Sketcher (for xz plane)
+
+  --> Decision: Stick with Y axis as default up axis
 
 
 ---------

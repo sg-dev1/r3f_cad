@@ -33,8 +33,27 @@ List of Improvements
 (B008) Add attachment to Sketches, e.g. where they are located in 3D space
     - (target) Plane representation (currently as string - update when needed):
         * ("xy" | "xz" | "yz" | normal_vector, offset), e.g.
-          sketch.plane
-          sketch.plane_offset
+          sketch.plane.plane         // holds the string as in old version
+                                     //   - 3 standard planes "xy", "xz", and "yz"
+                                     //   - leave empty ("") to use the normalVector
+          sketch.plane.normalVector  // arbitrary plane given by its normal vector
+          sketch.plane.offset        // offset for plane, may be used with .plane
+                                     // or .normalVector
+    - Functions to consider:
+      - threejs_utils.ts:        calcIntersectionWithPlaneFromRect()
+      - threejs_planes.ts:       nearly all functions
+      - SketchCycleObjectNg.tsx  placement of the 2d shape in 3d
+          (should not require a change, changes should be limited to the two files aboth)
+    Other remarks:
+      * If sketch offset is updated all points needed to be updated
+        (the 3rd coordinate for the standard planes, for arbitrary planes it may involve
+         multiple coordinates)
+         --> support for "shifting" of plane (should be a redux action 
+             of sketchSlice.ts - e.g. implementation in Sketch.ts)
+      * F.e. in SketcherView.tsx itself no change needed, getCameraPositionForPlane()
+        should return the correct position (need to consider an offset)
+      * No change in SketchCycleObjectNg.tsx
+      * Quaternion is not needed in sketcher since camera is always looking at [0, 0, 0]
 (B008-2)
       Additionally offsets in all directions are needed (per default it is located at [0,0,0])
         * Need to be considered for sure:
