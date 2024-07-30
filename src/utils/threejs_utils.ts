@@ -1,6 +1,6 @@
 /** This library contains helper functionality for three.js. */
 import * as THREE from 'three';
-import { SKETCH_PLANE_MAP, getPointU2, getPointV2 } from './threejs_planes';
+import { getPointU2, getPointV2, getThreePlane } from './threejs_planes';
 import { CadTool3DShapeSubset } from './algo3d';
 import { Point3DInlineType } from '@/app/types/Point3DType';
 import { GeometryType } from '@/app/types/EntityType';
@@ -72,8 +72,7 @@ export const calcIntersectionWithPlaneFromRect = (
   // UPDATE: Do not intersect with object on screen but with a plane!
 
   let planeIntersection: THREE.Vector3 = new THREE.Vector3(0, 0, 0);
-  const planeObj = SKETCH_PLANE_MAP[plane.plane];
-  const result = raycaster.ray.intersectPlane(planeObj, planeIntersection);
+  const result = raycaster.ray.intersectPlane(getThreePlane(plane), planeIntersection);
   //console.log('Plane intersection:', out);
 
   return result;

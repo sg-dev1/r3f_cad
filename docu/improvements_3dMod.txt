@@ -39,9 +39,10 @@ List of Improvements
           sketch.plane.normalVector  // arbitrary plane given by its normal vector
           sketch.plane.offset        // offset for plane, may be used with .plane
                                      // or .normalVector
-    - Functions to consider:
-      - threejs_utils.ts:        calcIntersectionWithPlaneFromRect()
+    - Functions to consider:      
       - threejs_planes.ts:       nearly all functions
+    - No longer to consider:
+      - threejs_utils.ts:        calcIntersectionWithPlaneFromRect()
       - SketchCycleObjectNg.tsx  placement of the 2d shape in 3d
           (should not require a change, changes should be limited to the two files aboth)
     Other remarks:
@@ -55,6 +56,20 @@ List of Improvements
       * No change in SketchCycleObjectNg.tsx
       * Quaternion is not needed in sketcher since camera is always looking at [0, 0, 0]
 (B008-2)
+      TODOs:
+        - Function to update offset in sketchSlice.ts and integration in UI
+        - @threejs_planes: getNormalVectorForPlane
+            - should return different normal vectors for xz and yz planes
+              (may affect functionality, e.g. 
+                - extrudeSketch in occ_utils.ts: Sketch extruded in different direction
+                   // I don't think this is an issue, the proper direction would
+                   // be the negative axis
+                - Circle creation in algo3d-occ.ts:
+                  Maybe this caused the issue with circle wires?
+                  // Testing needed (with 04_... dataset) with 3d objects
+                  // --> if no issue this should be fine as well
+              )
+        - testing!!!
       Additionally offsets in all directions are needed (per default it is located at [0,0,0])
         * Need to be considered for sure:
            - SketchCycleObjectNg.tsx to draw the faces in the right space in 3D
