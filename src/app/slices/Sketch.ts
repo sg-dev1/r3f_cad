@@ -142,6 +142,28 @@ export const sketchResetLastPoint = (sketch: SketchType) => {
   sketch.lastPoint3D = null;
 };
 
+export const sketchUpdatePlaneOffset = (sketch: SketchType, newOffset: number) => {
+  sketch.plane.offset = newOffset;
+  if (sketch.plane.plane === 'xy') {
+    sketch.points = sketch.points.map((point) => ({ ...point, z: newOffset }));
+    Object.keys(sketch.pointsMap).forEach((key) => {
+      sketch.pointsMap[Number(key)] = { ...sketch.pointsMap[Number(key)], z: newOffset };
+    });
+  } else if (sketch.plane.plane === 'xz') {
+    sketch.points = sketch.points.map((point) => ({ ...point, y: newOffset }));
+    Object.keys(sketch.pointsMap).forEach((key) => {
+      sketch.pointsMap[Number(key)] = { ...sketch.pointsMap[Number(key)], y: newOffset };
+    });
+  } else if (sketch.plane.plane === 'yz') {
+    sketch.points = sketch.points.map((point) => ({ ...point, x: newOffset }));
+    Object.keys(sketch.pointsMap).forEach((key) => {
+      sketch.pointsMap[Number(key)] = { ...sketch.pointsMap[Number(key)], x: newOffset };
+    });
+  } else {
+    console.warn('Not implemented for sketch plane', sketch.plane);
+  }
+};
+
 export const sketchAddConstraint = (sketch: SketchType, payload: ConstraintType) => {
   sketch.constraints.push({ ...payload, id: sketch.constraintIdCounter });
   sketch.constraintIdCounter++;

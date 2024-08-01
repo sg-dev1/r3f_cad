@@ -12,7 +12,11 @@ import { CircleInlinePointType } from '@/app/types/CircleType';
 import { GeometryType } from '@/app/types/EntityType';
 import { Point3DInlineType } from '@/app/types/Point3DType';
 import { SketchCycleOcctMapType, SketchCycleTypeOcct } from '@/utils/algo3d-occ';
-import { convert2DPointTo3D, getRotationForPlaneAsQuaternion } from '@/utils/threejs_planes';
+import {
+  convert2DPointTo3D,
+  getPlaneOffsetAsCoordinates,
+  getRotationForPlaneAsQuaternion,
+} from '@/utils/threejs_planes';
 import { cadTool3DShapeTo3DPoints, cadTool3DShapeToThreeShape } from '@/utils/threejs_utils';
 import useArcPoints from '@/utils/useArcPoints';
 import useCirclePoints from '@/utils/useCirclePoints';
@@ -43,8 +47,12 @@ const SketchCycleObjectNg = ({ sketchCycle, sketchCycleMap }: SketchCycleObjectN
     [sketchCycle]
   );
   // Cannot use useMemo for both of these because cannot use a hook in a hook
-  const arcsPointsArray = arcs.map((arc) => useArcPoints({ arc: arc, quaternion: quaternion }));
-  const circlePointsArray = circles.map((circle) => useCirclePoints({ circle: circle, quaternion: quaternion }));
+  const arcsPointsArray = arcs.map((arc) =>
+    useArcPoints({ arc: arc, quaternion: quaternion, plane: sketchCycle.sketch.plane })
+  );
+  const circlePointsArray = circles.map((circle) =>
+    useCirclePoints({ circle: circle, quaternion: quaternion, plane: sketchCycle.sketch.plane })
+  );
 
   const [hovered, setHovered] = useState<boolean>(false);
 
@@ -90,6 +98,7 @@ const SketchCycleObjectNg = ({ sketchCycle, sketchCycleMap }: SketchCycleObjectN
     <>
       {shapeGeometry && (
         <mesh
+          position={getPlaneOffsetAsCoordinates(sketchCycle.sketch.plane)}
           frustumCulled={false}
           geometry={shapeGeometry}
           onPointerOver={() => {

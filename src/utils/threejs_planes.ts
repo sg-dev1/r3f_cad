@@ -176,13 +176,18 @@ export const getNormalVectorForPlane = (plane: SketchPlaneType): [number, number
   if ('xy' === plane.plane) {
     return [0, 0, 1];
   } else if ('xz' === plane.plane) {
-    return [0, 1, 0]; // XXX: Note this should be [0, -1, 0]
+    return [0, 1, 0]; // actual normal vector is [0, -1, 0]
   } else if ('yz' == plane.plane) {
-    return [1, 0, 0]; // XXX: Note this should be [-1, 0, 0]
+    return [1, 0, 0]; //actual normal vector is [-1, 0, 0]
   } else {
     console.error('[getNormalVectorForPlane] Invalid plane given: ' + plane);
     return [0, 0, 0];
   }
+};
+
+export const getPlaneOffsetAsCoordinates = (plane: SketchPlaneType): [number, number, number] => {
+  const normVector = getNormalVectorForPlane(plane);
+  return [normVector[0] * plane.offset, normVector[1] * plane.offset, normVector[2] * plane.offset];
 };
 
 /** Get a plane aware sketch position at basePosition with offsets into

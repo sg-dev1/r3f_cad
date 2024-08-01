@@ -22,6 +22,7 @@ import {
   sketchUpdateConstraint,
   sketchUpdateEntities,
   sketchUpdateLinePoints,
+  sketchUpdatePlaneOffset,
   sketchUpdatePoint,
 } from './Sketch';
 import { CircleType } from '../types/CircleType';
@@ -178,6 +179,9 @@ export const sketchSlice = createSlice({
     deleteLengthConstraintForLine: (state: SketchState, { payload }) => {
       sketchDeleteLengthConstraintForLine(state.sketches[state.activeSketchId], payload);
     },
+    updatePlaneOffset: (state: SketchState, { payload }) => {
+      sketchUpdatePlaneOffset(state.sketches[payload.sketchId], payload.offset);
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -224,6 +228,7 @@ export const {
   deleteConstraint,
   deleteConstraintById,
   deleteLengthConstraintForLine,
+  updatePlaneOffset,
 } = sketchSlice.actions;
 
 export const selectSketchs = (state: RootState) => state.sketchs.sketches;
