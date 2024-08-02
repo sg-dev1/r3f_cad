@@ -1,6 +1,6 @@
 /** This component contains a list of all sketches presented to the user in the 3D modelling tool. */
 import { useAppDispatch, useAppSelector } from '@/app/hooks';
-import { selectSelectedSketch, setSelectedSketch } from '@/app/slices/modellingToolStateSlice';
+import { selectSelectedSketch, setSelectedSketch, setUpdatedSketchId } from '@/app/slices/modellingToolStateSlice';
 import {
   deleteSketch,
   selectSketchs,
@@ -241,6 +241,7 @@ const SketchTable = () => {
       planeOffset = planeOffset[0];
     }
     dispatch(updatePlaneOffset({ sketchId: row.id, offset: planeOffset }));
+    dispatch(setUpdatedSketchId(row.id));
   };
 
   const columns = defaultColumns.map((col) => {

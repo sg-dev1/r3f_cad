@@ -32,7 +32,7 @@ export const occ_init = (onInitialized: (bitbybit: BitByBitOCCT) => Promise<void
 };
 
 /** Converts the sketchs from redux store to objects that can be displayed in 3D space.
- *  Output type is list of SketchCycleType.
+ *  Output type is list of SketchCyclesOcctContainer.
  */
 export const createSketchCycleContainers = async (
   bitbybit: BitByBitOCCT,
@@ -40,7 +40,7 @@ export const createSketchCycleContainers = async (
   prevSketchCycleContainers: SketchCyclesOcctContainer[],
   saveGraphGeom2d: SaveGraphToReduxFunction,
   graphGeom2dStateGraphs: GraphGeom2dMap
-) => {
+): Promise<SketchCyclesOcctContainer[]> => {
   // Disabled this since it created issues on rerender, e.g.
   // after deleting a sketch
   // Occt lib occassionally behaves a bit strange ...

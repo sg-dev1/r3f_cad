@@ -7,12 +7,17 @@ import {
   selectModellingToolState,
   selectSelectedShapeIds,
   selectSketchToExtrude,
+  selectUpdatedSketchId,
   setSketchToExtrude,
 } from '@/app/slices/modellingToolStateSlice';
 import { BitByBitOCCT, OccStateEnum } from '@bitbybit-dev/occt-worker';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { selectSketchs } from '@/app/slices/sketchSlice';
-import { SketchCyclesOcctContainer, findCyclesInSketchAndConvertToOcct } from '@/utils/algo3d-occ';
+import {
+  SketchCyclesOcctContainer,
+  findCyclesInSketchAndConvertToOcct,
+  patchSketchCycleContainer,
+} from '@/utils/algo3d-occ';
 import useKeyboard from '@/utils/useKeyboard';
 import SketchCycleObjectNg from './SketchCycleObjectNg';
 import R3fHtmlInput from '../Utils/R3fHtmlInput';
@@ -41,6 +46,8 @@ const OcctRoot = () => {
   const [sketchToExtrude, labelOfCycle] = useAppSelector(selectSketchToExtrude);
   const graphGeom2dStateGraphs = useAppSelector(selectStateGraphs);
   const toolState = useAppSelector(selectModellingToolState);
+
+  const updatedSketchId = useAppSelector(selectUpdatedSketchId);
 
   // ---
 
@@ -182,6 +189,43 @@ const OcctRoot = () => {
       }
     }
   }, [selectedShapeIds]);
+
+  // Handles the update of the plane offset of a sketch.
+  // In this case the affected SketchCyclesOcctContainer needs to be patched.
+  // This function implements the proper interaction with async data using an ignore flag:
+  //   https://react.dev/learn/you-might-not-need-an-effect#fetching-data
+  //   #147 of the following article:
+  //   https://sebastiancarlos.com/react-js-best-practices-from-the-new-docs-1c65570e785d
+  useEffect(() => {
+    let ignore = false;
+    if (updatedSketchId === -1 || !bitbybit) {
+      return;
+    }
+
+    const sketch = sketchs[updatedSketchId];
+    const containerToPatch = sketchCycleOcctContainers.filter(
+      (container) => container.cycles[0].sketch.id === sketch.id
+    );
+    if (containerToPatch.length > 0) {
+      const otherContainers = sketchCycleOcctContainers.filter(
+        (container) => container.cycles[0].sketch.id !== sketch.id
+      );
+      if (containerToPatch.length > 1) {
+        console.warn('There should be only a single container per sketch');
+      }
+      const patchContainer = async () => {
+        const patchedSketchCycleContainer = await patchSketchCycleContainer(sketch, bitbybit, containerToPatch[0]);
+        if (!ignore) {
+          setSketchCycleOcctContainers([...otherContainers, patchedSketchCycleContainer]);
+        }
+      };
+      patchContainer();
+    }
+
+    return () => {
+      ignore = true;
+    };
+  }, [updatedSketchId]);
 
   // ---
 

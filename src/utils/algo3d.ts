@@ -930,11 +930,13 @@ export const findCyclesInSketch = (
         const startPoint = arc.start;
         const endPoint = arc.end;
         const middlePoint = arc.center;
+        const arcMiddle = arc.middle();
         return {
           t: GeometryType.ARC,
           start: convert2DPointTo3D(sketch.plane, startPoint.x, startPoint.y),
           mid_pt: convert2DPointTo3D(sketch.plane, middlePoint.x, middlePoint.y),
           end: convert2DPointTo3D(sketch.plane, endPoint.x, endPoint.y),
+          middle: convert2DPointTo3D(sketch.plane, arcMiddle.x, arcMiddle.y),
           radius: arc.r,
           start_angle: arc.startAngle,
           end_angle: arc.endAngle,
