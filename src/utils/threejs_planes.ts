@@ -171,8 +171,10 @@ export const convert3dPointTo2d = (plane: SketchPlaneType, p: Point3DInlineType)
   return [getPointU2(plane, p), getPointV2(plane, p)];
 };
 
-/** Get the normal vector of a given plane. */
-export const getNormalVectorForPlane = (plane: SketchPlaneType): [number, number, number] => {
+/** Get the direction vector of a given plane.
+ *  This may not be the same as the normal vector.
+ */
+export const getDirectionVectorForPlane = (plane: SketchPlaneType): [number, number, number] => {
   if ('xy' === plane.plane) {
     return [0, 0, 1];
   } else if ('xz' === plane.plane) {
@@ -180,14 +182,14 @@ export const getNormalVectorForPlane = (plane: SketchPlaneType): [number, number
   } else if ('yz' == plane.plane) {
     return [1, 0, 0]; //actual normal vector is [-1, 0, 0]
   } else {
-    console.error('[getNormalVectorForPlane] Invalid plane given: ' + plane);
+    console.error('[getDirectionVectorForPlane] Invalid plane given: ' + plane);
     return [0, 0, 0];
   }
 };
 
 export const getPlaneOffsetAsCoordinates = (plane: SketchPlaneType): [number, number, number] => {
-  const normVector = getNormalVectorForPlane(plane);
-  return [normVector[0] * plane.offset, normVector[1] * plane.offset, normVector[2] * plane.offset];
+  const directionVector = getDirectionVectorForPlane(plane);
+  return [directionVector[0] * plane.offset, directionVector[1] * plane.offset, directionVector[2] * plane.offset];
 };
 
 /** Get a plane aware sketch position at basePosition with offsets into

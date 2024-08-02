@@ -3,7 +3,7 @@ import { SketchType } from '@/app/slices/Sketch';
 import { Inputs } from '@bitbybit-dev/occt';
 import { BitByBitOCCT, OccStateEnum } from '@bitbybit-dev/occt-worker';
 import * as THREE from 'three';
-import { getNormalVectorForPlane } from './threejs_planes';
+import { getDirectionVectorForPlane } from './threejs_planes';
 import { SketchTypeMap } from '@/app/slices/sketchSlice';
 import { findCyclesInSketchAndConvertToOcct, SketchCyclesOcctContainer, SketchCycleTypeOcct } from './algo3d-occ';
 import { SaveGraphToReduxFunction } from './algo3d';
@@ -170,7 +170,7 @@ const extrudeSketch = async (
   sketch: SketchType,
   length: number
 ): Promise<Inputs.OCCT.TopoDSShapePointer> => {
-  const directionVectNumbers = getNormalVectorForPlane(sketch.plane);
+  const directionVectNumbers = getDirectionVectorForPlane(sketch.plane);
   const directionVect = new THREE.Vector3(directionVectNumbers[0], directionVectNumbers[1], directionVectNumbers[2]);
   directionVect.setLength(length);
 

@@ -10,13 +10,15 @@ import {
   findCyclesInSketch,
 } from './algo3d';
 import { Arc, Circle, Segment } from '@flatten-js/core';
-import { convert2DPointTo3D, getNormalVectorForPlane, updatePoint3dInlineFromPlaneOffset } from './threejs_planes';
+import { convert2DPointTo3D, getDirectionVectorForPlane, updatePoint3dInlineFromPlaneOffset } from './threejs_planes';
 import { GraphGeom2d } from '@/app/slices/graphGeom2dSlice';
 import { GeometryType } from '@/app/types/EntityType';
 import { Line3DInlinePointType } from '@/app/types/Line3DType';
 import { ArcInlinePointType } from '@/app/types/ArcType';
 import { CircleInlinePointType } from '@/app/types/CircleType';
 import { floatNumbersEqual } from './utils';
+
+const DEBUG_FLAG = false;
 
 /** Datatype representing a sketch cycle including occt data (the face) */
 export interface SketchCycleTypeOcct {
@@ -82,7 +84,7 @@ export const findCyclesInSketchAndConvertToOcct = async (
           return await bitbybit.occt.shapes.edge.createCircleEdge({
             radius: circle.r,
             center: convert2DPointTo3D(sketch.plane, circle.center.x, circle.center.y),
-            direction: getNormalVectorForPlane(sketch.plane),
+            direction: getDirectionVectorForPlane(sketch.plane),
           });
         }
         console.error('Must not get here ...', shape);
@@ -244,7 +246,9 @@ const createOcctFaceFromEdges = async (
   if (!floatNumbersEqual(faceArea, sketchCycle.cycleArea)) {
     // If the area does not match it means we have to reverse at least one wire before creating
     // the face.
-    console.log('faceArea (occt vs cycleArea)', faceArea, sketchCycle.cycleArea, sketchCycle);
+    if (DEBUG_FLAG) {
+      console.log('faceArea (occt vs cycleArea)', faceArea, sketchCycle.cycleArea, sketchCycle);
+    }
     const innerWiresMod = await Promise.all(
       innerWires.map(async (innerWire, index) => {
         const cycleForInnerCycle = sketchCycleMap[sketchCycle.innerCycles[index]];
@@ -287,7 +291,7 @@ const generateOcctFace = async (
           return await bitbybit.occt.shapes.edge.createCircleEdge({
             radius: circleObj.radius,
             center: circleObj.mid_pt,
-            direction: getNormalVectorForPlane(sketch.plane),
+            direction: getDirectionVectorForPlane(sketch.plane),
           });
         }
         console.error('Must not get here ...', shape);

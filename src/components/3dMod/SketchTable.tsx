@@ -81,8 +81,8 @@ const EditableCell: React.FC<EditableCellProps> = ({
       let values = await form.validateFields();
       // Note: values contains the whole object as record
 
-      console.log('values', values);
-      console.log(typeof values[dataIndex]);
+      //console.log('values', values);
+      //console.log(typeof values[dataIndex]);
       if (typeof values[dataIndex] === 'string') {
         //console.log('values are string');
         const elements = values[dataIndex].split(',');
@@ -233,7 +233,7 @@ const SketchTable = () => {
   ];
 
   const handleSave = (row: DataType) => {
-    console.log('handleSave', row);
+    //console.log('handleSave', row);
     //const { ['key']: removedKey, ['isError']: _, ...constraintData } = row;
     //dispatch(updateConstraint(constraintData));
     let planeOffset = row.plane_offset;

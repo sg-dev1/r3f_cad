@@ -65,58 +65,6 @@ const OcctRoot = () => {
   useEffect(() => {gl}, [gl])
   */
 
-  // keyboard events
-  /* old hidding functionality - quick and dirty using number keys (no longer supported)
-  const keyMap = useKeyboard();
-  useEffect(() => {
-    if (shapeToExtrude.length > 0) {
-      // do nothing while entering values for extrude
-      return;
-    }
-
-    //console.log(keyMap);
-    // quick and dirty hack to enable/disable shapes
-    // mainly for debug  purpose
-    if (keyMap['Digit1'] === true) {
-      if (sketchShapes.length > 0) {
-        sketchShapes[0].isHidden = !sketchShapes[0].isHidden;
-      }
-    } else if (keyMap['Digit2'] === true) {
-      if (sketchShapes.length > 1) {
-        sketchShapes[1].isHidden = !sketchShapes[1].isHidden;
-      }
-    } else if (keyMap['Digit3'] === true) {
-      if (sketchShapes.length > 2) {
-        sketchShapes[2].isHidden = !sketchShapes[2].isHidden;
-      }
-    } else if (keyMap['Digit4'] === true) {
-      if (sketchShapes.length > 3) {
-        sketchShapes[3].isHidden = !sketchShapes[3].isHidden;
-      }
-    } else if (keyMap['Digit5'] === true) {
-      if (sketchShapes.length > 4) {
-        sketchShapes[4].isHidden = !sketchShapes[4].isHidden;
-      }
-    } else if (keyMap['Digit6'] === true) {
-      if (sketchShapes.length > 5) {
-        sketchShapes[5].isHidden = !sketchShapes[5].isHidden;
-      }
-    } else if (keyMap['Digit7'] === true) {
-      if (sketchShapes.length > 6) {
-        sketchShapes[6].isHidden = !sketchShapes[6].isHidden;
-      }
-    } else if (keyMap['Digit8'] === true) {
-      if (sketchShapes.length > 7) {
-        sketchShapes[7].isHidden = !sketchShapes[7].isHidden;
-      }
-    } else if (keyMap['Digit9'] === true) {
-      if (sketchShapes.length > 8) {
-        sketchShapes[8].isHidden = !sketchShapes[8].isHidden;
-      }
-    }
-  }, [keyMap]);
-  */
-
   // Note: Currently the init() needs to be re called when coming back from Sketcher
   // Most likely this is because this component needs to be mounted again
   useEffect(() => {
@@ -138,7 +86,7 @@ const OcctRoot = () => {
       firstRender.current = false;
       return;
     }
-    console.log('---useEffect sketchs', bitbybit);
+    //console.log('---useEffect sketchs', bitbybit);
     const sketchIds = Object.keys(sketchs).map((key) => Number(key));
     const sketchContainersFiltered = sketchCycleOcctContainers.filter((container) =>
       sketchIds.includes(container.cycles[0].sketch.id)
@@ -167,18 +115,21 @@ const OcctRoot = () => {
 
   useEffect(() => {
     let active = true;
-    doWork();
-    return () => {
-      active = false;
-    };
 
     async function doWork() {
       if (!active || !bitbybit || sketchShapes.length === 0) {
         return;
       }
       const finalShapes = await createGeom3dShapes(bitbybit, dispatch, sketchShapes, geometries3d);
-      setShapes3d(finalShapes);
+      if (active) {
+        setShapes3d(finalShapes);
+      }
     }
+
+    doWork();
+    return () => {
+      active = false;
+    };
   }, [bitbybit, sketchShapes, geometries3d]);
 
   useEffect(() => {
