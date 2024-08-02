@@ -214,3 +214,15 @@ export const getPlaneAwareSketchPosition = (
 
   return result;
 };
+
+/** Updates the given Point3DInlineType instance with the plane offset given by the SketchPlaneType instance. */
+export const updatePoint3dInlineFromPlaneOffset = (p: Point3DInlineType, plane: SketchPlaneType): Point3DInlineType => {
+  if (plane.plane === 'xy') {
+    return [p[0], p[1], plane.offset];
+  } else if (plane.plane === 'xz') {
+    return [p[0], plane.offset, p[2]];
+  } else if (plane.plane === 'yz') {
+    return [plane.offset, p[1], p[2]];
+  }
+  return [0, 0, 0];
+};

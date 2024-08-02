@@ -70,12 +70,6 @@ List of Improvements
                   // Testing needed (with 04_... dataset) with 3d objects
                   // --> if no issue this should be fine as well
               )
-        - @algo3d-occ: refactoring of duplicated code --> move into single function
-          called by findCyclesInSketchAndConvertToOcct and generateOcctFace
-        - @algo3d-occ: There is still a bug in generateOcctFace with map creation
-          (implementation does not work with inner cycles)
-        - @algo3d-occ: Maybe change some of the type casts with "as SomeType" to
-            myObject: SomeType = {...}
         - Proper deletion of objects in algo3d-occ 
           (delete functions still create errors with occt, maybe due to React twice
            calling all functions in dev mode?)
@@ -86,6 +80,12 @@ List of Improvements
         - a change in the SketchTable does not trigger a redraw of the 2d/ 3d objects in the scene
           (most likely because SketchCycleObjects are not updated)
           // need to call the new --> patchSketchCycleObjects()
+        - @algo3d-occ: refactoring of duplicated code --> move into single function
+          called by findCyclesInSketchAndConvertToOcct and generateOcctFace
+        - @algo3d-occ: There is still a bug in generateOcctFace with map creation
+          (implementation does not work with inner cycles)
+        - @algo3d-occ: Maybe change some of the type casts with "as SomeType" to
+            myObject: SomeType = {...}
       Additionally offsets in all directions are needed (per default it is located at [0,0,0])
         * Need to be considered for sure:
            - SketchCycleObjectNg.tsx to draw the faces in the right space in 3D

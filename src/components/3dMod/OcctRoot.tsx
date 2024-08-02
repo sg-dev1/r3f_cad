@@ -9,6 +9,7 @@ import {
   selectSketchToExtrude,
   selectUpdatedSketchId,
   setSketchToExtrude,
+  setUpdatedSketchId,
 } from '@/app/slices/modellingToolStateSlice';
 import { BitByBitOCCT, OccStateEnum } from '@bitbybit-dev/occt-worker';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
@@ -202,6 +203,8 @@ const OcctRoot = () => {
       return;
     }
 
+    //console.log('---updatedSketchId', updatedSketchId);
+
     const sketch = sketchs[updatedSketchId];
     const containerToPatch = sketchCycleOcctContainers.filter(
       (container) => container.cycles[0].sketch.id === sketch.id
@@ -217,6 +220,7 @@ const OcctRoot = () => {
         const patchedSketchCycleContainer = await patchSketchCycleContainer(sketch, bitbybit, containerToPatch[0]);
         if (!ignore) {
           setSketchCycleOcctContainers([...otherContainers, patchedSketchCycleContainer]);
+          dispatch(setUpdatedSketchId(-1));
         }
       };
       patchContainer();
