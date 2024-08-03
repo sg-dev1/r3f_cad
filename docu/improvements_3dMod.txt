@@ -60,10 +60,12 @@ List of Improvements
         - Proper deletion of objects in algo3d-occ 
           (delete functions still create errors with occt, maybe due to React twice
            calling all functions in dev mode?)
-          - @occ_utils.ts: createGeom3dShapes
+          - @algo3d-occ.ts: <functions tbd>                    [tbd]
+          - @occ_utils.ts: createGeom3dShapes                  [do not delete]
               - issues with delete, need to track occt objects
                 (e.g. what objects with which ids are in the cache of the worker?)
-          - @algo3d-occ.ts: <functions tbd>
+              - seems the delete is not working here, seems that a delete deletes objects
+                that are still needed later on --> so don't do it!
         - testing!!!
       Done:
         - Function to update offset in sketchSlice.ts and integration in UI

@@ -75,7 +75,6 @@ export const createGeom3dShapes = async (
 
   const finalShapes: Geometry3DType[] = [];
   const geomIdsToRemove: number[] = [];
-  const shapesToDelete: Inputs.OCCT.TopoDSShapePointer[] = [];
   const allGeometries = Object.entries(geometries3d).map(([key, value]) => value);
   //console.log('allGeometries', allGeometries);
   for (const geom of allGeometries) {
@@ -86,11 +85,6 @@ export const createGeom3dShapes = async (
         case ModellingOperationType.ADDITIVE_EXTRUDE:
           const extrudedShape = await findAndExtrudeSketch(bitbybit, sketchShapes, modellingOp);
           if (extrudedShape) {
-            // TODO when assigning a new prevShape we have to collect the old shape
-            //      to delete it later
-            if (prevShape !== null) {
-              shapesToDelete.push(prevShape);
-            }
             prevShape = extrudedShape;
           }
           break;
@@ -108,11 +102,6 @@ export const createGeom3dShapes = async (
             }
           }
           const unionShape = await bitbybit.occt.booleans.union({ shapes: unionShapes, keepEdges: false });
-          // TODO when assigning a new prevShape we have to collect the old shape
-          //      to delete it later
-          if (prevShape !== null) {
-            shapesToDelete.push(prevShape);
-          }
           prevShape = unionShape;
           break;
         default:
@@ -132,16 +121,6 @@ export const createGeom3dShapes = async (
     // clean up all "orphaned geometries" where the sketch was removed
     console.info('clean up orphaned shapes', geomIdsToRemove);
     dispatch(removeGeometries({ ids: geomIdsToRemove }));
-  }
-
-  if (shapesToDelete.length > 0) {
-    //console.log('Deleting the following shapes', shapesToDelete);
-    //await bitbybit.occt.deleteShapes({ shapes: shapesToDelete });
-    // TODO track the shapes to delete and print them out first
-    // With these deletes we could errors in unrelated parts,
-    //   e.g. in useEffect of Occt3dGeometryVisualizer calling
-    //   occtGetFacesWiresEdgesPoints4Shape()
-    // Need to somehow track all the occt objects in the app
   }
 
   return finalShapes;

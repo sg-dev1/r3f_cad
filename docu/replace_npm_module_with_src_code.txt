@@ -1,0 +1,28 @@
+# Replace an npm module with a modified version
+# based on Modifying npm packages - the right way
+# (https://teambrookvale.com.au/articles/modifying-npm-packages-the-right-way)
+
+1) Create a _dependencies_ folder in this project and copy/ checkout there the library to work with,
+   e.g. bitbybit-occt-worker
+
+2) Do your changes in the library and build a release package
+   e.g. for bitbybit-occt-worker run "npm run build" followed by "cp .\package.json .\dist\"
+   (there is a "npm run build-p" target which however does not work - package.json is not copied)
+   (if package json is missing the dependencies of bitbybit-occt-worker are not installed)
+
+3) Edit the package.json file, e.g. replace the line
+  "@bitbybit-dev/occt-worker": "^0.15.9"
+  with
+  "@bitbybit-dev/occt-worker": "file:_dependencies_/bitbybit-occt-worker/dist"
+
+4) Run "npm i" in this project
+
+5) Start the app as normal with e.g. "npm run dev"
+   Now you should be using your own version of the dependency, e.g. verify it by
+   looking for console.log's you added.
+
+Notes:
+  - It seems that the dependency must live in a subdirectory below your package.json
+    (did not work with the dependency in a folder next to my project)
+  - Tested this on Windows 10
+  - Are absolute paths working? How do they work on Windows?
