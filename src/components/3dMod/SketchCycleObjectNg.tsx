@@ -47,12 +47,12 @@ const SketchCycleObjectNg = ({ sketchCycle, sketchCycleMap }: SketchCycleObjectN
     [sketchCycle]
   );
   // Cannot use useMemo for both of these because cannot use a hook in a hook
-  const arcsPointsArray = arcs.map((arc) =>
-    useArcPoints({ arc: arc, quaternion: quaternion, plane: sketchCycle.sketch.plane })
-  );
-  const circlePointsArray = circles.map((circle) =>
-    useCirclePoints({ circle: circle, quaternion: quaternion, plane: sketchCycle.sketch.plane })
-  );
+  const arcsPointsArray = useArcPoints({ arcs: arcs, quaternion: quaternion, plane: sketchCycle.sketch.plane });
+  const circlePointsArray = useCirclePoints({
+    circles: circles,
+    quaternion: quaternion,
+    plane: sketchCycle.sketch.plane,
+  });
 
   const [hovered, setHovered] = useState<boolean>(false);
 

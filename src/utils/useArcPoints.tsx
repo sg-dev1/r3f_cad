@@ -7,48 +7,52 @@ import * as THREE from 'three';
 import { getPlaneOffsetAsCoordinates } from './threejs_planes';
 
 export const useArcPoints = ({
-  arc,
+  arcs,
   quaternion,
   plane,
 }: {
-  arc: ArcInlinePointType;
+  arcs: ArcInlinePointType[];
   quaternion?: THREE.Quaternion;
   plane: SketchPlaneType;
 }) => {
-  const geometry = useMemo(() => {
-    const geometry = new THREE.BufferGeometry().setFromPoints(
-      new THREE.EllipseCurve(
-        arc.midPt2d[0],
-        arc.midPt2d[1],
-        arc.radius,
-        arc.radius,
-        arc.start_angle,
-        arc.end_angle,
-        arc.clockwise,
-        0 // aRotation, see https://threejs.org/docs/index.html#api/en/extras/curves/EllipseCurve
-      ).getPoints(128)
-    );
+  const geometries = useMemo(() => {
+    return arcs.map((arc) => {
+      const geometry = new THREE.BufferGeometry().setFromPoints(
+        new THREE.EllipseCurve(
+          arc.midPt2d[0],
+          arc.midPt2d[1],
+          arc.radius,
+          arc.radius,
+          arc.start_angle,
+          arc.end_angle,
+          arc.clockwise,
+          0 // aRotation, see https://threejs.org/docs/index.html#api/en/extras/curves/EllipseCurve
+        ).getPoints(128)
+      );
 
-    if (quaternion) {
-      geometry.applyQuaternion(quaternion);
-    }
+      if (quaternion) {
+        geometry.applyQuaternion(quaternion);
+      }
 
-    return geometry;
-  }, [arc, quaternion]);
+      return geometry;
+    });
+  }, [arcs, quaternion]);
 
-  const points = useMemo(() => {
-    const points = [];
-    const planeOffset = getPlaneOffsetAsCoordinates(plane);
+  const pointsArray = useMemo(() => {
+    return geometries.map((geometry) => {
+      const points = [];
+      const planeOffset = getPlaneOffsetAsCoordinates(plane);
 
-    let positions = geometry.attributes.position;
-    for (let i = 0; i < positions.count; i++) {
-      let p = new THREE.Vector3().fromBufferAttribute(positions, i);
-      points.push([p.x + planeOffset[0], p.y + planeOffset[1], p.z + planeOffset[2]] as Point3DInlineType);
-    }
-    return points;
-  }, [geometry, plane]);
+      let positions = geometry.attributes.position;
+      for (let i = 0; i < positions.count; i++) {
+        let p = new THREE.Vector3().fromBufferAttribute(positions, i);
+        points.push([p.x + planeOffset[0], p.y + planeOffset[1], p.z + planeOffset[2]] as Point3DInlineType);
+      }
+      return points;
+    });
+  }, [geometries, plane]);
 
-  return points;
+  return pointsArray;
 };
 
 export default useArcPoints;
