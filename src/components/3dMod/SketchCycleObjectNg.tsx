@@ -10,14 +10,13 @@ import { RootState } from '@/app/store';
 import { ArcInlinePointType } from '@/app/types/ArcType';
 import { CircleInlinePointType } from '@/app/types/CircleType';
 import { GeometryType } from '@/app/types/EntityType';
-import { Point3DInlineType } from '@/app/types/Point3DType';
 import { SketchCycleOcctMapType, SketchCycleTypeOcct } from '@/utils/algo3d-occ';
 import {
   convert2DPointTo3D,
   getPlaneOffsetAsCoordinates,
   getRotationForPlaneAsQuaternion,
 } from '@/utils/threejs_planes';
-import { cadTool3DShapeTo3DPoints, cadTool3DShapeToThreeShape } from '@/utils/threejs_utils';
+import { drawThreeShape } from '@/utils/threejs_utils';
 import useArcPoints from '@/utils/useArcPoints';
 import useCirclePoints from '@/utils/useCirclePoints';
 import { Line, Point, Points } from '@react-three/drei';
@@ -58,31 +57,10 @@ const SketchCycleObjectNg = ({ sketchCycle, sketchCycleMap }: SketchCycleObjectN
 
   // ---
 
-  const drawShape = (): [THREE.ShapeGeometry | null, Point3DInlineType[]] => {
-    const points = cadTool3DShapeTo3DPoints(sketchCycle.cycle, arcsPointsArray, circlePointsArray);
-    let threeShapeGeometry: THREE.ShapeGeometry | null = null;
-    if (sketchCycle.cycle.length > 0) {
-      const threeShape = cadTool3DShapeToThreeShape(sketchCycle.cycle, sketchCycle.sketch.plane);
-      // add the holes
-      // after example from
-      // https://discourse.threejs.org/t/use-a-shape-as-a-reference-to-make-a-hole/43595
-      sketchCycle.innerCycles.forEach((cycleIndex) => {
-        const cycle = sketchCycleMap[cycleIndex];
-        if (cycle === undefined) {
-          console.warn('cycleIndex', cycleIndex, 'not found in cycle map', sketchCycleMap);
-          return;
-        }
-        const holeShape = cadTool3DShapeToThreeShape(cycle.cycle, sketchCycle.sketch.plane);
-        threeShape.holes.push(holeShape);
-      });
-
-      threeShapeGeometry = new THREE.ShapeGeometry(threeShape);
-      threeShapeGeometry.applyQuaternion(quaternion);
-    }
-
-    return [threeShapeGeometry, points];
-  };
-  const [shapeGeometry, shapePoints] = useMemo(() => drawShape(), [sketchCycle]);
+  const [shapeGeometry, shapePoints] = useMemo(
+    () => drawThreeShape(sketchCycle, sketchCycleMap, arcsPointsArray, circlePointsArray, quaternion),
+    [sketchCycle, sketchCycleMap, arcsPointsArray, circlePointsArray, quaternion]
+  );
 
   const obtainShapeColor = () => {
     if (hovered) {

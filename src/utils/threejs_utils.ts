@@ -8,6 +8,7 @@ import { Line3DInlinePointType } from '@/app/types/Line3DType';
 import { ArcInlinePointType } from '@/app/types/ArcType';
 import { CircleInlinePointType } from '@/app/types/CircleType';
 import { SketchPlaneType } from '@/app/slices/Sketch';
+import { SketchCycleOcctMapType, SketchCycleTypeOcct } from './algo3d-occ';
 
 /**
  * Calculates the intersection of a ray casted from the camera to a specific plane.
@@ -76,6 +77,38 @@ export const calcIntersectionWithPlaneFromRect = (
   //console.log('Plane intersection:', out);
 
   return result;
+};
+
+/** Draws a three shape from the given parameters. */
+export const drawThreeShape = (
+  sketchCycle: SketchCycleTypeOcct,
+  sketchCycleMap: SketchCycleOcctMapType,
+  arcsPointsArray: Point3DInlineType[][],
+  circlePointsArray: Point3DInlineType[][],
+  quaternion: THREE.Quaternion
+): [THREE.ShapeGeometry | null, Point3DInlineType[]] => {
+  const points = cadTool3DShapeTo3DPoints(sketchCycle.cycle, arcsPointsArray, circlePointsArray);
+  let threeShapeGeometry: THREE.ShapeGeometry | null = null;
+  if (sketchCycle.cycle.length > 0) {
+    const threeShape = cadTool3DShapeToThreeShape(sketchCycle.cycle, sketchCycle.sketch.plane);
+    // add the holes
+    // after example from
+    // https://discourse.threejs.org/t/use-a-shape-as-a-reference-to-make-a-hole/43595
+    sketchCycle.innerCycles.forEach((cycleIndex) => {
+      const cycle = sketchCycleMap[cycleIndex];
+      if (cycle === undefined) {
+        console.warn('cycleIndex', cycleIndex, 'not found in cycle map', sketchCycleMap);
+        return;
+      }
+      const holeShape = cadTool3DShapeToThreeShape(cycle.cycle, sketchCycle.sketch.plane);
+      threeShape.holes.push(holeShape);
+    });
+
+    threeShapeGeometry = new THREE.ShapeGeometry(threeShape);
+    threeShapeGeometry.applyQuaternion(quaternion);
+  }
+
+  return [threeShapeGeometry, points];
 };
 
 /** Convert a CadTool3DShapeSubset array to a THREE.Shape using the given plane. */
