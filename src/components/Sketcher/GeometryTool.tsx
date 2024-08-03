@@ -623,4 +623,8 @@ const GeometryTool = forwardRef<any, any>(({}: GeometryToolProps, ref) => {
   );
 });
 
+// To fix the following linter error:
+// Error: Component definition is missing display name  react/display-name
+GeometryTool.displayName = 'GeometryTool';
+
 export default GeometryTool;

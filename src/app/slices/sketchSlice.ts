@@ -101,11 +101,15 @@ export const sketchSlice = createSlice({
   initialState,
   reducers: {
     createSketch: (state: SketchState, { payload: plane }) => {
+      let planeObj = plane;
+      if (plane === 'xy' || plane === 'xz' || plane === 'yz') {
+        planeObj = { plane: plane, normalVector: [0, 0, 0], offset: 0 };
+      }
       state.sketches[state.sketchIdCount] = {
         ...emptySketch,
         id: state.sketchIdCount,
         name: `Sketch${state.sketchIdCount}`,
-        plane: plane,
+        plane: planeObj,
       };
       state.activeSketchId = state.sketchIdCount;
       state.sketchIdCount++;
