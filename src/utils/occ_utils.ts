@@ -37,22 +37,9 @@ export const occ_init = (onInitialized: (bitbybit: BitByBitOCCT) => Promise<void
 export const createSketchCycleContainers = async (
   bitbybit: BitByBitOCCT,
   sketchs: SketchTypeMap,
-  prevSketchCycleContainers: SketchCyclesOcctContainer[],
   saveGraphGeom2d: SaveGraphToReduxFunction,
   graphGeom2dStateGraphs: GraphGeom2dMap
 ): Promise<SketchCyclesOcctContainer[]> => {
-  // Disabled this since it created issues on rerender, e.g.
-  // after deleting a sketch
-  // Occt lib occassionally behaves a bit strange ...
-  // Update 2024-07-04: Enabled it again for now - handling of bitbybit needs to be improved any
-  //   also find out if there are any memory leaks ...
-  if (prevSketchCycleContainers.length > 0) {
-    console.log('Deleting previous sketchShapes ', prevSketchCycleContainers);
-    await bitbybit.occt.deleteShapes({
-      shapes: prevSketchCycleContainers.map((container) => container.cycles.map((cycle) => cycle.occtFace)).flat(1),
-    });
-  }
-
   const resultSketchCycleContainers: SketchCyclesOcctContainer[] = [];
   const allSketchs = Object.entries(sketchs).map(([key, value]) => value);
   for (const sketch of allSketchs) {

@@ -4,29 +4,22 @@ import {
   addOrRemoveSelectedShapeId,
   clearSelectedShapeIds,
   ModellingToolStateEnum,
+  selectDeletedSketchId,
   selectModellingToolState,
   selectSelectedShapeIds,
   selectSketchToExtrude,
   selectUpdatedSketchId,
+  setDeletedSketchId,
   setSketchToExtrude,
   setUpdatedSketchId,
 } from '@/app/slices/modellingToolStateSlice';
-import { BitByBitOCCT, OccStateEnum } from '@bitbybit-dev/occt-worker';
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { BitByBitOCCT } from '@bitbybit-dev/occt-worker';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { selectSketchs } from '@/app/slices/sketchSlice';
-import {
-  SketchCyclesOcctContainer,
-  findCyclesInSketchAndConvertToOcct,
-  patchSketchCycleContainer,
-} from '@/utils/algo3d-occ';
-import useKeyboard from '@/utils/useKeyboard';
+import { SketchCyclesOcctContainer, patchSketchCycleContainer } from '@/utils/algo3d-occ';
 import SketchCycleObjectNg from './SketchCycleObjectNg';
 import R3fHtmlInput from '../Utils/R3fHtmlInput';
-import { Inputs } from '@bitbybit-dev/occt';
-import { SketchType } from '@/app/slices/Sketch';
-import { STLExporter } from 'three/examples/jsm/Addons.js';
-import * as THREE from 'three';
-import { createGeom3d, createUnion, removeGeometries, select3dGeometries } from '@/app/slices/geom3dSlice';
+import { createGeom3d, createUnion, select3dGeometries } from '@/app/slices/geom3dSlice';
 import { Geometry3DType } from '@/app/types/Geometry3DType';
 import Occt3dGeometryVisualizer from './Occt3dGeometryVisualizer';
 import { SketchShapeLabelingGraphNode } from '@/utils/algo3d';
@@ -36,7 +29,6 @@ import { createGeom3dShapes, createSketchCycleContainers, occ_init } from '@/uti
 const OcctRoot = () => {
   const [bitbybit, setBitbybit] = useState<BitByBitOCCT>();
 
-  const firstRender = useRef(true);
   const dispatch = useAppDispatch();
   const sketchs = useAppSelector(selectSketchs);
   const [sketchCycleOcctContainers, setSketchCycleOcctContainers] = useState<SketchCyclesOcctContainer[]>([]);
@@ -49,6 +41,7 @@ const OcctRoot = () => {
   const toolState = useAppSelector(selectModellingToolState);
 
   const updatedSketchId = useAppSelector(selectUpdatedSketchId);
+  const deletedSketchId = useAppSelector(selectDeletedSketchId);
 
   // ---
 
@@ -60,17 +53,13 @@ const OcctRoot = () => {
     (shape) => shape.sketch.id === sketchToExtrude && shape.label === labelOfCycle
   );
 
-  /*
-  const {gl} = useThree()
-  useEffect(() => {gl}, [gl])
-  */
+  // ---
 
   // Note: Currently the init() needs to be re called when coming back from Sketcher
   // Most likely this is because this component needs to be mounted again
   useEffect(() => {
-    console.log('---bitbybit', bitbybit);
-    console.log('---sketchShapes', sketchCycleOcctContainers);
-    const [occt, newBitBybit] = occ_init(onOcctIntialized);
+    console.log('Initializing occt ...');
+    const [occt, newBitBybit] = occ_init(onOcctInitialized);
     setBitbybit(newBitBybit);
 
     // we need to terminate the worker thread else there are more and more threads
@@ -80,19 +69,9 @@ const OcctRoot = () => {
   // Note: This useEffect is needed if f.e. a sketch is deleted so it can also be removed from display
   //       (needs an updated of sketchShapes list).
   useEffect(() => {
-    // skip this call on first render also no geometries are created because sketchShapes array
-    // is empty
-    if (firstRender.current) {
-      firstRender.current = false;
+    if (deletedSketchId === -1 || !bitbybit) {
       return;
     }
-    //console.log('---useEffect sketchs', bitbybit);
-    const sketchIds = Object.keys(sketchs).map((key) => Number(key));
-    const sketchContainersFiltered = sketchCycleOcctContainers.filter((container) =>
-      sketchIds.includes(container.cycles[0].sketch.id)
-    );
-    //console.log('sketchShapesFiltered', sketchShapesFiltered);
-    setSketchCycleOcctContainers(sketchContainersFiltered);
 
     let active = true;
     cleanup();
@@ -101,17 +80,30 @@ const OcctRoot = () => {
     };
 
     async function cleanup() {
-      if (!active) {
+      if (!active || !bitbybit) {
         return;
       }
+
+      //console.log('---useEffect sketchs', bitbybit);
+      const sketchIds = Object.keys(sketchs).map((key) => Number(key));
+      const sketchContainersFiltered = sketchCycleOcctContainers.filter((container) =>
+        sketchIds.includes(container.cycles[0].sketch.id)
+      );
+      //console.log('sketchShapesFiltered', sketchShapesFiltered);
+
       const containersToRemove = sketchCycleOcctContainers.filter(
         (container) => !sketchIds.includes(container.cycles[0].sketch.id)
       );
-      await bitbybit?.occt.deleteShapes({
-        shapes: containersToRemove.map((container) => container.cycles.map((cycle) => cycle.occtFace)).flat(1),
-      });
+
+      if (active) {
+        await bitbybit.occt.deleteShapes({
+          shapes: containersToRemove.map((container) => container.cycles.map((cycle) => cycle.occtFace)).flat(1),
+        });
+        setSketchCycleOcctContainers(sketchContainersFiltered);
+        dispatch(setDeletedSketchId(-1));
+      }
     }
-  }, [sketchs]);
+  }, [sketchs, deletedSketchId, bitbybit, sketchCycleOcctContainers, dispatch]);
 
   useEffect(() => {
     let active = true;
@@ -130,9 +122,10 @@ const OcctRoot = () => {
     return () => {
       active = false;
     };
-  }, [bitbybit, sketchShapes, geometries3d]);
+  }, [bitbybit, sketchShapes, geometries3d, dispatch]);
 
   useEffect(() => {
+    //console.log('Calling the UNION creation useEffect.');
     if (ModellingToolStateEnum.UNION === toolState) {
       if (selectedShapeIds.length >= 2) {
         // Note: this only allows two shapes to be part of the union
@@ -140,7 +133,7 @@ const OcctRoot = () => {
         dispatch(clearSelectedShapeIds());
       }
     }
-  }, [selectedShapeIds]);
+  }, [selectedShapeIds, toolState, dispatch]);
 
   // Handles the update of the plane offset of a sketch.
   // In this case the affected SketchCyclesOcctContainer needs to be patched.
@@ -180,48 +173,49 @@ const OcctRoot = () => {
     return () => {
       ignore = true;
     };
-  }, [updatedSketchId]);
+  }, [updatedSketchId, dispatch, bitbybit, sketchCycleOcctContainers, sketchs]);
 
   // ---
 
   /** Save the state graph for sketch shape labeling to redux */
-  const saveGraphGeom2dToRedux = (
-    sketchId: number,
-    nodes: SketchShapeLabelingGraphNode[],
-    adjacencyList: number[][]
-  ): void => {
-    dispatch(
-      setStateGraph({
-        sketchId,
-        graph: {
-          nodes: nodes.map((node) => ({
-            id: node.id,
-            centroid: node.centroid,
-            topLeftCorner: node.topLeftCorner,
-            faceArea: node.area,
-            label: node.label,
-          })),
-          adjacencyList: adjacencyList,
-        },
-      })
-    );
-  };
+  const saveGraphGeom2dToRedux = useCallback(
+    (sketchId: number, nodes: SketchShapeLabelingGraphNode[], adjacencyList: number[][]): void => {
+      dispatch(
+        setStateGraph({
+          sketchId,
+          graph: {
+            nodes: nodes.map((node) => ({
+              id: node.id,
+              centroid: node.centroid,
+              topLeftCorner: node.topLeftCorner,
+              faceArea: node.area,
+              label: node.label,
+            })),
+            adjacencyList: adjacencyList,
+          },
+        })
+      );
+    },
+    [dispatch]
+  );
 
   /** Callback to be called when occt has been initialized. */
-  const onOcctIntialized = async (bitbybit: BitByBitOCCT) => {
-    // Launch the function converting Sketches to be visualized in 3D
-    const sketchCycleContainers = await createSketchCycleContainers(
-      bitbybit,
-      sketchs,
-      sketchCycleOcctContainers,
-      saveGraphGeom2dToRedux,
-      graphGeom2dStateGraphs
-    );
-    setSketchCycleOcctContainers(sketchCycleContainers);
-    // disabled the animation loop because it make f.e. the GizmoHelper disappear
-    //gl.setAnimationLoop(animation);
-    console.log('Occt init completed');
-  };
+  const onOcctInitialized = useCallback(
+    async (bitbybit: BitByBitOCCT) => {
+      // Launch the function converting Sketches to be visualized in 3D
+      const sketchCycleContainers = await createSketchCycleContainers(
+        bitbybit,
+        sketchs,
+        saveGraphGeom2dToRedux,
+        graphGeom2dStateGraphs
+      );
+      setSketchCycleOcctContainers(sketchCycleContainers);
+      // disabled the animation loop because it make f.e. the GizmoHelper disappear
+      //gl.setAnimationLoop(animation);
+      console.log('Occt init completed');
+    },
+    [graphGeom2dStateGraphs, saveGraphGeom2dToRedux, sketchs]
+  );
 
   // ---
 

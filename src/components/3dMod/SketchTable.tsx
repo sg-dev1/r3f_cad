@@ -1,6 +1,11 @@
 /** This component contains a list of all sketches presented to the user in the 3D modelling tool. */
 import { useAppDispatch, useAppSelector } from '@/app/hooks';
-import { selectSelectedSketch, setSelectedSketch, setUpdatedSketchId } from '@/app/slices/modellingToolStateSlice';
+import {
+  selectSelectedSketch,
+  setDeletedSketchId,
+  setSelectedSketch,
+  setUpdatedSketchId,
+} from '@/app/slices/modellingToolStateSlice';
 import {
   deleteSketch,
   selectSketchs,
@@ -270,6 +275,7 @@ const SketchTable = () => {
   const handleDelete = (record: DataType) => {
     console.log('delete', record);
     dispatch(deleteSketch(record.id));
+    dispatch(setDeletedSketchId(record.id));
   };
 
   const handleRowClick = (record: DataType) => {

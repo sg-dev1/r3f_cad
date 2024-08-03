@@ -15,6 +15,7 @@ export interface ModellingToolState {
   selectedShapeIds: number[];
 
   updatedSketchId: number;
+  deletedSketchId: number;
 }
 
 const initialState: ModellingToolState = {
@@ -25,6 +26,7 @@ const initialState: ModellingToolState = {
   selectedShapeIds: [],
 
   updatedSketchId: -1,
+  deletedSketchId: -1,
 };
 
 export const modellingToolSlice = createSlice({
@@ -59,6 +61,9 @@ export const modellingToolSlice = createSlice({
     setUpdatedSketchId: (state, { payload }) => {
       state.updatedSketchId = payload;
     },
+    setDeletedSketchId: (state, { payload }) => {
+      state.deletedSketchId = payload;
+    },
   },
 });
 
@@ -70,6 +75,7 @@ export const {
   removeSelectedShapeId,
   clearSelectedShapeIds,
   setUpdatedSketchId,
+  setDeletedSketchId,
 } = modellingToolSlice.actions;
 
 export const selectSketchToExtrude = (state: RootState) => state.modellingTool.sketchToExtrude;
@@ -77,5 +83,6 @@ export const selectSelectedSketch = (state: RootState) => state.modellingTool.se
 export const selectModellingToolState = (state: RootState) => state.modellingTool.toolState;
 export const selectSelectedShapeIds = (state: RootState) => state.modellingTool.selectedShapeIds;
 export const selectUpdatedSketchId = (state: RootState) => state.modellingTool.updatedSketchId;
+export const selectDeletedSketchId = (state: RootState) => state.modellingTool.deletedSketchId;
 
 export default modellingToolSlice.reducer;
