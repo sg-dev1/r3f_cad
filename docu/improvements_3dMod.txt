@@ -1,5 +1,4 @@
 Priority of improvements (my ranking)
-  - B008-2 // add plane offsets to sketches
   - B012-A // union tool
   - B023-A // topo naming SketchCycles
   - B023   // data model, topo naming problem
@@ -30,91 +29,8 @@ List of Improvements
     - for 3D geometry maybe add a new slice (e.g. geom3DSlice.ts) to hold the information
       (similar to sketchSlice)
 
-(B008) Add attachment to Sketches, e.g. where they are located in 3D space
-    - (target) Plane representation (currently as string - update when needed):
-        * ("xy" | "xz" | "yz" | normal_vector, offset), e.g.
-          sketch.plane.plane         // holds the string as in old version
-                                     //   - 3 standard planes "xy", "xz", and "yz"
-                                     //   - leave empty ("") to use the normalVector
-          sketch.plane.normalVector  // arbitrary plane given by its normal vector
-          sketch.plane.offset        // offset for plane, may be used with .plane
-                                     // or .normalVector
-    - Functions to consider:      
-      - threejs_planes.ts:       nearly all functions
-    - No longer to consider:
-      - threejs_utils.ts:        calcIntersectionWithPlaneFromRect()
-      - SketchCycleObjectNg.tsx  placement of the 2d shape in 3d
-          (should not require a change, changes should be limited to the two files aboth)
-    Other remarks:
-      * If sketch offset is updated all points needed to be updated
-        (the 3rd coordinate for the standard planes, for arbitrary planes it may involve
-         multiple coordinates)
-         --> support for "shifting" of plane (should be a redux action 
-             of sketchSlice.ts - e.g. implementation in Sketch.ts)
-      * F.e. in SketcherView.tsx itself no change needed, getCameraPositionForPlane()
-        should return the correct position (need to consider an offset)
-      * No change in SketchCycleObjectNg.tsx
-      * Quaternion is not needed in sketcher since camera is always looking at [0, 0, 0]
-(B008-2)
-      TODOs:
-        - Proper deletion of objects in algo3d-occ 
-          (delete functions still create errors with occt, maybe due to React twice
-           calling all functions in dev mode?)
-          - @algo3d-occ.ts: <functions tbd>                    [tbd]
-          - @occ_utils.ts: createGeom3dShapes                  [do not delete]
-              - issues with delete, need to track occt objects
-                (e.g. what objects with which ids are in the cache of the worker?)
-              - seems the delete is not working here, seems that a delete deletes objects
-                that are still needed later on --> so don't do it!
-        - testing!!!
-      Done:
-        - Function to update offset in sketchSlice.ts and integration in UI
-        - changes in SketchCycleObjectNg.tsx (also to draw circles/ arcs correctly)
-        - a change in the SketchTable does not trigger a redraw of the 2d/ 3d objects in the scene
-          (most likely because SketchCycleObjects are not updated)
-          // need to call the new --> patchSketchCycleObjects()
-        - @algo3d-occ: refactoring of duplicated code --> move into single function
-          called by findCyclesInSketchAndConvertToOcct and generateOcctFace
-        - @algo3d-occ: There is still a bug in generateOcctFace with map creation
-          (implementation does not work with inner cycles)
-        - @algo3d-occ: Maybe change some of the type casts with "as SomeType" to
-            myObject: SomeType = {...}
-        - @threejs_planes: getNormalVectorForPlane  
-                 (or rename this function, because negative values are not that good,
-                 e.g. --> getDirectionVectorForPlane)
-            - should return different normal vectors for xz and yz planes
-              (may affect functionality, e.g. 
-                - extrudeSketch in occ_utils.ts: Sketch extruded in different direction
-                   // I don't think this is an issue, the proper direction would
-                   // be the negative axis
-                - Circle creation in algo3d-occ.ts:
-                  Maybe this caused the issue with circle wires?
-                  // Testing needed (with 04_... dataset) with 3d objects
-                  // --> if no issue this should be fine as well
-              )
-      Additionally offsets in all directions are needed (per default it is located at [0,0,0])
-        * Need to be considered for sure:
-           - SketchCycleObjectNg.tsx to draw the faces in the right space in 3D
-        * Maybe need to be considered:
-           - Sketcher tool  // e.g. if we allow rotations
-        * No need to consider:
-           - algo3d algorithms --> they work in 2D (an offset in 3D is not considered)
-(B008-3)
-      For future also an arbitrary plane may be selected (e.g. need for rotations etc.)
-        * Need to be considered everywhere:
-           SketchCycleObjectNg.tsx, Sketcher tool, algo3d algorithms
-        * Also needs to be considered in solver backend which only supports the
-          three standard planes
-        * Quaternion should represent rotation from one (normal) vector to other
-          - e.g. [0,0,1] (default of XY_PLANE) to normal vector of target plane
-          - calc performed as in https://stackoverflow.com/questions/1171849/finding-quaternion-representing-the-rotation-from-one-vector-to-another
-          - maybe can directly use Quaternion..setFromUnitVectors()
-            https://threejs.org/docs/index.html#api/en/math/Quaternion
-            (normal vectors need to be normalized!)
-          - Could try this out for XZ_PLANE and YZ_PLANE
-            (do I get values as in getRotationForPlaneAsQuaternion() found out empirically?)
-          (these rotations should be around origin, an offset may need to be considered separately,
-           e.g. need to use the position)
+
+
 
 (B012) Creating of 3D objects
      - support of more operations 
@@ -169,7 +85,36 @@ List of Improvements
     - Need to define test cases to model with the app (only 2d shapes with multiple (inner) cycles)
 
 
+(BXXX) Issues with bitbybit
+   - To me it seems like a bug in the library (occt-worker), maybe collision of hashes
+     (or why does the delete of shapes no longer needed causes issues in later occt calls?)
+   - Need to do some further debugging of occt worker, e.g. adding log messages etc.
+
+
 On Hold
+
+(B008-3)
+      - Datamodel is ready to support this change (see B008 and B008-2 tasks)
+      - All changes should only be done in threejs_planes.ts which handles all the 
+        "plane aware logic" 
+        - functions need to support a plane given by plane.normalVector (instead of plane.plane)
+        - There may be additional changes needed I currently don't know, e.g.
+          in SketchCycleObjectNg.tsx, maybe OcctFaceVisualizer.tsx
+      - For future also an arbitrary plane may be selected (e.g. need for rotations etc.)
+        * Need to be considered everywhere:
+           SketchCycleObjectNg.tsx, Sketcher tool, algo3d algorithms
+        * Also needs to be considered in solver backend which only supports the
+          three standard planes
+        * Quaternion should represent rotation from one (normal) vector to other
+          - e.g. [0,0,1] (default of XY_PLANE) to normal vector of target plane
+          - calc performed as in https://stackoverflow.com/questions/1171849/finding-quaternion-representing-the-rotation-from-one-vector-to-another
+          - maybe can directly use Quaternion..setFromUnitVectors()
+            https://threejs.org/docs/index.html#api/en/math/Quaternion
+            (normal vectors need to be normalized!)
+          - Could try this out for XZ_PLANE and YZ_PLANE
+            (do I get values as in getRotationForPlaneAsQuaternion() found out empirically?)
+          (these rotations should be around origin, an offset may need to be considered separately,
+           e.g. need to use the position)
 
 (B026) Testing of algo3d-occ.ts
   - Create new test cases for (B025)
@@ -227,6 +172,74 @@ On Hold
 
 
 Done Improvements
+
+(B008) Add attachment to Sketches, e.g. where they are located in 3D space
+    - (target) Plane representation (currently as string - update when needed):
+        * ("xy" | "xz" | "yz" | normal_vector, offset), e.g.
+          sketch.plane.plane         // holds the string as in old version
+                                     //   - 3 standard planes "xy", "xz", and "yz"
+                                     //   - leave empty ("") to use the normalVector
+          sketch.plane.normalVector  // arbitrary plane given by its normal vector
+          sketch.plane.offset        // offset for plane, may be used with .plane
+                                     // or .normalVector
+    - Functions to consider:      
+      - threejs_planes.ts:       nearly all functions
+    - No longer to consider:
+      - threejs_utils.ts:        calcIntersectionWithPlaneFromRect()
+      - SketchCycleObjectNg.tsx  placement of the 2d shape in 3d
+          (should not require a change, changes should be limited to the two files aboth)
+    Other remarks:
+      * If sketch offset is updated all points needed to be updated
+        (the 3rd coordinate for the standard planes, for arbitrary planes it may involve
+         multiple coordinates)
+         --> support for "shifting" of plane (should be a redux action 
+             of sketchSlice.ts - e.g. implementation in Sketch.ts)
+      * F.e. in SketcherView.tsx itself no change needed, getCameraPositionForPlane()
+        should return the correct position (need to consider an offset)
+      * No change in SketchCycleObjectNg.tsx
+      * Quaternion is not needed in sketcher since camera is always looking at [0, 0, 0]
+(B008-2)
+      Done Tasks:
+        - Function to update offset in sketchSlice.ts and integration in UI
+        - changes in SketchCycleObjectNg.tsx (also to draw circles/ arcs correctly)
+        - a change in the SketchTable does not trigger a redraw of the 2d/ 3d objects in the scene
+          (most likely because SketchCycleObjects are not updated)
+          // need to call the new --> patchSketchCycleObjects()
+        - @algo3d-occ: refactoring of duplicated code --> move into single function
+          called by findCyclesInSketchAndConvertToOcct and generateOcctFace
+        - @algo3d-occ: There is still a bug in generateOcctFace with map creation
+          (implementation does not work with inner cycles)
+        - @algo3d-occ: Maybe change some of the type casts with "as SomeType" to
+            myObject: SomeType = {...}
+        - @threejs_planes: getNormalVectorForPlane  
+                 (or rename this function, because negative values are not that good,
+                 e.g. --> getDirectionVectorForPlane)
+            - should return different normal vectors for xz and yz planes
+              (may affect functionality, e.g. 
+                - extrudeSketch in occ_utils.ts: Sketch extruded in different direction
+                   // I don't think this is an issue, the proper direction would
+                   // be the negative axis
+                - Circle creation in algo3d-occ.ts:
+                  Maybe this caused the issue with circle wires?
+                  // Testing needed (with 04_... dataset) with 3d objects
+                  // --> if no issue this should be fine as well
+              )
+        - Proper deletion of objects in algo3d-occ 
+          (delete functions still create errors with occt, maybe due to React twice
+           calling all functions in dev mode?)
+          - @algo3d-occ.ts: <functions tbd>                    [do not delete]
+          - @occ_utils.ts: createGeom3dShapes                  [do not delete]
+              - issues with delete, need to track occt objects
+                (e.g. what objects with which ids are in the cache of the worker?)
+              - seems the delete is not working here, seems that a delete deletes objects
+                that are still needed later on --> so don't do it!
+      Additionally offsets in all directions are needed (per default it is located at [0,0,0])
+        * Need to be considered for sure:
+           - SketchCycleObjectNg.tsx to draw the faces in the right space in 3D
+        * Maybe need to be considered:
+           - Sketcher tool  // e.g. if we allow rotations
+        * No need to consider:
+           - algo3d algorithms --> they work in 2D (an offset in 3D is not considered)
 
 (B027) Improvement of occt root
   - init() function from occt root to be moved to occ_utils.ts --> e.g. occ_init(initCodeAfterInitialized)

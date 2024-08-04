@@ -329,7 +329,7 @@ export const patchSketchCycleContainer = async (
       innerCycles: cycle.innerCycles,
       sketch: sketch,
       index: cycle.index,
-      occtFace: cycle.occtFace, // use the old face, to be overwritten later
+      occtFace: { hash: 0, type: '' }, // use a dummy face
       cycleArea: cycle.cycleArea,
       label: cycle.label,
       centroid: cycle.centroid,
@@ -350,7 +350,9 @@ export const patchSketchCycleContainer = async (
     })
   );
 
-  // delete old occt faces
+  // delete old occt faces - delete produces errors in occt calls later on
+  //   To me this seems like a bug in the occt-worker library
+  //   Hash collision?
   //await bitbybit.occt.deleteShapes({ shapes: occtFacesToDelete });
 
   const cycleMapResult = buildSketchCycleOcctMap(newCyclesWithFace, containerToPatch.map, sketch.plane);

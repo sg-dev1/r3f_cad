@@ -76,6 +76,12 @@ export const getRotationForPlaneAsQuaternion = (plane: SketchPlaneType): THREE.Q
     // Y axis need to be rotated counter clockwise to get desired location
     quaternion.setFromAxisAngle(new THREE.Vector3(0, 1, 0), -Math.PI / 2);
   } else {
+    // arbitrary case:
+    // - plane.normalVector needs to be normalized, else an additional
+    //   new THREE.Vector3(...plane.normalVector).normalize() is needed
+    // - calc quaternion:
+    //   quaternion.setFromUnitVectors([0, 0, 1], plane.normalVector)
+    // - Note: this was only tested for the standard planes, see notes.txt
     console.error('[getRotationForPlane] Invalid plane given: ' + plane);
   }
   return quaternion;
