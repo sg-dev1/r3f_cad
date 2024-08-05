@@ -34,3 +34,9 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+###############
+
+# This folder contains local dependencies e.g. for testing/ debugging the dependency
+# that shall not be comitted
+_dependencies_

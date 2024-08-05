@@ -14,6 +14,23 @@
   "@bitbybit-dev/occt-worker": "^0.15.9"
   with
   "@bitbybit-dev/occt-worker": "file:_dependencies_/bitbybit-occt-worker/dist"
+  NOTES:
+    - this only works if the dependency file is in a sub directory (e.g. in _dependencies_ folder)
+       - tested it with dependency next to this project, e.g.
+          - cad_tool folder
+          - bitbybit-occt-worker folder
+       - and also having a link from _dependencies_/bitbybit-occt-worker to ../bitbybit-occt-worker
+         which did not work
+       - both did not work on Windows 10
+       - npm docu also says the following:
+         """
+         note: Packages linked by local path will not have their own dependencies 
+         installed when npm install is ran in this case. You must run npm install from inside the local path itself.
+         """
+         maybe this is the cause, see
+         https://docs.npmjs.com/cli/v10/configuring-npm/package-json#local-paths
+         https://stackoverflow.com/a/72353583
+    - else the dependencies of the bitbybit-occt-worker package are not installed
 
 4) Run "npm i" in this project
 
