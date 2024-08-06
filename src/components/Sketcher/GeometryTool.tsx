@@ -503,7 +503,7 @@ const GeometryTool = forwardRef<any, any>(({}: GeometryToolProps, ref) => {
         })
       )
     );
-  }, [sketchPoints, sketchLines, sketchConstraints]);
+  }, [sketchPoints, sketchLines, sketchCircles, sketchConstraints, sketchCurrentPlane, dispatch]);
 
   useImperativeHandle(
     ref,
@@ -538,7 +538,7 @@ const GeometryTool = forwardRef<any, any>(({}: GeometryToolProps, ref) => {
     } else if (!currentMousePos) {
       setPointsToDraw([]);
     }
-  }, [currentMousePos]);
+  }, [currentMousePos, sketchLastPoint]);
 
   useEffect(() => {
     // reset the tool state when changing tool

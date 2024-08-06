@@ -74,7 +74,7 @@ const SketcherView = () => {
       dispatch(setDiamConstraintCircleId(-1));
       dispatch(setAngleConstraintLineIds([-1, -1]));
     }
-  }, [keyMap]);
+  }, [keyMap, dispatch, sketchLengthConstraintLineId, sketchSelectedConstraintId]);
 
   // Just for debugging
   useEffect(() => {
@@ -87,7 +87,7 @@ const SketcherView = () => {
     } else {
       setSolverResult('Solver Error, Failed Constraints=' + sketchLastSolverFailedConstraints.map(String));
     }
-  }, [sketchLastSolverResultCode, sketchLastDof]);
+  }, [sketchLastSolverResultCode, sketchLastDof, sketchLastSolverFailedConstraints]);
 
   useEffect(() => {
     switch (toolState) {
@@ -147,7 +147,7 @@ const SketcherView = () => {
     if (ToolState.CONSTRAINT_LENGTH !== toolState && sketchLengthConstraintLineId !== -1) {
       dispatch(setLengthConstraintLineId(-1));
     }
-  }, [toolState]);
+  }, [toolState, dispatch, sketchLengthConstraintLineId]);
 
   return (
     <>
