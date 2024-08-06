@@ -115,7 +115,7 @@ const CircleObject = ({
       points.push(p);
     }
     return points;
-  }, [midPoint, radius]);
+  }, [midPoint, radius, sketchCurrentPlane]);
 
   const getColor = () => {
     if (!enableHover) {

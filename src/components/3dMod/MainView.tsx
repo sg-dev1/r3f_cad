@@ -57,7 +57,7 @@ const MainView = () => {
         console.error('Should not get here. Invalid Tool State.');
     }
     dispatch(clearSelectedShapeIds());
-  }, [toolState]);
+  }, [toolState, dispatch]);
 
   // ---
 

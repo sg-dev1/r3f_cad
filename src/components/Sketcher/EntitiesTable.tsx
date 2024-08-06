@@ -32,7 +32,7 @@ const EntitiesTable = () => {
     }));
     // TODO merge other types when available
     setTableData([...points, ...lines, ...circles].sort((a, b) => a.id - b.id));
-  }, [sketchPoints, sketchLines]);
+  }, [sketchPoints, sketchLines, sketchCircles]);
 
   useEffect(() => {
     setSelectedRowKey(String(sketchSelectedEntityId));

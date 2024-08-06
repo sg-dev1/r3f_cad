@@ -64,6 +64,9 @@ const OcctRoot = () => {
 
     // we need to terminate the worker thread else there are more and more threads
     return () => occt.terminate();
+    // The onOcctInitialized() callback function causes a react-hooks/exhaustive-deps warning,
+    // however we only want to run this effect only on component mount.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Note: This useEffect is needed if f.e. a sketch is deleted so it can also be removed from display

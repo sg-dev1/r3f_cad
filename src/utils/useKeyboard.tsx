@@ -13,7 +13,7 @@ const useKeyboard = () => {
 
   useEffect(() => {
     const onDocumentKey = (e: KeyboardEvent) => {
-      setKeyMap({ ...keyMap, [e.code]: e.type === 'keydown' });
+      setKeyMap((k) => ({ ...k, [e.code]: e.type === 'keydown' }));
     };
     document.addEventListener('keydown', onDocumentKey);
     document.addEventListener('keyup', onDocumentKey);
