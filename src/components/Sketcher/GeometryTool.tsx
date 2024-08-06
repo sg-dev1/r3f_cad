@@ -1,5 +1,5 @@
 /** This component contains the main geometry drawing and interaction functionality for the sketcher tool. */
-import React, { useState, forwardRef, useImperativeHandle, useEffect } from 'react';
+import React, { useState, forwardRef, useImperativeHandle, useEffect, useCallback } from 'react';
 import { useThree } from '@react-three/fiber';
 import { Line, Points } from '@react-three/drei';
 import { useAppSelector, useAppDispatch } from '@/app/hooks';
@@ -71,83 +71,11 @@ const GeometryTool = forwardRef<any, any>(({}: GeometryToolProps, ref) => {
 
   // ---
 
-  const lineToolOnClick = (event: React.MouseEvent<HTMLElement>) => {
-    event.stopPropagation();
-    //console.log(event);
+  const lineToolOnClick = useCallback(
+    (event: React.MouseEvent<HTMLElement>) => {
+      event.stopPropagation();
+      //console.log(event);
 
-    const intersect = calcIntersectionWithPlane(
-      raycaster,
-      camera,
-      sketchCurrentPlane,
-      event.clientX,
-      event.clientY,
-      event.target as HTMLElement
-    );
-    if (intersect) {
-      dispatch(addEntity({ p: { ...intersect, id: 0 }, type: GeometryType.LINE }));
-    }
-    //console.log(intersect);
-  };
-
-  const lineToolOnPointerMove = (event: React.PointerEvent<HTMLDivElement>) => {
-    event.stopPropagation();
-
-    //console.log('onPointerMove', event);
-    const intersect = calcIntersectionWithPlane(
-      raycaster,
-      camera,
-      sketchCurrentPlane,
-      event.clientX,
-      event.clientY,
-      event.target as HTMLElement
-    );
-    if (intersect) {
-      setCurrentMousePos([intersect.x, intersect.y, intersect.z]);
-    }
-  };
-
-  const pointToolOnClick = (event: React.MouseEvent<HTMLElement>) => {
-    event.stopPropagation();
-
-    const intersect = calcIntersectionWithPlane(
-      raycaster,
-      camera,
-      sketchCurrentPlane,
-      event.clientX,
-      event.clientY,
-      event.target as HTMLElement
-    );
-    if (intersect) {
-      dispatch(addEntity({ p: { ...intersect, id: 0 }, type: GeometryType.POINT }));
-    }
-  };
-
-  const circleToolOnClick = (event: React.MouseEvent<HTMLElement>) => {
-    event.stopPropagation();
-
-    const intersect = calcIntersectionWithPlane(
-      raycaster,
-      camera,
-      sketchCurrentPlane,
-      event.clientX,
-      event.clientY,
-      event.target as HTMLElement
-    );
-    //console.log('circleToolOnClick', intersect);
-    if (intersect) {
-      if (circleMidPoint === null) {
-        setCircleMidPoint(intersect);
-      } else {
-        //console.log('Create the circle!', circleRadius, g_circleRadius);
-        dispatch(addEntity({ p: { ...circleMidPoint, id: 0 }, type: GeometryType.CIRCLE, radius: g_circleRadius }));
-
-        setCircleMidPoint(null);
-      }
-    }
-  };
-
-  const circleToolOnPointerMove = (event: React.PointerEvent<HTMLDivElement>) => {
-    if (circleMidPoint !== null) {
       const intersect = calcIntersectionWithPlane(
         raycaster,
         camera,
@@ -157,337 +85,430 @@ const GeometryTool = forwardRef<any, any>(({}: GeometryToolProps, ref) => {
         event.target as HTMLElement
       );
       if (intersect) {
-        // update the radius
-        const radius = intersect.sub(circleMidPoint).length();
-        //console.log('circle radius', radius);
-        setCircleRadius(radius);
-        g_circleRadius = radius;
+        dispatch(addEntity({ p: { ...intersect, id: 0 }, type: GeometryType.LINE }));
       }
-    }
-  };
+      //console.log(intersect);
+    },
+    [dispatch, sketchCurrentPlane, raycaster, camera]
+  );
 
-  const lineToolReset = () => {
+  const lineToolOnPointerMove = useCallback(
+    (event: React.PointerEvent<HTMLDivElement>) => {
+      event.stopPropagation();
+
+      //console.log('onPointerMove', event);
+      const intersect = calcIntersectionWithPlane(
+        raycaster,
+        camera,
+        sketchCurrentPlane,
+        event.clientX,
+        event.clientY,
+        event.target as HTMLElement
+      );
+      if (intersect) {
+        setCurrentMousePos([intersect.x, intersect.y, intersect.z]);
+      }
+    },
+    [sketchCurrentPlane, raycaster, camera]
+  );
+
+  const pointToolOnClick = useCallback(
+    (event: React.MouseEvent<HTMLElement>) => {
+      event.stopPropagation();
+
+      const intersect = calcIntersectionWithPlane(
+        raycaster,
+        camera,
+        sketchCurrentPlane,
+        event.clientX,
+        event.clientY,
+        event.target as HTMLElement
+      );
+      if (intersect) {
+        dispatch(addEntity({ p: { ...intersect, id: 0 }, type: GeometryType.POINT }));
+      }
+    },
+    [dispatch, sketchCurrentPlane, raycaster, camera]
+  );
+
+  const circleToolOnClick = useCallback(
+    (event: React.MouseEvent<HTMLElement>) => {
+      event.stopPropagation();
+
+      const intersect = calcIntersectionWithPlane(
+        raycaster,
+        camera,
+        sketchCurrentPlane,
+        event.clientX,
+        event.clientY,
+        event.target as HTMLElement
+      );
+      //console.log('circleToolOnClick', intersect);
+      if (intersect) {
+        if (circleMidPoint === null) {
+          setCircleMidPoint(intersect);
+        } else {
+          //console.log('Create the circle!', circleRadius, g_circleRadius);
+          dispatch(addEntity({ p: { ...circleMidPoint, id: 0 }, type: GeometryType.CIRCLE, radius: g_circleRadius }));
+
+          setCircleMidPoint(null);
+        }
+      }
+    },
+    [dispatch, sketchCurrentPlane, raycaster, camera, circleMidPoint]
+  );
+
+  const circleToolOnPointerMove = useCallback(
+    (event: React.PointerEvent<HTMLDivElement>) => {
+      if (circleMidPoint !== null) {
+        const intersect = calcIntersectionWithPlane(
+          raycaster,
+          camera,
+          sketchCurrentPlane,
+          event.clientX,
+          event.clientY,
+          event.target as HTMLElement
+        );
+        if (intersect) {
+          // update the radius
+          const radius = intersect.sub(circleMidPoint).length();
+          //console.log('circle radius', radius);
+          setCircleRadius(radius);
+          g_circleRadius = radius;
+        }
+      }
+    },
+    [sketchCurrentPlane, raycaster, camera, circleMidPoint]
+  );
+
+  const lineToolReset = useCallback(() => {
     setCurrentMousePos(null);
     dispatch(resetLastPoint());
-  };
+  }, [dispatch]);
 
-  const geometryToolReset = () => {
+  const geometryToolReset = useCallback(() => {
     lineToolReset();
 
     setCircleMidPoint(null);
     setCircleRadius(0);
-  };
+  }, [lineToolReset]);
 
   // ---
 
-  const onGeometryPointerOver = (type: GeometryType, id: number) => {
-    switch (toolState) {
-      case ToolState.POINT_TOOL:
-      case ToolState.LINE_TOOL:
-      case ToolState.CIRCLE_TOOL:
-        break;
-      case ToolState.CONSTRAINT_COINCIDENCE:
-        // everything else than POINT not supported
-        if (
-          type !== GeometryType.POINT ||
-          (objectsClicked.length === 1 && objectsClicked[0].type !== GeometryType.POINT)
-        ) {
-          //console.log('Setting pointer to not allowed');
-          document.body.style.cursor = 'not-allowed';
-        }
-        break;
-      case ToolState.CONSTRAINT_HORIZONTAL:
-        if (type !== GeometryType.LINE) {
-          document.body.style.cursor = 'not-allowed';
-        }
-        break;
-      case ToolState.CONSTRAINT_VERTICAL:
-        if (type !== GeometryType.LINE) {
-          document.body.style.cursor = 'not-allowed';
-        }
-        break;
-      case ToolState.CONSTRAINT_LENGTH:
-        if (type !== GeometryType.LINE) {
-          document.body.style.cursor = 'not-allowed';
-        }
-        break;
-      case ToolState.CONSTRAINT_DIAMETER:
-        if (type !== GeometryType.CIRCLE && type !== GeometryType.ARC) {
-          document.body.style.cursor = 'not-allowed';
-        }
-        break;
-      case ToolState.CONSTRAINT_PARALLEL:
-        if (type !== GeometryType.LINE) {
-          document.body.style.cursor = 'not-allowed';
-        }
-      case ToolState.CONSTRAINT_EQUAL:
-        // Equal constraint allowed for lines, circles and arcs
-        if (type !== GeometryType.LINE && type !== GeometryType.CIRCLE && type !== GeometryType.ARC) {
-          document.body.style.cursor = 'not-allowed';
-        } else {
-          if (objectsClicked.length === 1) {
-            if (type === GeometryType.LINE && objectsClicked[0].type !== GeometryType.LINE) {
-              document.body.style.cursor = 'not-allowed';
-            } else if (
-              type === GeometryType.CIRCLE &&
-              objectsClicked[0].type !== GeometryType.CIRCLE &&
-              objectsClicked[0].type !== GeometryType.ARC
-            ) {
-              document.body.style.cursor = 'not-allowed';
-            }
-          }
-        }
-        break;
-      case ToolState.CONSTRAINT_MID_POINT:
-        if (type !== GeometryType.POINT && type !== GeometryType.LINE) {
-          document.body.style.cursor = 'not-allowed';
-        } else if (objectsClicked.length === 1) {
-          if (type === GeometryType.POINT && objectsClicked[0].type !== GeometryType.LINE) {
-            document.body.style.cursor = 'not-allowed';
-          } else if (type === GeometryType.LINE && objectsClicked[0].type !== GeometryType.POINT) {
+  const onGeometryPointerOver = useCallback(
+    (type: GeometryType, id: number) => {
+      switch (toolState) {
+        case ToolState.POINT_TOOL:
+        case ToolState.LINE_TOOL:
+        case ToolState.CIRCLE_TOOL:
+          break;
+        case ToolState.CONSTRAINT_COINCIDENCE:
+          // everything else than POINT not supported
+          if (
+            type !== GeometryType.POINT ||
+            (objectsClicked.length === 1 && objectsClicked[0].type !== GeometryType.POINT)
+          ) {
+            //console.log('Setting pointer to not allowed');
             document.body.style.cursor = 'not-allowed';
           }
-        }
-        break;
-      case ToolState.CONSTRAINT_PERPENDICULAR:
-        if (type !== GeometryType.LINE) {
-          document.body.style.cursor = 'not-allowed';
-        }
-        break;
-      case ToolState.CONSTRAINT_ANGLE:
-        if (type !== GeometryType.LINE) {
-          document.body.style.cursor = 'not-allowed';
-        }
-        break;
-      case ToolState.CONSTRAINT_POINT_ON_OBJECT:
-        if (type !== GeometryType.POINT && type !== GeometryType.LINE && type !== GeometryType.CIRCLE) {
-          document.body.style.cursor = 'not-allowed';
-        } else {
-          if (objectsClicked.length === 1) {
-            if (objectsClicked[0].type === GeometryType.POINT) {
-              if (type !== GeometryType.LINE && type !== GeometryType.CIRCLE) {
+          break;
+        case ToolState.CONSTRAINT_HORIZONTAL:
+          if (type !== GeometryType.LINE) {
+            document.body.style.cursor = 'not-allowed';
+          }
+          break;
+        case ToolState.CONSTRAINT_VERTICAL:
+          if (type !== GeometryType.LINE) {
+            document.body.style.cursor = 'not-allowed';
+          }
+          break;
+        case ToolState.CONSTRAINT_LENGTH:
+          if (type !== GeometryType.LINE) {
+            document.body.style.cursor = 'not-allowed';
+          }
+          break;
+        case ToolState.CONSTRAINT_DIAMETER:
+          if (type !== GeometryType.CIRCLE && type !== GeometryType.ARC) {
+            document.body.style.cursor = 'not-allowed';
+          }
+          break;
+        case ToolState.CONSTRAINT_PARALLEL:
+          if (type !== GeometryType.LINE) {
+            document.body.style.cursor = 'not-allowed';
+          }
+        case ToolState.CONSTRAINT_EQUAL:
+          // Equal constraint allowed for lines, circles and arcs
+          if (type !== GeometryType.LINE && type !== GeometryType.CIRCLE && type !== GeometryType.ARC) {
+            document.body.style.cursor = 'not-allowed';
+          } else {
+            if (objectsClicked.length === 1) {
+              if (type === GeometryType.LINE && objectsClicked[0].type !== GeometryType.LINE) {
                 document.body.style.cursor = 'not-allowed';
-              }
-            } else {
-              // objectsClicked[0].type is circle or line
-              if (type !== GeometryType.POINT) {
+              } else if (
+                type === GeometryType.CIRCLE &&
+                objectsClicked[0].type !== GeometryType.CIRCLE &&
+                objectsClicked[0].type !== GeometryType.ARC
+              ) {
                 document.body.style.cursor = 'not-allowed';
               }
             }
           }
-        }
-        break;
-      case ToolState.CURSOR_TOOL:
-        break;
-      default:
-        console.error('Unknown tool state: ' + toolState);
-    }
-  };
+          break;
+        case ToolState.CONSTRAINT_MID_POINT:
+          if (type !== GeometryType.POINT && type !== GeometryType.LINE) {
+            document.body.style.cursor = 'not-allowed';
+          } else if (objectsClicked.length === 1) {
+            if (type === GeometryType.POINT && objectsClicked[0].type !== GeometryType.LINE) {
+              document.body.style.cursor = 'not-allowed';
+            } else if (type === GeometryType.LINE && objectsClicked[0].type !== GeometryType.POINT) {
+              document.body.style.cursor = 'not-allowed';
+            }
+          }
+          break;
+        case ToolState.CONSTRAINT_PERPENDICULAR:
+          if (type !== GeometryType.LINE) {
+            document.body.style.cursor = 'not-allowed';
+          }
+          break;
+        case ToolState.CONSTRAINT_ANGLE:
+          if (type !== GeometryType.LINE) {
+            document.body.style.cursor = 'not-allowed';
+          }
+          break;
+        case ToolState.CONSTRAINT_POINT_ON_OBJECT:
+          if (type !== GeometryType.POINT && type !== GeometryType.LINE && type !== GeometryType.CIRCLE) {
+            document.body.style.cursor = 'not-allowed';
+          } else {
+            if (objectsClicked.length === 1) {
+              if (objectsClicked[0].type === GeometryType.POINT) {
+                if (type !== GeometryType.LINE && type !== GeometryType.CIRCLE) {
+                  document.body.style.cursor = 'not-allowed';
+                }
+              } else {
+                // objectsClicked[0].type is circle or line
+                if (type !== GeometryType.POINT) {
+                  document.body.style.cursor = 'not-allowed';
+                }
+              }
+            }
+          }
+          break;
+        case ToolState.CURSOR_TOOL:
+          break;
+        default:
+          console.error('Unknown tool state: ' + toolState);
+      }
+    },
+    [toolState, objectsClicked]
+  );
 
-  const onGeometryPointerOut = (type: GeometryType, id: number) => {
+  const onGeometryPointerOut = useCallback((type: GeometryType, id: number) => {
     //console.log('Resetting pointer ...');
     document.body.style.cursor = 'auto';
-  };
+  }, []);
 
-  const onGeometryClick = (type: GeometryType, id: number) => {
-    console.log(
-      '[SketcherView.onGeometryClick] Geometry with type ' + geometryTypeToString(type) + ' and id ' + id + ' clicked'
-    );
+  const onGeometryClick = useCallback(
+    (type: GeometryType, id: number) => {
+      console.log(
+        '[SketcherView.onGeometryClick] Geometry with type ' + geometryTypeToString(type) + ' and id ' + id + ' clicked'
+      );
 
-    // Add constraint in case a constraint tool was selected
-    if (ToolState.CONSTRAINT_COINCIDENCE === toolState) {
-      if (type === GeometryType.POINT) {
-        //console.log(objectsClicked);
-        if (objectsClicked.length === 1) {
-          if (!g_coincidence_created) {
-            dispatch(
-              addConstraint({
-                id: 0,
-                t: SlvsConstraints.SLVS_C_POINTS_COINCIDENT,
-                v: [0, objectsClicked[0].id, id, 0, 0],
-              })
-            );
-            setObjectsClicked([]);
-            g_coincidence_created = true;
+      // Add constraint in case a constraint tool was selected
+      if (ToolState.CONSTRAINT_COINCIDENCE === toolState) {
+        if (type === GeometryType.POINT) {
+          //console.log(objectsClicked);
+          if (objectsClicked.length === 1) {
+            if (!g_coincidence_created) {
+              dispatch(
+                addConstraint({
+                  id: 0,
+                  t: SlvsConstraints.SLVS_C_POINTS_COINCIDENT,
+                  v: [0, objectsClicked[0].id, id, 0, 0],
+                })
+              );
+              setObjectsClicked([]);
+              g_coincidence_created = true;
+            }
+          } else if (objectsClicked.length === 0) {
+            setObjectsClicked([{ type: type, id: id }]);
+            g_coincidence_created = false;
           }
-        } else if (objectsClicked.length === 0) {
-          setObjectsClicked([{ type: type, id: id }]);
-          g_coincidence_created = false;
         }
-      }
-    } else if (ToolState.CONSTRAINT_HORIZONTAL === toolState) {
-      if (type === GeometryType.LINE) {
-        dispatch(addConstraint({ id: 0, t: SlvsConstraints.SLVS_C_HORIZONTAL, v: [0, 0, 0, id, 0] }));
-      }
-    } else if (ToolState.CONSTRAINT_VERTICAL === toolState) {
-      if (type === GeometryType.LINE) {
-        dispatch(addConstraint({ id: 0, t: SlvsConstraints.SLVS_C_VERTICAL, v: [0, 0, 0, id, 0] }));
-      }
-    } else if (ToolState.CONSTRAINT_LENGTH === toolState) {
-      if (type === GeometryType.LINE) {
-        dispatch(setLengthConstraintLineId(id));
-      }
-      // Point type not supported - TODO indicate that visually
-    } else if (ToolState.CONSTRAINT_DIAMETER === toolState) {
-      if (type === GeometryType.CIRCLE) {
-        dispatch(setDiamConstraintCircleId(id));
-      } else if (type === GeometryType.ARC) {
-        // TODO add support
-      }
-    } else if (ToolState.CONSTRAINT_PARALLEL === toolState) {
-      if (type === GeometryType.LINE) {
-        if (objectsClicked.length === 1) {
-          dispatch(
-            addConstraint({
-              id: 0,
-              t: SlvsConstraints.SLVS_C_PARALLEL,
-              v: [0, 0, 0, objectsClicked[0].id, id],
-            })
-          );
-          setObjectsClicked([]);
-        } else if (objectsClicked.length === 0) {
-          setObjectsClicked([{ type: type, id: id }]);
+      } else if (ToolState.CONSTRAINT_HORIZONTAL === toolState) {
+        if (type === GeometryType.LINE) {
+          dispatch(addConstraint({ id: 0, t: SlvsConstraints.SLVS_C_HORIZONTAL, v: [0, 0, 0, id, 0] }));
         }
-      }
-    } else if (ToolState.CONSTRAINT_EQUAL === toolState) {
-      if (type === GeometryType.LINE) {
-        if (objectsClicked.length === 1) {
-          if (objectsClicked[0].type === GeometryType.LINE) {
+      } else if (ToolState.CONSTRAINT_VERTICAL === toolState) {
+        if (type === GeometryType.LINE) {
+          dispatch(addConstraint({ id: 0, t: SlvsConstraints.SLVS_C_VERTICAL, v: [0, 0, 0, id, 0] }));
+        }
+      } else if (ToolState.CONSTRAINT_LENGTH === toolState) {
+        if (type === GeometryType.LINE) {
+          dispatch(setLengthConstraintLineId(id));
+        }
+        // Point type not supported - TODO indicate that visually
+      } else if (ToolState.CONSTRAINT_DIAMETER === toolState) {
+        if (type === GeometryType.CIRCLE) {
+          dispatch(setDiamConstraintCircleId(id));
+        } else if (type === GeometryType.ARC) {
+          // TODO add support
+        }
+      } else if (ToolState.CONSTRAINT_PARALLEL === toolState) {
+        if (type === GeometryType.LINE) {
+          if (objectsClicked.length === 1) {
             dispatch(
               addConstraint({
                 id: 0,
-                t: SlvsConstraints.SLVS_C_EQUAL_LENGTH_LINES,
+                t: SlvsConstraints.SLVS_C_PARALLEL,
                 v: [0, 0, 0, objectsClicked[0].id, id],
               })
             );
             setObjectsClicked([]);
+          } else if (objectsClicked.length === 0) {
+            setObjectsClicked([{ type: type, id: id }]);
           }
-        } else if (objectsClicked.length === 0) {
-          setObjectsClicked([{ type: type, id: id }]);
         }
-      } else if (type === GeometryType.CIRCLE || type === GeometryType.ARC) {
-        if (objectsClicked.length === 1) {
-          if (objectsClicked[0].type === GeometryType.CIRCLE || objectsClicked[0].type === GeometryType.ARC) {
-            dispatch(
-              addConstraint({
-                id: 0,
-                t: SlvsConstraints.SLVS_C_EQUAL_RADIUS,
-                v: [0, 0, 0, objectsClicked[0].id, id],
-              })
-            );
-            setObjectsClicked([]);
-          }
-        } else if (objectsClicked.length === 0) {
-          setObjectsClicked([{ type: type, id: id }]);
-        }
-      }
-    } else if (ToolState.CONSTRAINT_MID_POINT === toolState) {
-      if (type === GeometryType.LINE || type === GeometryType.POINT) {
-        if (objectsClicked.length === 1) {
-          if (type === GeometryType.LINE && objectsClicked[0].type === GeometryType.POINT) {
-            dispatch(
-              addConstraint({
-                id: 0,
-                t: SlvsConstraints.SLVS_C_AT_MIDPOINT,
-                v: [0, objectsClicked[0].id, 0, id, 0],
-              })
-            );
-            setObjectsClicked([]);
-          } else if (type === GeometryType.POINT && objectsClicked[0].type === GeometryType.LINE) {
-            dispatch(
-              addConstraint({
-                id: 0,
-                t: SlvsConstraints.SLVS_C_AT_MIDPOINT,
-                v: [0, id, 0, objectsClicked[0].id, 0],
-              })
-            );
-            setObjectsClicked([]);
-          }
-        } else if (objectsClicked.length === 0) {
-          setObjectsClicked([{ type: type, id: id }]);
-        }
-      }
-    } else if (ToolState.CONSTRAINT_PERPENDICULAR === toolState) {
-      if (type === GeometryType.LINE) {
-        if (objectsClicked.length === 1) {
-          dispatch(
-            addConstraint({
-              id: 0,
-              t: SlvsConstraints.SLVS_C_PERPENDICULAR,
-              v: [0, 0, 0, objectsClicked[0].id, id],
-            })
-          );
-          setObjectsClicked([]);
-        } else if (objectsClicked.length === 0) {
-          setObjectsClicked([{ type: type, id: id }]);
-        }
-      }
-    } else if (ToolState.CONSTRAINT_POINT_ON_OBJECT === toolState) {
-      if (type === GeometryType.POINT) {
-        if (objectsClicked.length === 1) {
-          if (objectsClicked[0].type === GeometryType.LINE || objectsClicked[0].type === GeometryType.CIRCLE) {
+      } else if (ToolState.CONSTRAINT_EQUAL === toolState) {
+        if (type === GeometryType.LINE) {
+          if (objectsClicked.length === 1) {
             if (objectsClicked[0].type === GeometryType.LINE) {
               dispatch(
                 addConstraint({
                   id: 0,
-                  t: SlvsConstraints.SLVS_C_PT_ON_LINE,
-                  v: [0, id, 0, objectsClicked[0].id, 0],
+                  t: SlvsConstraints.SLVS_C_EQUAL_LENGTH_LINES,
+                  v: [0, 0, 0, objectsClicked[0].id, id],
                 })
               );
-            } else {
-              dispatch(
-                addConstraint({
-                  id: 0,
-                  t: SlvsConstraints.SLVS_C_PT_ON_CIRCLE,
-                  v: [0, id, 0, objectsClicked[0].id, 0],
-                })
-              );
+              setObjectsClicked([]);
             }
-            setObjectsClicked([]);
+          } else if (objectsClicked.length === 0) {
+            setObjectsClicked([{ type: type, id: id }]);
           }
-        } else if (objectsClicked.length === 0) {
-          setObjectsClicked([{ type: type, id: id }]);
-        }
-      } else if (type === GeometryType.LINE || type === GeometryType.CIRCLE) {
-        if (objectsClicked.length === 1) {
-          if (objectsClicked[0].type === GeometryType.POINT) {
-            if (type === GeometryType.LINE) {
+        } else if (type === GeometryType.CIRCLE || type === GeometryType.ARC) {
+          if (objectsClicked.length === 1) {
+            if (objectsClicked[0].type === GeometryType.CIRCLE || objectsClicked[0].type === GeometryType.ARC) {
               dispatch(
                 addConstraint({
                   id: 0,
-                  t: SlvsConstraints.SLVS_C_PT_ON_LINE,
+                  t: SlvsConstraints.SLVS_C_EQUAL_RADIUS,
+                  v: [0, 0, 0, objectsClicked[0].id, id],
+                })
+              );
+              setObjectsClicked([]);
+            }
+          } else if (objectsClicked.length === 0) {
+            setObjectsClicked([{ type: type, id: id }]);
+          }
+        }
+      } else if (ToolState.CONSTRAINT_MID_POINT === toolState) {
+        if (type === GeometryType.LINE || type === GeometryType.POINT) {
+          if (objectsClicked.length === 1) {
+            if (type === GeometryType.LINE && objectsClicked[0].type === GeometryType.POINT) {
+              dispatch(
+                addConstraint({
+                  id: 0,
+                  t: SlvsConstraints.SLVS_C_AT_MIDPOINT,
                   v: [0, objectsClicked[0].id, 0, id, 0],
                 })
               );
-            } else {
+              setObjectsClicked([]);
+            } else if (type === GeometryType.POINT && objectsClicked[0].type === GeometryType.LINE) {
               dispatch(
                 addConstraint({
                   id: 0,
-                  t: SlvsConstraints.SLVS_C_PT_ON_CIRCLE,
-                  v: [0, objectsClicked[0].id, 0, id, 0],
+                  t: SlvsConstraints.SLVS_C_AT_MIDPOINT,
+                  v: [0, id, 0, objectsClicked[0].id, 0],
                 })
               );
+              setObjectsClicked([]);
             }
-            setObjectsClicked([]);
+          } else if (objectsClicked.length === 0) {
+            setObjectsClicked([{ type: type, id: id }]);
           }
-        } else if (objectsClicked.length === 0) {
-          setObjectsClicked([{ type: type, id: id }]);
         }
-      }
-    } else if (ToolState.CONSTRAINT_ANGLE === toolState) {
-      if (type === GeometryType.LINE) {
-        if (objectsClicked.length === 1) {
-          dispatch(setAngleConstraintLineIds([objectsClicked[0].id, id]));
-          setObjectsClicked([]);
-        } else if (objectsClicked.length === 0) {
-          setObjectsClicked([{ type: type, id: id }]);
+      } else if (ToolState.CONSTRAINT_PERPENDICULAR === toolState) {
+        if (type === GeometryType.LINE) {
+          if (objectsClicked.length === 1) {
+            dispatch(
+              addConstraint({
+                id: 0,
+                t: SlvsConstraints.SLVS_C_PERPENDICULAR,
+                v: [0, 0, 0, objectsClicked[0].id, id],
+              })
+            );
+            setObjectsClicked([]);
+          } else if (objectsClicked.length === 0) {
+            setObjectsClicked([{ type: type, id: id }]);
+          }
         }
+      } else if (ToolState.CONSTRAINT_POINT_ON_OBJECT === toolState) {
+        if (type === GeometryType.POINT) {
+          if (objectsClicked.length === 1) {
+            if (objectsClicked[0].type === GeometryType.LINE || objectsClicked[0].type === GeometryType.CIRCLE) {
+              if (objectsClicked[0].type === GeometryType.LINE) {
+                dispatch(
+                  addConstraint({
+                    id: 0,
+                    t: SlvsConstraints.SLVS_C_PT_ON_LINE,
+                    v: [0, id, 0, objectsClicked[0].id, 0],
+                  })
+                );
+              } else {
+                dispatch(
+                  addConstraint({
+                    id: 0,
+                    t: SlvsConstraints.SLVS_C_PT_ON_CIRCLE,
+                    v: [0, id, 0, objectsClicked[0].id, 0],
+                  })
+                );
+              }
+              setObjectsClicked([]);
+            }
+          } else if (objectsClicked.length === 0) {
+            setObjectsClicked([{ type: type, id: id }]);
+          }
+        } else if (type === GeometryType.LINE || type === GeometryType.CIRCLE) {
+          if (objectsClicked.length === 1) {
+            if (objectsClicked[0].type === GeometryType.POINT) {
+              if (type === GeometryType.LINE) {
+                dispatch(
+                  addConstraint({
+                    id: 0,
+                    t: SlvsConstraints.SLVS_C_PT_ON_LINE,
+                    v: [0, objectsClicked[0].id, 0, id, 0],
+                  })
+                );
+              } else {
+                dispatch(
+                  addConstraint({
+                    id: 0,
+                    t: SlvsConstraints.SLVS_C_PT_ON_CIRCLE,
+                    v: [0, objectsClicked[0].id, 0, id, 0],
+                  })
+                );
+              }
+              setObjectsClicked([]);
+            }
+          } else if (objectsClicked.length === 0) {
+            setObjectsClicked([{ type: type, id: id }]);
+          }
+        }
+      } else if (ToolState.CONSTRAINT_ANGLE === toolState) {
+        if (type === GeometryType.LINE) {
+          if (objectsClicked.length === 1) {
+            dispatch(setAngleConstraintLineIds([objectsClicked[0].id, id]));
+            setObjectsClicked([]);
+          } else if (objectsClicked.length === 0) {
+            setObjectsClicked([{ type: type, id: id }]);
+          }
+        }
+      } else if (ToolState.CURSOR_TOOL === toolState) {
+        // Selection functionality
+        dispatch(setSelectedEntityId(id));
       }
-    } else if (ToolState.CURSOR_TOOL === toolState) {
-      // Selection functionality
-      dispatch(setSelectedEntityId(id));
-    }
-  };
+    },
+    [dispatch, toolState, objectsClicked]
+  );
 
   // ---
 
@@ -529,7 +550,16 @@ const GeometryTool = forwardRef<any, any>(({}: GeometryToolProps, ref) => {
         }
       },
     }),
-    [camera, scene, raycaster, toolState, circleMidPoint]
+    [
+      toolState,
+      lineToolOnClick,
+      pointToolOnClick,
+      circleToolOnClick,
+      lineToolOnPointerMove,
+      circleToolOnPointerMove,
+      lineToolReset,
+      geometryToolReset,
+    ]
   );
 
   useEffect(() => {

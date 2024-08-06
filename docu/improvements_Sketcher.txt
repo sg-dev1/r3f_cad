@@ -1,5 +1,6 @@
 Priority of improvements (my ranking)
 // MVP
+  - 027 // backend, solver infinite loop (maybe related to 025)
   - 026 // bug
   - 025 [backend, anoying bug]
 
@@ -60,6 +61,11 @@ List of Improvements
       When trying to move a shape it disappears from the sketcher screen.
       Seems that also the third coordinate is updated.
       This is related to (007) - the drag'n'drop feature of lines
+
+(027) Testing and bugfixing (solver infinite loop)
+    - If adding many lines and constraints it is quite easy to trigger
+      an endless loop in the solver --> need to get rid of this condition
+      (similar to bug 025)
 
 
 Done Improvements

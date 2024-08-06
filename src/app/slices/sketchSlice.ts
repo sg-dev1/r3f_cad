@@ -198,6 +198,11 @@ export const sketchSlice = createSlice({
       .addCase(callSketchSolverBackend.fulfilled, (state, action) => {
         state.isSolverRequestPending = false;
 
+        if (state.activeSketchId === -1) {
+          console.warn('Received a result from sketch solver backend although active sketch is -1.');
+          return;
+        }
+
         state.lastSolverResultCode = action.payload.code;
         state.lastSolverDof = action.payload.dof;
         if (0 === action.payload.code) {
