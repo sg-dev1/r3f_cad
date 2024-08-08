@@ -2,7 +2,6 @@ Priority of improvements (my ranking)
 // MVP
 
 // Later
-  - 005 [improvement, remove entities with ENTF]
   - 024 [improvement, angle constraint]
   - 009 [UI improvement]
   - 029 [functionality - length constraints]
@@ -16,10 +15,6 @@ Priority of improvements (my ranking)
 
 
 List of Improvements
-
-(005) Implement remove entities in sketcher slice via canvas
-    - Select an Entity (e.g. a line, a point) --> press ENTF key to delete it
-    (click listener on Entity for selection; then event listener on keyboard - could be combined with drag'n'drop of lines)
 
 (007) drag'n'drop of lines and points improvements
    - consider constraints
@@ -69,6 +64,10 @@ On Hold
 
 
 Done Improvements
+
+(005) Implement remove entities in sketcher slice via canvas
+    - Select an Entity (e.g. a line, a point) --> press ENTF key to delete it
+    (click listener on Entity for selection; then event listener on keyboard - could be combined with drag'n'drop of lines)
 
 (026) Bugfix: There is a bug in the cursor tool (moving a sketch shape).
       When trying to move a shape it disappears from the sketcher screen.

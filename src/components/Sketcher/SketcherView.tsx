@@ -10,6 +10,7 @@ import { useAppDispatch, useAppSelector } from '@/app/hooks';
 import {
   deleteConstraintById,
   deleteLengthConstraintForLine,
+  removeEntityById,
   resetActiveSketch,
   selectConstraints,
   selectLastDof,
@@ -21,6 +22,7 @@ import {
   ToolState,
   selectLengthConstraintLineId,
   selectSelectedConstraintId,
+  selectSelectedEntityId,
   selectToolState,
   setAngleConstraintLineIds,
   setDiamConstraintCircleId,
@@ -49,6 +51,7 @@ const SketcherView = () => {
 
   const sketchLengthConstraintLineId = useAppSelector(selectLengthConstraintLineId);
   const sketchSelectedConstraintId = useAppSelector(selectSelectedConstraintId);
+  const sketchSelectedEntityId = useAppSelector(selectSelectedEntityId);
   const toolState = useAppSelector(selectToolState);
   const sketchCurrentPlane = useAppSelector(selectSketchCurrentPlane);
 
@@ -67,6 +70,10 @@ const SketcherView = () => {
         dispatch(deleteConstraintById(sketchSelectedConstraintId));
         dispatch(setSelectedConstraintId(-1));
       }
+      if (sketchSelectedEntityId !== -1) {
+        dispatch(removeEntityById(sketchSelectedEntityId));
+        dispatch(setSelectedEntityId(-1));
+      }
     } else if (keyMap['Escape'] === true) {
       dispatch(setSelectedEntityId(-1));
       dispatch(setSelectedConstraintId(-1));
@@ -74,7 +81,7 @@ const SketcherView = () => {
       dispatch(setDiamConstraintCircleId(-1));
       dispatch(setAngleConstraintLineIds([-1, -1]));
     }
-  }, [keyMap, dispatch, sketchLengthConstraintLineId, sketchSelectedConstraintId]);
+  }, [keyMap, dispatch, sketchLengthConstraintLineId, sketchSelectedConstraintId, sketchSelectedEntityId]);
 
   // Just for debugging
   useEffect(() => {

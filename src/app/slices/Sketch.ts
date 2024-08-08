@@ -94,27 +94,48 @@ export const sketchAddEntity = (sketch: SketchType, p: Point3DType, type: Geomet
 };
 
 export const sketchRemoveEntity = (sketch: SketchType, id: number, type: GeometryType) => {
+  let entityDeleted = false;
   if (GeometryType.LINE === type) {
+    const oldLen = sketch.lines.length;
     sketch.lines = sketch.lines.filter((line) => line.id !== id);
     // also have to delete constraints referencing this line
     sketch.constraints = sketch.constraints.filter((constraint) => constraint.v[3] !== id && constraint.v[4] !== id);
+    entityDeleted = sketch.lines.length < oldLen;
   } else if (GeometryType.POINT === type) {
     const circles = sketch.circles.filter((circle) => circle.mid_pt_id === id);
     if (circles.length > 0) {
       _deleteCircleById(sketch, circles[0].id);
     }
-    _deletePointById(sketch, id);
+    entityDeleted = _deletePointById(sketch, id);
   } else if (GeometryType.CIRCLE === type) {
     const idx = sketch.circles.findIndex((circle) => circle.id === id);
-    const pt_id = sketch.circles[idx].mid_pt_id;
-    _deletePointById(sketch, pt_id);
-    _deleteCircleById(sketch, id);
+    if (idx !== -1) {
+      const pt_id = sketch.circles[idx].mid_pt_id;
+      _deletePointById(sketch, pt_id);
+      entityDeleted = _deleteCircleById(sketch, id);
+    }
   } else if (GeometryType.ARC === type) {
     console.warn('Geometry type arc is not yet supported.');
     // TODO add arc support
   } else {
     console.error('The given Geometry type ' + geometryTypeToString(type) + ' is not yet implemented');
   }
+  return entityDeleted;
+};
+
+export const sketchRemoveEntityById = (sketch: SketchType, id: number) => {
+  const lineRemoved = sketchRemoveEntity(sketch, id, GeometryType.LINE);
+  if (!lineRemoved) {
+    const pointRemoved = sketchRemoveEntity(sketch, id, GeometryType.POINT);
+    if (!pointRemoved) {
+      const circleRemoved = sketchRemoveEntity(sketch, id, GeometryType.CIRCLE);
+      if (!circleRemoved) {
+        //console.warn('Could not remove entity with id', id);
+        return false;
+      }
+    }
+  }
+  return true;
 };
 
 export const sketchUpdatePoint = (sketch: SketchType, id: number, position: number[]) => {
@@ -259,6 +280,7 @@ const _deleteConstraintsForLines = (sketch: SketchType, lines: Line3DType[]) => 
 };
 
 const _deletePointById = (sketch: SketchType, id: number) => {
+  const oldLen = sketch.points.length;
   sketch.points = sketch.points.filter((point) => point.id !== id);
   delete sketch.pointsMap[id];
   // also have to delete constraints referencing this point
@@ -267,9 +289,13 @@ const _deletePointById = (sketch: SketchType, id: number) => {
   const linesToDelete = sketch.lines.filter((line) => line.p1_id === id || line.p2_id === id);
   sketch.lines = sketch.lines.filter((line) => line.p1_id !== id && line.p2_id !== id);
   _deleteConstraintsForLines(sketch, linesToDelete);
+
+  return sketch.points.length < oldLen;
 };
 
 const _deleteCircleById = (sketch: SketchType, id: number) => {
+  const oldLen = sketch.circles.length;
   sketch.circles = sketch.circles.filter((circle) => circle.id !== id);
   sketch.constraints = sketch.constraints.filter((constraint) => constraint.v[3] !== id && constraint.v[4] !== id);
+  return sketch.circles.length < oldLen;
 };

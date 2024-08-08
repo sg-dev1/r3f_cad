@@ -7,6 +7,7 @@ import {
   sketchDeleteConstraint,
   sketchDeleteLengthConstraintForLine,
   sketchRemoveEntity,
+  sketchRemoveEntityById,
   sketchResetLastPoint,
   sketchUpdateCircleRadius,
   sketchUpdateConstraint,
@@ -23,7 +24,7 @@ const createEmptyTemplateSketch = (): SketchType => {
   return {
     id: 1,
     name: `Sketch1`,
-    plane: 'xy',
+    plane: { plane: 'xy', normalVector: [0, 0, 0], offset: 0 },
     isVisible: true,
 
     entityIdCounter: 1,
@@ -87,27 +88,62 @@ describe('Sketch test suite', () => {
 
   test('remove last point entity in sketch', () => {
     const sketch = createSketchWithSinglePoint();
-    sketchRemoveEntity(sketch, 1, GeometryType.POINT);
+    const result = sketchRemoveEntity(sketch, 1, GeometryType.POINT);
     expect(sketch.points).toStrictEqual([]);
     expect(sketch.pointsMap).toStrictEqual({});
+    expect(result).toBe(true);
+  });
+
+  test('remove non existing point', () => {
+    const sketch = createSketchWithSinglePoint();
+    const result = sketchRemoveEntity(sketch, 999, GeometryType.POINT);
+    expect(result).toBe(false);
   });
 
   test('remove last line entity in sketch', () => {
     const sketch = createSketchWithSingleLine();
-    sketchRemoveEntity(sketch, 3, GeometryType.LINE);
+    const result = sketchRemoveEntity(sketch, 3, GeometryType.LINE);
     expect(sketch.lines).toStrictEqual([]);
+    expect(result).toBe(true);
+  });
+
+  test('remove non existing line', () => {
+    const sketch = createSketchWithSingleLine();
+    const result = sketchRemoveEntity(sketch, 999, GeometryType.LINE);
+    expect(result).toBe(false);
+  });
+
+  test('remove entity by id', () => {
+    const sketch = createSketchWithSingleLine();
+    const result = sketchRemoveEntityById(sketch, 3);
+    expect(sketch.lines).toStrictEqual([]);
+    expect(result).toBe(true);
+  });
+
+  test('remove non existing entity by id', () => {
+    const sketch = createSketchWithSingleLine();
+    const result = sketchRemoveEntityById(sketch, 999);
+    expect(result).toBe(false);
   });
 
   test('remove last circle entity in sketch', () => {
     const sketch = createSketchWithSingleCircle();
-    sketchRemoveEntity(sketch, 2, GeometryType.CIRCLE);
+    const result = sketchRemoveEntity(sketch, 2, GeometryType.CIRCLE);
     expect(sketch.circles).toStrictEqual([]);
+    expect(result).toBe(true);
+  });
+
+  test('remove non existing circle', () => {
+    const sketch = createSketchWithSingleCircle();
+    const result = sketchRemoveEntity(sketch, 999, GeometryType.CIRCLE);
+    expect(result).toBe(false);
   });
 
   test('remove point of last circle entity in sketch - should remove circle', () => {
     const sketch = createSketchWithSingleCircle();
-    sketchRemoveEntity(sketch, 1, GeometryType.POINT);
+    const result = sketchRemoveEntity(sketch, 1, GeometryType.POINT);
     expect(sketch.circles).toStrictEqual([]);
+    expect(result).toBe(true);
   });
 
   // TODO remove arc test case
