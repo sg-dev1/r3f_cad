@@ -1,17 +1,16 @@
 Priority of improvements (my ranking)
 // MVP
-  - 027 // backend, solver infinite loop (maybe related to 025)
-  - 026 // bug
-  - 025 [backend, anoying bug]
 
 // Later
+  - 005 [improvement, remove entities with ENTF]
+  - 024 [improvement, angle constraint]
   - 009 [UI improvement]
-  - 008 [settings]
-  - 022 [functionality - constraints]
-  - 023 [functionality - tools]
-  - 024 [improvement]
-  - 005 [improvement]
-  - 017 [functionality - tools]
+  - 029 [functionality - length constraints]
+  - 023 [functionality - tools arc]
+  - 028 [functionality - construction lines]
+  - 022 [functionality - more constraints]  
+  - 017 [functionality - tools rectangle]
+  - 008 [settings - settings slice to make e.g. color of lines configurable]
   - 007  // most important work done, considering constraints hard to do,
          // therefore least prio
 
@@ -46,7 +45,18 @@ List of Improvements
         - Line should be replaced by an arc
         - Start/end positions of line/arc should be improved (not just use middle of two lines but be nearer to the edge of the angle)
 
+(028) Add construction lines (circles etc.)
+
+(029) Length constraint between point and line, point and point etc.
+    - point and point should be easy because length constraint for points uses points of line internally
+    - for point and line e.g. use the normal distance
+
+
+On Hold
+
 (025) Infinite loop in solver - Need to detect swapped points
+    --> cannot reproduce the issue (maybe the issue was solved by fixing 027?)
+       - Test case should be a triangle (not a rectangle) - right?
     - Each solver result swaps two points each time causing a new solver call
     - Need to detect that
     - Test Case: Rectangle with two 45 degree constraints and a length constraint on the hypothenuse of the 90 degree angle
@@ -57,18 +67,20 @@ List of Improvements
       - Compare it with this run
       --> if swapped points detected - discard the change
 
+
+Done Improvements
+
 (026) Bugfix: There is a bug in the cursor tool (moving a sketch shape).
       When trying to move a shape it disappears from the sketcher screen.
       Seems that also the third coordinate is updated.
       This is related to (007) - the drag'n'drop feature of lines
 
-(027) Testing and bugfixing (solver infinite loop)
+(027) Testing and bugfixing (solver infinite loop due to rounding error)
     - If adding many lines and constraints it is quite easy to trigger
       an endless loop in the solver --> need to get rid of this condition
       (similar to bug 025)
-
-
-Done Improvements
+    - In this particular case it is a rounding error
+      --> round the result
 
 (020) Improve the top button bar
     - E.g. visually separate what are constraint tools and what are geometry tools

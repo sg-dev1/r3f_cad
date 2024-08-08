@@ -28,7 +28,14 @@ import { useThree } from '@react-three/fiber';
 import { useDrag } from '@use-gesture/react';
 import { useEffect, useState } from 'react';
 import TextObject from './TextObject';
-import { getPlaneAwareSketchPosition, getRotationForPlaneAsQuaternion } from '@/utils/threejs_planes';
+import {
+  convert2DPointTo3D,
+  convert3dPointTo2d,
+  getPlaneAwareSketchPosition,
+  getPointU,
+  getPointV,
+  getRotationForPlaneAsQuaternion,
+} from '@/utils/threejs_planes';
 import React from 'react';
 import AngleConstraintObject from './AngleConstraintObject';
 import R3fHtmlInput from '../Utils/R3fHtmlInput';
@@ -108,17 +115,23 @@ const LineObject = ({
 
         if (down) {
           if (lastClickPos.length === 0) {
-            setLastClickPos([result.x, result.y]);
+            setLastClickPos([getPointU(sketchCurrentPlane, result), getPointV(sketchCurrentPlane, result)]);
           }
         } else {
           if (lastClickPos.length !== 0) {
-            const diff = [result.x - lastClickPos[0], result.y - lastClickPos[1]];
-            //console.log('diff', diff, 'result', result, 'lastClickPos', lastClickPos);
+            const result2D = convert3dPointTo2d(sketchCurrentPlane, [result.x, result.y, result.z]);
+            const origStart = convert3dPointTo2d(sketchCurrentPlane, start);
+            const origEnd = convert3dPointTo2d(sketchCurrentPlane, end);
+            const diff = [result2D[0] - lastClickPos[0], result2D[1] - lastClickPos[1]];
+            const start2D = [origStart[0] + diff[0], origStart[1] + diff[1]];
+            const end2D = [origEnd[0] + diff[0], origEnd[1] + diff[1]];
+            //console.log('diff', diff, 'result2D', result2D, 'lastClickPos', lastClickPos);
+            //console.log('start vs start2D', origStart, start2D, 'end vs end2D', origEnd, end2D);
             dispatch(
               updateLinePoints({
                 id: id,
-                newStart: [start[0] + diff[0], start[1] + diff[1], start[2]],
-                newEnd: [end[0] + diff[0], end[1] + diff[0], end[2]],
+                newStart: convert2DPointTo3D(sketchCurrentPlane, start2D[0], start2D[1]),
+                newEnd: convert2DPointTo3D(sketchCurrentPlane, end2D[0], end2D[1]),
               })
             );
           }

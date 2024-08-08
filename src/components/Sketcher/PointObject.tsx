@@ -53,7 +53,7 @@ const PointObject = ({
 
       const result = calcIntersectionWithPlaneFromRect(raycaster, camera, sketchCurrentPlane, x, y, size);
       if (result) {
-        //console.log('result', result);
+        //console.log('position vs result', position, result);
         dispatch(updatePoint({ id: id, position: [result.x, result.y, result.z] }));
       }
 
