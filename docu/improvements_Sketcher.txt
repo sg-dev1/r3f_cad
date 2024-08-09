@@ -37,7 +37,12 @@ List of Improvements
 (024) Improve Angle constraint
       - Behaviour is sometimes a bit strange, e.g. when dragging a line constraint error is produced --> need to be investigated in backend
       - Drawing of constraint on canvas
+        - Implementation done - TODO test it with different angles!
+        - TODO cleanup old impl in AngleConstraintObject
         - Line should be replaced by an arc
+            - mid point      -->  where both lines meet
+            - start and end  -->  on each line (can use middle of lines as current solution with line)
+            
         - Start/end positions of line/arc should be improved (not just use middle of two lines but be nearer to the edge of the angle)
 
 (028) Add construction lines (circles etc.)

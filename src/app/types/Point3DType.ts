@@ -19,3 +19,7 @@ export const point3DInlineEquals = (a: Point3DInlineType, b: Point3DInlineType) 
     return false;
   }
 };
+
+export const point3dEquals = (a: Point3DType, b: Point3DType) => {
+  return point3DInlineEquals([a.x, a.y, a.z], [b.x, b.y, b.z]);
+};
