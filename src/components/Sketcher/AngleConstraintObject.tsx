@@ -10,6 +10,7 @@ import { Line } from '@react-three/drei';
 import { point3dEquals, Point3DType } from '@/app/types/Point3DType';
 import { createArc2 } from '@/app/types/ArcType';
 import useArcPoints from '@/utils/useArcPoints';
+import { toRadiant } from '@/utils/utils';
 
 const AngleConstraintObject = ({ angleConstraint }: { angleConstraint: ConstraintType }) => {
   const sketchCurrentPlane = useAppSelector(selectSketchCurrentPlane);
@@ -24,20 +25,9 @@ const AngleConstraintObject = ({ angleConstraint }: { angleConstraint: Constrain
 
   const pt1_1 = sketchPointsMap[line1[0].p1_id];
   const pt2_1 = sketchPointsMap[line1[0].p2_id];
-  //const mid_1: [number, number, number] = [(pt1_1.x + pt2_1.x) / 2, (pt1_1.y + pt2_1.y) / 2, (pt1_1.z + pt2_1.z) / 2];
 
   const pt1_2 = sketchPointsMap[line2[0].p1_id];
   const pt2_2 = sketchPointsMap[line2[0].p2_id];
-  //const mid_2: [number, number, number] = [(pt1_2.x + pt2_2.x) / 2, (pt1_2.y + pt2_2.y) / 2, (pt1_2.z + pt2_2.z) / 2];
-
-  //console.log(mid_1, mid_2);
-
-  //const linePos = [mid_1, mid_2];
-  // const textPos: [number, number, number] = [
-  //   (mid_1[0] + mid_2[0]) / 2,
-  //   (mid_1[1] + mid_2[1]) / 2,
-  //   (mid_1[2] + mid_2[2]) / 2,
-  // ];
 
   let arcMidPoint: Point3DType | null = null;
   let arcStart: Point3DType | null = null;
@@ -60,9 +50,12 @@ const AngleConstraintObject = ({ angleConstraint }: { angleConstraint: Constrain
     arcEnd = pt1_2;
   }
 
-  console.log('+++arcMidPoint', arcMidPoint, 'arcStart', arcStart, 'arcEnd', arcEnd, 'angle', angleConstraint.v[0]);
+  //console.log('+++arcMidPoint', arcMidPoint, 'arcStart', arcStart, 'arcEnd', arcEnd, 'angle', angleConstraint.v[0]);
 
-  const arcObj = createArc2(sketchCurrentPlane, arcMidPoint, arcStart, arcEnd);
+  const arcObj = createArc2(sketchCurrentPlane, arcMidPoint, arcStart, arcEnd, {
+    radiusDivisor: 6,
+    angleHint: toRadiant(angleConstraint.v[0] as number),
+  });
   const arcPoints = useArcPoints({ arcs: [arcObj], quaternion: quaternion, plane: sketchCurrentPlane });
 
   //console.log(arcPoints);
