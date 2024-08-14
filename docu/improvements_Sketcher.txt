@@ -23,8 +23,61 @@ List of Improvements
 (008) put common settings in a "settingsSlice" s.t. they can be changed, e.g. color of lines etc.
 
 (009) Improve update of constraints in ConstraintsTable.tsx
+   Observations:
+     - Issues with input field
+       --> when modifying anything the array data is converted to a string
+           (separated by ',') - therefore the special handling
+           Here the output when nothing is changed --> original object is preserved
+           """
+           ---values Object { v: (5) […] } dataIndex v ConstraintTable.tsx:96:14
+           object ConstraintTable.tsx:98:14
+           save: values Object { v: (5) […] }
+           """
+       - as data in text field the values of the "v" array are just shown separated by a ','
+         (seems to be a default behaviour of Input)
+       - Alternatives: Use multiple input fields; 
+           conditional rendering (of input fields) per constraint type, ...
+     - Input validation:
+        - The validation in the current solution only checks if the field is empty
+           --> validation error (via rules of Form.Item)
+        - else you can mess up with the data as you like
+           --> results in 500 ERRORs in the solver backend (e.g. due to undefined fields of the array)
+     - Proposed Solution:
+        - Add addtional checks to EditableCell, e.g. access record["t"] to get the type
+        - Depending on the type do conditional rendering, e.g. different input fields
+        - Only input fields that are needed,
+          e.g. for SLVS_C_ANGLE: val, entityA, entityB
+        - Need to define mappings for all (currently) used types:
+          @Point:
+          SLVS_C_POINTS_COINCIDENT
+          SLVS_C_AT_MIDPOINT
+          SLVS_C_PT_ON_CIRCLE
+          SLVS_C_PT_ON_LINE
+          @Line:
+          SLVS_C_HORIZONTAL
+          SLVS_C_VERTICAL
+          SLVS_C_PT_PT_DISTANCE   // is acually for @Point
+          SLVS_C_PARALLEL
+          SLVS_C_PERPENDICULAR
+          SLVS_C_EQUAL_LENGTH_LINES
+          SLVS_C_ANGLE
+          @Circle:
+          SLVS_C_DIAMETER
+          SLVS_C_EQUAL_RADIUS
+    - Can also improve ConstraintTable --> render function for "Values"
+        - need only to render relevant data, e.g. to omit dat that need not be shown
+        - default branch renders all data
+
+    - Note to SketchTable: Was copied from ConstraintsTable:
+      - Maybe the special array handling from line 91 is not needed?
+      - It will not do that much harm since data is string anyways ...
+
    - Current way to edit leaves many ways the user can mess up with the data/ input invalid data
    - Proper error handling needed / edit will be different per constraint type (as display)
+     - simplest but not best solution only trying to mitigate the issues of constraint errors etc.
+     --> don't let a wrong edit to be done 
+      (need to validate the 'v' array, different per constraint type which fields are needed 
+       and which not, ...)
 
 (017) Create a tool to generate a rectangle (with proper constraints)
 
