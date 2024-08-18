@@ -6,7 +6,7 @@ import {
   selectLastSolverFailedConstraints,
   updateConstraint,
 } from '@/app/slices/sketchSlice';
-import { ConstraintType, SlvsConstraints } from '@/app/types/Constraints';
+import { ConstraintType, ConstraintValueType, SlvsConstraints } from '@/app/types/Constraints';
 import type { GetRef, InputRef } from 'antd';
 import { Form, Input, Popconfirm, Table } from 'antd';
 import { SorterResult } from 'antd/es/table/interface';
@@ -15,12 +15,6 @@ import React, { useContext, useEffect, useRef, useState } from 'react';
 import '../../app/globals.css';
 import { DeleteOutlined } from '@ant-design/icons';
 import { selectSelectedConstraintId, setSelectedConstraintId } from '@/app/slices/sketchToolStateSlice';
-
-//
-// Future TODOs:
-//  - If new constraints are supported the way to (1) display it, (2) edit it needs to be updated
-//  - Per default the whole v (Values) array is shown - parts of it are not relevant for a particular constraint
-//
 
 // ---
 // Base on Editable Cells example
@@ -56,6 +50,8 @@ interface EditableCellProps {
   handleSave: (record: DataType) => void;
 }
 
+// Note: The implementation is specific to the ConstraintType as record.
+// DO NOT use this for anything else.
 const EditableCell: React.FC<EditableCellProps> = ({
   title,
   editable,
@@ -82,8 +78,17 @@ const EditableCell: React.FC<EditableCellProps> = ({
     // children: The html (ReactNode) return by render (for the v dataIndex) as specified in the columns arry
     //console.log('toggleEdit', title, dataIndex, record, children);
 
-    setEditing(!editing);
-    form.setFieldsValue({ [dataIndex]: record[dataIndex] });
+    const constraintType = record['t'];
+    if (
+      SlvsConstraints.SLVS_C_PT_PT_DISTANCE === constraintType ||
+      SlvsConstraints.SLVS_C_ANGLE === constraintType ||
+      SlvsConstraints.SLVS_C_DIAMETER === constraintType
+    ) {
+      setEditing(!editing);
+      const constraintValue = record[dataIndex] as ConstraintValueType;
+      const value = constraintValue[0] as number;
+      form.setFieldsValue({ [dataIndex]: value });
+    }
   };
 
   const save = async () => {
@@ -91,7 +96,7 @@ const EditableCell: React.FC<EditableCellProps> = ({
       let values = await form.validateFields();
       // Note: values contains the whole object as record
 
-      //console.log(typeof values[dataIndex]);
+      console.log(typeof values[dataIndex], values[dataIndex]);
       if (typeof values[dataIndex] === 'string') {
         //console.log('values are string');
         const elements = values[dataIndex].split(',');
@@ -103,10 +108,17 @@ const EditableCell: React.FC<EditableCellProps> = ({
         });
       }
 
-      //console.log('save: values', values);
+      const [oldValue, ...oldVArray] = record[dataIndex] as ConstraintValueType;
+      let newValue = values[dataIndex][0];
+      if (!newValue) {
+        newValue = oldValue;
+      }
+      const newValues = { [dataIndex]: [newValue, ...oldVArray] };
+
+      console.log('save: values', newValues);
 
       toggleEdit();
-      handleSave({ ...record, ...values });
+      handleSave({ ...record, ...newValues });
     } catch (errInfo) {
       console.log('Save failed:', errInfo);
     }
@@ -174,6 +186,7 @@ const ConstraintTable = () => {
   }, [constraints, sketchLastSolverFailedConstraints]);
 
   const handleDelete = (record: DataType) => {
+    console.log('handle delete', record);
     dispatch(deleteConstraint(record));
   };
 
@@ -315,6 +328,33 @@ const ConstraintTable = () => {
           case SlvsConstraints.SLVS_C_VERTICAL:
             displayData = 'entityA=' + value[3];
             break;
+          case SlvsConstraints.SLVS_C_AT_MIDPOINT:
+            displayData = 'ptA=' + value[1] + ', entityA=' + value[3];
+            break;
+          case SlvsConstraints.SLVS_C_PT_ON_CIRCLE:
+            displayData = 'ptA=' + value[1] + ', entityA=' + value[3];
+            break;
+          case SlvsConstraints.SLVS_C_PT_ON_LINE:
+            displayData = 'ptA=' + value[1] + ', entityA=' + value[3];
+            break;
+          case SlvsConstraints.SLVS_C_PARALLEL:
+            displayData = 'entityA=' + value[3] + ', entityB=' + value[4];
+            break;
+          case SlvsConstraints.SLVS_C_PERPENDICULAR:
+            displayData = 'entityA=' + value[3] + ', entityB=' + value[4];
+            break;
+          case SlvsConstraints.SLVS_C_EQUAL_LENGTH_LINES:
+            displayData = 'entityA=' + value[3] + ', entityB=' + value[4];
+            break;
+          case SlvsConstraints.SLVS_C_ANGLE:
+            displayData = 'val=' + value[0] + ', entityA=' + value[3] + ', entityB=' + value[4];
+            break;
+          case SlvsConstraints.SLVS_C_DIAMETER:
+            displayData = 'val=' + value[0] + ', entityA=' + value[3];
+            break;
+          case SlvsConstraints.SLVS_C_EQUAL_RADIUS:
+            displayData = 'entityA=' + value[3] + ', entityB=' + value[4];
+            break;
           default:
             displayData =
               'val=' +
@@ -349,7 +389,7 @@ const ConstraintTable = () => {
   ];
 
   const handleSave = (row: DataType) => {
-    //console.log('handleSave', row);
+    console.log('handleSave', row);
     const { ['key']: removedKey, ['isError']: _, ...constraintData } = row;
     dispatch(updateConstraint(constraintData));
   };
