@@ -2,9 +2,9 @@ Priority of improvements (my ranking)
 // MVP
 
 // Later
+  - 028 [functionality - construction entities]
   - 029 [functionality - length constraints]
   - 023 [functionality - tools arc]
-  - 028 [functionality - construction lines]
   - 022 [functionality - more constraints]  
   - 017 [functionality - tools rectangle]
   - 008 [settings - settings slice to make e.g. color of lines configurable]
@@ -28,7 +28,35 @@ List of Improvements
 
 (023) Add Arc drawing tool
 
-(028) Add construction lines (circles etc.)
+(028) Add construction entities (lines, circles etc.)
+  - Add/ Updated test cases for Sketch.ts along these changes,
+    verify that no existing functionality breaks
+  - Two ways to build it:
+  (A) Add new lists to SketchType with construction objects    // go for solution
+    + algo3d can be left as is
+    - changing from construction to non construction would involve copying entities
+      between lists
+    - to consider construction entities in solver backend, lists need to be merged
+    + Changes mainly limited to Sketch.ts, e.g. 
+      * need new functions also accessible via sketchSlice.ts,
+      * implementation of copying entities between lists
+      * sketchSlice->buildSolverRequestType: here do the merge,
+        should also mark construction entities here somehow, s.t. it can be identified
+        in the result again what are construction entities and what are "normal" entities
+        ~ alternative would be to to a merge in the backend and extend to dataformat
+          with the new lists, see SolverTypes.ts for existing data formats,
+          e.g. could have constructionEntities in SolverRequestType and SolverResponseType
+        ~ need to decide if it 
+           (a) shall be completely opaque for the backend  --> no changes in the backend needed
+             - frontend needs to process the result and find out based on id
+               what entitity belongs to which list (construction vs non construction)
+             - currently Sketch->sketchUpdateEntities does this only based on entity type
+             - could be extended with decision logic if it is construction or non construction
+           (b) backend shall be aware of these new entities
+        ~ would prefer variant (a) to not have to touch the backend!
+  (B) Add a boolean (isConstruction) to each Point3DType, Line3DType, CircleType
+    - need to be considered in algo3d.ts to filter out construction entities
+    --> not recommended
 
 (029) Length constraint between point and line, point and point etc.
     - point and point should be easy because length constraint for points uses points of line internally
