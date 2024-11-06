@@ -12,7 +12,7 @@
   },
   "dependencies": {
     "@ant-design/icons": "^5.3.6",
-    "@bitbybit-dev/occt-worker": "^0.15.9",
+    "@bitbybit-dev/occt-worker": "^0.18",
     "@flatten-js/core": "^1.5.4",
     "@google/model-viewer": "^3.5.0",
     "@react-three/drei": "^9.101.0",

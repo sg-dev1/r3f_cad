@@ -2,6 +2,7 @@
 const nextConfig = {
   reactStrictMode: true,
   output: 'standalone',
+  transpilePackages: ['three'],
   webpack: (config) => {
     config.module.rules
       .find((k) => k.oneOf !== undefined)
